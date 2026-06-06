@@ -517,7 +517,7 @@ async function fazerLogout() { await SB.auth.signOut(); }
 async function carregarDados() {
   setSync('spin', 'Carregando...');
   try {
-    var r1 = await SB.from('lançamentos').select('*').order('criado_em', { ascending: false });
+    var r1 = await SB.from('lancamentos').select('*').order('criado_em', { ascending: false });
     var r2 = await SB.from('meses_status').select('*');
     if (r1.error) throw new Error(r1.error.message);
     if (r2.error) throw new Error(r2.error.message);
@@ -542,7 +542,7 @@ async function carregarDados() {
 }
 
 async function sbInsert(item) {
-  var r = await SB.from('lançamentos').insert({
+  var r = await SB.from('lancamentos').insert({
     id: item.id, colaborador: item.colaborador, tipo: item.tipo, projeto: item.projeto,
     valor: item.valor, mes: item.mes, cliente: item.cliente || '', cidade: item.cidade || '',
     origem: item.origem || 'manual', sheets_key: item.sheetsKey || '',
@@ -551,11 +551,11 @@ async function sbInsert(item) {
   if (r.error) throw new Error(r.error.message);
 }
 async function sbDelete(id) {
-  var r = await SB.from('lançamentos').delete().eq('id', id);
+  var r = await SB.from('lancamentos').delete().eq('id', id);
   if (r.error) throw new Error(r.error.message);
 }
 async function sbUpdate(id, u) {
-  var r = await SB.from('lançamentos').update({ colaborador: u.colaborador, tipo: u.tipo, projeto: u.projeto, valor: u.valor, mes: u.mes }).eq('id', id);
+  var r = await SB.from('lancamentos').update({ colaborador: u.colaborador, tipo: u.tipo, projeto: u.projeto, valor: u.valor, mes: u.mes }).eq('id', id);
   if (r.error) throw new Error(r.error.message);
 }
 async function sbSetMes(mes, status) {
@@ -1070,20 +1070,34 @@ function renderColabs() {
   cols.forEach(function(c) {
     var regs = byC[c], total = regs.reduce(function(s, r) { return s + r.valor; }, 0);
     var mm = {}; regs.forEach(function(r) { if (r.mes) mm[r.mes] = 1; }); var ml = Object.keys(mm).sort();
+    var det = [];
+    var en = regs.filter(function(r) { return r.tipo === 'Entrega'; });
+    var di = regs.filter(function(r) { return r.tipo === 'Di\u00e1ria' || r.tipo === 'Diaria'; });
+    var rb = regs.filter(function(r) { return r.tipo === 'Reembolso'; });
+    if (en.length) det.push(en.length + ' entrega' + (en.length > 1 ? 's' : ''));
+    if (di.length) det.push(di.length + ' di\u00e1ria' + (di.length > 1 ? 's' : ''));
+    if (rb.length) det.push(rb.length + ' reembolso' + (rb.length > 1 ? 's' : ''));
+    var eid = 'col-' + c.replace(/\W+/g, '_');
     var rows = '';
     ml.forEach(function(m) {
       var rm = regs.filter(function(r) { return r.mes === m; });
-      var di = rm.filter(function(r) { return r.tipo === 'Di\u00e1ria' || r.tipo === 'Diaria'; });
-      var en = rm.filter(function(r) { return r.tipo === 'Entrega'; });
-      var rb = rm.filter(function(r) { return r.tipo === 'Reembolso'; });
+      var dim = rm.filter(function(r) { return r.tipo === 'Di\u00e1ria' || r.tipo === 'Diaria'; });
+      var enm = rm.filter(function(r) { return r.tipo === 'Entrega'; });
+      var rbm = rm.filter(function(r) { return r.tipo === 'Reembolso'; });
       var totM = rm.reduce(function(s, r) { return s + r.valor; }, 0); var fec = MS[m] === 'fechado';
-      rows += '<tr class="month-sub"><td colspan="4" style="padding:6px 13px">' + fml(m) + (fec ? ' <span class="badge b-lock" style="font-size:10px">Fechado</span>' : '') + '</td></tr>';
-      if (di.length) { rows += '<tr class="cat-row"><td colspan="4">Di\u00e1rias</td></tr>'; di.forEach(function(r, i) { var fec2 = MS[r.mes] === 'fechado'; rows += '<tr><td style="color:var(--t2);width:26px;padding:6px 13px">' + (i + 1) + '</td><td style="padding:6px 13px">' + r.projeto + '</td><td style="padding:6px 13px"><span class="badge b-di">Di\u00e1ria</span></td><td style="font-weight:700;color:var(--gr);text-align:right;padding:6px 13px">' + fv(r.valor) + '</td><td style="padding:4px 13px">' + actBtns(r.id, fec2) + '</td></tr>'; }); }
-      if (en.length) { rows += '<tr class="cat-row"><td colspan="4">Entregas</td></tr>'; en.forEach(function(r, i) { var fec2 = MS[r.mes] === 'fechado'; rows += '<tr><td style="color:var(--t2);width:26px;padding:6px 13px">' + (i + 1) + '</td><td style="padding:6px 13px">' + r.projeto + '</td><td style="padding:6px 13px"><span class="badge b-en">Entrega</span></td><td style="font-weight:700;color:var(--gr);text-align:right;padding:6px 13px">' + fv(r.valor) + '</td><td style="padding:4px 13px">' + actBtns(r.id, fec2) + '</td></tr>'; }); }
-      if (rb.length) { rows += '<tr class="cat-row"><td colspan="4">Reembolsos</td></tr>'; rb.forEach(function(r, i) { var fec2 = MS[r.mes] === 'fechado'; rows += '<tr><td style="color:var(--t2);width:26px;padding:6px 13px">' + (i + 1) + '</td><td style="padding:6px 13px">' + r.projeto + '</td><td style="padding:6px 13px"><span class="badge b-re">Reembolso</span></td><td style="font-weight:700;color:var(--pu);text-align:right;padding:6px 13px">' + fv(r.valor) + '</td><td style="padding:4px 13px">' + actBtns(r.id, fec2) + '</td></tr>'; }); }
-      rows += '<tr class="month-total"><td colspan="4" style="padding:9px 13px">Total ' + fm(m) + '</td><td style="font-weight:700;color:var(--gr);text-align:right;padding:9px 13px">' + fv(totM) + '</td></tr>';
+      rows += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:8px 18px 3px;background:var(--bg)">' + fml(m) + (fec ? ' <span class="badge b-lock" style="font-size:10px">Fechado</span>' : '') + '</div>';
+      if (dim.length) { rows += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:5px 18px 2px">Di\u00e1rias</div>'; dim.forEach(function(r) { var fec2 = MS[r.mes] === 'fechado'; rows += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 18px 6px 28px;font-size:13px;border-bottom:1px solid var(--br)"><span style="color:var(--t2)">' + r.projeto + '</span><div style="display:flex;align-items:center;gap:10px"><span style="color:var(--gr);font-weight:600">' + fv(r.valor) + '</span>' + actBtns(r.id, fec2) + '</div></div>'; }); }
+      if (enm.length) { rows += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:5px 18px 2px">Entregas</div>'; enm.forEach(function(r) { var fec2 = MS[r.mes] === 'fechado'; rows += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 18px 6px 28px;font-size:13px;border-bottom:1px solid var(--br)"><span style="color:var(--t2)">' + r.projeto + '</span><div style="display:flex;align-items:center;gap:10px"><span style="color:var(--gr);font-weight:600">' + fv(r.valor) + '</span>' + actBtns(r.id, fec2) + '</div></div>'; }); }
+      if (rbm.length) { rows += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:5px 18px 2px">Reembolsos</div>'; rbm.forEach(function(r) { var fec2 = MS[r.mes] === 'fechado'; rows += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 18px 6px 28px;font-size:13px;border-bottom:1px solid var(--br)"><span style="color:var(--t2)">' + r.projeto + '</span><div style="display:flex;align-items:center;gap:10px"><span style="color:var(--pu);font-weight:600">' + fv(r.valor) + '</span>' + actBtns(r.id, fec2) + '</div></div>'; }); }
+      rows += '<div style="display:flex;justify-content:space-between;padding:8px 18px;background:var(--bg);font-weight:700;font-size:13px;border-bottom:1px solid var(--br)"><span>Total ' + fm(m) + '</span><span style="color:var(--gr)">' + fv(totM) + '</span></div>';
     });
-    h += '<div class="colab-card"><div class="colab-head"><div style="display:flex;align-items:center;gap:9px"><div class="av">' + ini(c) + '</div><span style="font-weight:700;font-size:15px">' + c + '</span></div><span style="font-weight:700;font-size:15px;color:var(--gr)">' + fv(total) + '</span></div><table>' + rows + '</table></div>';
+    h += '<div class="folha-wrap" style="margin-bottom:10px">';
+    h += '<div class="folha-row" onclick="toggleFD(\'' + eid + '\')" style="padding:13px 18px">';
+    h += '<div><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin-bottom:2px"><div class="av">' + ini(c) + '</div>' + c + '<span id="arr-' + eid + '" style="font-size:10px;color:var(--t3);transition:transform .2s;display:inline-block;margin-left:2px">v</span></div>';
+    h += '<div style="font-size:12px;color:var(--t2);padding-left:35px">' + det.join(' &middot; ') + '</div></div>';
+    h += '<div style="font-size:16px;font-weight:700;color:var(--gr)">' + fv(total) + '</div></div>';
+    h += '<div id="' + eid + '" style="display:none;border-top:1px solid var(--br)">' + rows + '</div>';
+    h += '</div>';
   });
   el.innerHTML = h;
   bindActions(el);
@@ -1095,11 +1109,35 @@ function renderProjs() {
   var byP = {}; f.forEach(function(d) { if (!byP[d.projeto]) byP[d.projeto] = []; byP[d.projeto].push(d); });
   var projs = Object.keys(byP).sort(); var el = document.getElementById('projs-cont');
   if (!projs.length) { el.innerHTML = '<div class="empty"><p>Nenhum projeto.</p></div>'; return; }
-  var h = '<table><thead><tr><th>Campanha</th><th>Mês</th><th>Cliente</th><th>Cidade</th><th>Colaborador</th><th>Tipo</th><th style="text-align:right">Valor</th></tr></thead><tbody>';
-  projs.forEach(function(p) { var regs = byP[p], total = regs.reduce(function(s, r) { return s + r.valor; }, 0); regs.forEach(function(r) { h += '<tr><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + r.projeto + '</td><td><span class="badge b-mes">' + fm(r.mes) + '</span></td><td style="color:var(--t2)">' + (r.cliente || '-') + '</td><td style="color:var(--t2)">' + (r.cidade || '-') + '</td><td><div style="display:flex;align-items:center;gap:7px"><div class="av">' + ini(r.colaborador) + '</div>' + r.colaborador + '</div></td><td>' + tipBadge(r.tipo) + '</td><td style="font-weight:700;color:var(--gr);text-align:right">' + fv(r.valor) + '</td></tr>'; }); h += '<tr style="background:var(--bg)"><td colspan="6" style="font-weight:700;padding:9px 13px">Total: ' + p + '</td><td style="font-weight:700;color:var(--gr);text-align:right;padding:9px 13px">' + fv(total) + '</td></tr>'; });
-  el.innerHTML = h + '</tbody></table>';
+  var h = '';
+  projs.forEach(function(p) {
+    var regs = byP[p], total = regs.reduce(function(s, r) { return s + r.valor; }, 0);
+    var colabs = {}; regs.forEach(function(r) { colabs[r.colaborador] = 1; });
+    var nColabs = Object.keys(colabs).length;
+    var eid = 'proj-' + p.replace(/\W+/g, '_');
+    var rows = '<table style="width:100%"><thead><tr><th>Colaborador</th><th>Mês</th><th>Tipo</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>';
+    regs.forEach(function(r) {
+      var fec = MS[r.mes] === 'fechado';
+      rows += '<tr><td><div style="display:flex;align-items:center;gap:7px"><div class="av">' + ini(r.colaborador) + '</div>' + r.colaborador + '</div></td>';
+      rows += '<td><span class="badge b-mes">' + fm(r.mes) + '</span></td>';
+      rows += '<td>' + tipBadge(r.tipo) + '</td>';
+      rows += '<td style="font-weight:700;color:var(--gr);text-align:right">' + fv(r.valor) + '</td>';
+      rows += '<td>' + actBtns(r.id, fec) + '</td></tr>';
+    });
+    rows += '</tbody></table>';
+    h += '<div class="folha-wrap" style="margin-bottom:10px">';
+    h += '<div class="folha-row" onclick="toggleFD(\'' + eid + '\')" style="padding:13px 18px">';
+    h += '<div><div style="font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px">' + p;
+    h += '<span id="arr-' + eid + '" style="font-size:10px;color:var(--t3);transition:transform .2s;display:inline-block">v</span></div>';
+    h += '<div style="font-size:12px;color:var(--t2);margin-top:2px">' + nColabs + ' colaborador' + (nColabs !== 1 ? 'es' : '') + ' &middot; ' + regs.length + ' lançamento' + (regs.length !== 1 ? 's' : '') + '</div></div>';
+    h += '<div style="font-size:16px;font-weight:700;color:var(--gr)">' + fv(total) + '</div></div>';
+    h += '<div id="' + eid + '" style="display:none;border-top:1px solid var(--br)">' + rows + '</div>';
+    h += '</div>';
+  });
+  el.innerHTML = h;
   bindActions(el);
 }
+
 
 function renderFolha() {
   var mes = document.getElementById('fil-mf').value, el = document.getElementById('folha-cont');
