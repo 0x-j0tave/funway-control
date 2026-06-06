@@ -143,6 +143,11 @@ tbody tr:hover td{background:#FAFAF8}
 .emp-header-logo img{width:32px;height:32px;border-radius:50%;object-fit:cover}
 .emp-header-logo span{color:#fff;font-weight:700;font-size:15px}
 .emp-content{max-width:700px;margin:0 auto;padding:24px 16px}
+/* Full viewport panels */
+#login-screen{position:fixed;inset:0;z-index:100}
+#admin-panel{position:fixed;inset:0;z-index:10}
+#emp-panel{position:fixed;inset:0;z-index:10;overflow-y:auto}
+#admin-panel .shell{width:100%;height:100%}
 </style>
 </head>
 <body>
@@ -166,7 +171,7 @@ tbody tr:hover td{background:#FAFAF8}
 </div>
 
 <!-- ADMIN -->
-<div id="admin-panel" style="display:none;height:100vh">
+<div id="admin-panel" style="display:none">
   <div class="shell">
     <aside class="sb-side">
       <div class="sb-logo">
@@ -488,7 +493,7 @@ async function routeUser() {
 
 function showScreen(s) {
   document.getElementById('login-screen').style.display  = s === 'login' ? 'flex'  : 'none';
-  document.getElementById('admin-panel').style.display   = s === 'admin' ? 'flex'  : 'none';
+  document.getElementById('admin-panel').style.display   = s === 'admin' ? 'block' : 'none';
   document.getElementById('emp-panel').style.display     = s === 'emp'   ? 'block' : 'none';
 }
 
