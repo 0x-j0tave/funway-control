@@ -181,7 +181,6 @@ tbody tr:hover td{background:#FAFAF8}
       <nav class="sb-nav">
         <button class="ni active" id="nb-lancar" onclick="goPage('lancar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>Lançar</button>
         <button class="ni" id="nb-reembolsos" onclick="goPage('reembolsos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Reembolsos</button>
-        <button class="ni" id="nb-gastos-admin" onclick="goPage('gastos-admin')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16l3.5-2 2.5 2 2.5-2 3.5 2z"/></svg>Gastos</button>
         <button class="ni" id="nb-colaboradores" onclick="goPage('colaboradores')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Colaboradores</button>
         <button class="ni" id="nb-projetos" onclick="goPage('projetos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>Projetos</button>
         <button class="ni" id="nb-folha" onclick="goPage('folha')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>Folha</button>
@@ -228,7 +227,7 @@ tbody tr:hover td{background:#FAFAF8}
           </div>
           <div class="tbl-wrap" id="tbl-lanc"></div>
         </div>
-        <div id="pg-reembolsos" class="page">
+                <div id="pg-reembolsos" class="page">
           <div id="msg-r"></div>
           <div class="ph"><h2>Reembolsos</h2><p>Valores a reembolsar que entram no total da folha.</p></div>
           <div class="card" style="padding:16px;margin-bottom:20px">
@@ -247,24 +246,9 @@ tbody tr:hover td{background:#FAFAF8}
               <select id="fil-rmes" onchange="renderReemb()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os meses</option></select>
             </div>
           </div>
-          <div class="tbl-wrap" id="tbl-reemb"></div>
+          <div id="tbl-reemb"></div>
         </div>
-          <div class="ph"><h2>Gastos submetidos</h2><p>Comprovantes e gastos enviados pelo funcionário para aprovação.</p></div>
-          <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
-            <select id="fil-gstatus" onchange="renderGastosAdmin()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os status</option><option value="pendente">Pendentes</option><option value="aprovado">Aprovados</option><option value="rejeitado">Rejeitados</option></select>
-            <select id="fil-gmes" onchange="renderGastosAdmin()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os meses</option></select>
-          </div>
-</div>
-        <div id="pg-gastos-admin" class="page">
-          <div id="msg-ga"></div>
-          <div class="ph"><h2>Gastos submetidos</h2><p>Comprovantes e gastos enviados pela produção para aprovação.</p></div>
-          <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
-            <select id="fil-gstatus" onchange="renderGastosAdmin()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os status</option><option value="pendente">Pendentes</option><option value="aprovado">Aprovados</option><option value="rejeitado">Rejeitados</option></select>
-            <select id="fil-gmes" onchange="renderGastosAdmin()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os meses</option></select>
-          </div>
-          <div id="gastos-admin-cont"></div>
-        </div>
-        <div id="pg-colaboradores" class="page">
+<div id="pg-colaboradores" class="page">
           <div class="ph"><h2>Colaboradores</h2><p>Diárias, entregas e reembolsos por pessoa.</p></div>
           <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
             <select id="fil-mc" onchange="renderColabs()" style="width:auto"><option value="">Todos os meses</option></select>
@@ -568,8 +552,6 @@ async function carregarDados() {
     renderAtivePage();
     var r3 = await SB.from('gastos').select('*').order('criado_em', { ascending: false });
     if (!r3.error) GASTOS_ADMIN = r3.data || [];
-    populateGastosFiltros();
-    if (PA === 'gastos-admin') renderGastosAdmin();
     if (PA === 'reembolsos') renderReemb();
     setSync('ok', 'Sincronizado - ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
   } catch(e) {
@@ -1039,7 +1021,7 @@ function populateFiltros() {
   var dp = document.getElementById('dl-proj'); if (dp) dp.innerHTML = getProjs().map(function(p) { return '<option value="' + p + '">'; }).join('');
 }
 
-var PAGE_TITLES = { lancar: 'Lançamentos', 'gastos-admin': 'Gastos', reembolsos: 'Reembolsos', colaboradores: 'Colaboradores', projetos: 'Projetos', folha: 'Folha de Pagamento', meses: 'Meses' };
+var PAGE_TITLES = { lancar: 'Lançamentos', reembolsos: 'Reembolsos', colaboradores: 'Colaboradores', projetos: 'Projetos', folha: 'Folha de Pagamento', meses: 'Meses' };
 function goPage(id) {
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
   document.querySelectorAll('.ni').forEach(function(b) { b.classList.remove('active'); });
@@ -1048,7 +1030,7 @@ function goPage(id) {
   document.getElementById('topbar-title').textContent = PAGE_TITLES[id] || id;
   PA = id; renderAtivePage();
 }
-function renderAtivePage() { if (PA === 'lancar') renderLanc(); else if (PA === 'gastos-admin') renderGastosAdmin(); else if (PA === 'reembolsos') renderReemb(); else if (PA === 'colaboradores') renderColabs(); else if (PA === 'projetos') renderProjs(); else if (PA === 'folha') renderFolha(); else if (PA === 'meses') renderMeses(); }
+function renderAtivePage() { if (PA === 'lancar') renderLanc(); else if (PA === 'reembolsos') renderReemb(); else if (PA === 'colaboradores') renderColabs(); else if (PA === 'projetos') renderProjs(); else if (PA === 'folha') renderFolha(); else if (PA === 'meses') renderMeses(); }
 
 function tipBadge(t) { if (t === 'Diaria' || t === 'Di\u00e1ria') return '<span class="badge b-di">Di\u00e1ria</span>'; if (t === 'Reembolso') return '<span class="badge b-re">Reembolso</span>'; return '<span class="badge b-en">Entrega</span>'; }
 function actBtns(id, fechado) {
@@ -1244,69 +1226,9 @@ function renderMeses() {
 }
 
 // ── Gastos tab (admin) ────────────────────────────────────────────────────────
-var EDIT_GASTO_ADMIN_ID = null;
 
-function renderGastosAdmin() {
-  var fs = (document.getElementById('fil-gstatus') || {}).value || '';
-  var fm2 = (document.getElementById('fil-gmes') || {}).value || '';
-  var f = GASTOS_ADMIN.filter(function(g) { return (!fs || g.status === fs) && (!fm2 || g.mes === fm2); });
-  var el = document.getElementById('gastos-admin-cont');
-  if (!el) return;
-  if (!f.length) { el.innerHTML = '<div class="empty"><p>Nenhum gasto encontrado.</p></div>'; return; }
-  var pend = f.filter(function(g) { return g.status === 'pendente'; });
-  var totalPend = pend.reduce(function(s, g) { return s + parseFloat(g.valor || 0); }, 0);
-  var h = '<div class="sumgrid" style="margin-bottom:16px"><div class="sc"><div class="lbl">Total</div><div class="val">' + f.length + '</div></div><div class="sc"><div class="lbl">Pendentes</div><div class="val" style="color:var(--am)">' + pend.length + '</div></div><div class="sc"><div class="lbl">Valor pendente</div><div class="val" style="color:var(--am)">' + fv(totalPend) + '</div></div></div>';
-  h += '<div class="tbl-wrap"><table><thead><tr><th>Funcion\u00e1rio</th><th>Tipo</th><th>Descri\u00e7\u00e3o</th><th>M\u00eas</th><th>Valor</th><th>Comprovante</th><th>Status</th><th></th></tr></thead><tbody>';
-  f.forEach(function(g) {
-    var isPend = g.status === 'pendente';
-    var tipLabel = g.tipo === 'cartao' ? 'Cart\u00e3o Funway' : 'Reembolso';
-    var tipStyle = g.tipo === 'cartao' ? 'background:#EDE9FE;color:#6D28D9' : '';
-    var statusClass = g.status === 'aprovado' ? 'b-aprov' : (g.status === 'rejeitado' ? 'b-rejeit' : 'b-pend');
-    h += '<tr>';
-    h += '<td><div style="display:flex;align-items:center;gap:7px"><div class="av">' + ini(g.colaborador) + '</div>' + g.colaborador + '</div></td>';
-    h += '<td><span class="badge" style="' + tipStyle + '">' + tipLabel + '</span></td>';
-    h += '<td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + g.descricao + '</td>';
-    h += '<td><span class="badge b-mes">' + fm(g.mes) + '</span></td>';
-    h += '<td style="font-weight:700;color:var(--gr)">' + fv(g.valor) + '</td>';
-    h += '<td>' + (g.arquivo_path ? '<button class="btn btn-ghost btn-sm" data-view="' + g.arquivo_path + '" style="font-size:12px">Ver</button>' : '-') + '</td>';
-    h += '<td><span class="badge ' + statusClass + '">' + g.status + '</span></td>';
-    h += '<td><div style="display:flex;gap:4px">';
-    if (isPend) { h += '<button class="btn btn-gr btn-sm" data-apv="' + g.id + '">Aprovar</button><button class="btn btn-rd btn-sm" data-rej="' + g.id + '">Rejeitar</button>'; }
-    h += '<button class="btn btn-ghost btn-sm" data-edt-g="' + g.id + '" style="color:var(--t2)">Editar</button>';
-    h += '<button class="btn btn-ghost btn-sm" data-del-g="' + g.id + '" style="color:var(--rd)">x</button>';
-    h += '</div></td></tr>';
-    if (g.observacao && g.status === 'rejeitado') { h += '<tr><td colspan="8" style="padding:4px 13px 8px;font-size:12px;color:var(--rd)">Motivo: ' + g.observacao + '</td></tr>'; }
-  });
-  h += '</tbody></table></div>';
-  el.innerHTML = h;
-  el.querySelectorAll('[data-apv]').forEach(function(b) { b.addEventListener('click', function() { aprovarGasto(b.getAttribute('data-apv')); }); });
-  el.querySelectorAll('[data-rej]').forEach(function(b) { b.addEventListener('click', function() { abrirRejeitar(b.getAttribute('data-rej')); }); });
-  el.querySelectorAll('[data-view]').forEach(function(b) { b.addEventListener('click', function() { verAnexo(b.getAttribute('data-view')); }); });
-  el.querySelectorAll('[data-edt-g]').forEach(function(b) { b.addEventListener('click', function() { abrirEditGastoAdmin(b.getAttribute('data-edt-g')); }); });
-  el.querySelectorAll('[data-del-g]').forEach(function(b) { b.addEventListener('click', function() { deletarGastoAdmin(b.getAttribute('data-del-g')); }); });
-}
 
-function populateGastosFiltros() {
-  var meses = {}; GASTOS_ADMIN.forEach(function(g) { if (g.mes) meses[g.mes] = 1; });
-  var el = document.getElementById('fil-gmes'); if (!el) return;
-  var cur = el.value; el.innerHTML = '<option value="">Todos os meses</option>';
-  Object.keys(meses).sort().reverse().forEach(function(m) { el.innerHTML += '<option value="' + m + '">' + fml(m) + '</option>'; });
-  if (cur) el.value = cur;
-}
 
-function abrirEditGastoAdmin(id) {
-  var g = null; for (var i = 0; i < GASTOS_ADMIN.length; i++) { if (GASTOS_ADMIN[i].id === id) { g = GASTOS_ADMIN[i]; break; } }
-  if (!g) return;
-  EDIT_GASTO_ADMIN_ID = id;
-  document.getElementById('eg2-tipo').value = g.tipo;
-  document.getElementById('eg2-mes').value = g.mes;
-  document.getElementById('eg2-desc').value = g.descricao;
-  document.getElementById('eg2-val').value = g.valor;
-  // Reuse the edit modal - add nome field if present
-  var nomeEl = document.getElementById('eg2-nome');
-  if (nomeEl) nomeEl.value = g.colaborador || '';
-  document.getElementById('edit-gasto-bg').classList.add('show');
-}
 
 async function deletarGastoAdmin(id) {
   if (!confirm('Remover este gasto permanentemente?')) return;
