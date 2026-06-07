@@ -249,9 +249,15 @@ tbody tr:hover td{background:#FAFAF8}
           </div>
           <div class="tbl-wrap" id="tbl-reemb"></div>
         </div>
+          <div class="ph"><h2>Gastos submetidos</h2><p>Comprovantes e gastos enviados pelo funcionário para aprovação.</p></div>
+          <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+            <select id="fil-gstatus" onchange="renderGastosAdmin()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os status</option><option value="pendente">Pendentes</option><option value="aprovado">Aprovados</option><option value="rejeitado">Rejeitados</option></select>
+            <select id="fil-gmes" onchange="renderGastosAdmin()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os meses</option></select>
+          </div>
+</div>
         <div id="pg-gastos-admin" class="page">
           <div id="msg-ga"></div>
-          <div class="ph"><h2>Gastos submetidos</h2><p>Comprovantes e gastos enviados pelo funcionário para aprovação.</p></div>
+          <div class="ph"><h2>Gastos submetidos</h2><p>Comprovantes e gastos enviados pela produção para aprovação.</p></div>
           <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
             <select id="fil-gstatus" onchange="renderGastosAdmin()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os status</option><option value="pendente">Pendentes</option><option value="aprovado">Aprovados</option><option value="rejeitado">Rejeitados</option></select>
             <select id="fil-gmes" onchange="renderGastosAdmin()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os meses</option></select>
@@ -434,6 +440,22 @@ var SEL_FILE2 = null;
 
 // Utils
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+// Normaliza nome: remove acentos, caixa baixa, espaços extras
+// Permite que "Caio", "CAIO", "Cáio" sejam tratados como a mesma pessoa
+function normName(n) {
+  return (n || '').trim().toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, ' ');
+}
+
+// Retorna o nome canônico (primeira ocorrência) para um nome normalizado
+function canonName(normKey) {
+  for (var i = 0; i < D.length; i++) {
+    if (normName(D[i].colaborador) === normKey) return D[i].colaborador;
+  }
+  return normKey;
+}
 function fv(v) { return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function fm(m) {
   if (!m) return '?';
@@ -451,7 +473,15 @@ function ini(n) {
   return (n || '?').trim().split(/\s+/).slice(0, 2).map(function(p) { return p[0] || ''; }).join('').toUpperCase();
 }
 function getMeses() { var s = {}; D.forEach(function(d) { if (d.mes) s[d.mes] = 1; }); return Object.keys(s).sort().reverse(); }
-function getColabs() { var s = {}; D.forEach(function(d) { if (d.colaborador) s[d.colaborador] = 1; }); return Object.keys(s).sort(); }
+function getColabs() {
+  var seen = {}, result = [];
+  D.forEach(function(d) {
+    if (!d.colaborador) return;
+    var key = normName(d.colaborador);
+    if (!seen[key]) { seen[key] = d.colaborador; result.push(d.colaborador); }
+  });
+  return result.sort(function(a, b) { return normName(a).localeCompare(normName(b)); });
+}
 function getProjs() { var s = {}; D.filter(function(d) { return d.tipo !== 'Reembolso'; }).forEach(function(d) { if (d.projeto) s[d.projeto] = 1; }); return Object.keys(s).sort(); }
 function getClientes() { var s = {}; D.forEach(function(d) { if (d.cliente) s[d.cliente] = 1; }); return Object.keys(s).sort(); }
 function showMsg(id, txt, tipo, persist) {
@@ -536,7 +566,11 @@ async function carregarDados() {
     if (!r3.error) GASTOS_ADMIN = r3.data || [];
     populateFiltros();
     renderAtivePage();
+    var r3 = await SB.from('gastos').select('*').order('criado_em', { ascending: false });
+    if (!r3.error) GASTOS_ADMIN = r3.data || [];
     populateGastosFiltros();
+    if (PA === 'gastos-admin') renderGastosAdmin();
+    if (PA === 'reembolsos') renderReemb();
     setSync('ok', 'Sincronizado - ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
   } catch(e) {
     setSync('err', 'Erro');
@@ -782,52 +816,7 @@ async function deletarGasto(id) {
 }
 
 // Gastos (admin)
-function populateGastosFiltros() {
-  var meses = {}; GASTOS_ADMIN.forEach(function(g) { if (g.mes) meses[g.mes] = 1; });
-  var el = document.getElementById('fil-gmes'); if (!el) return;
-  var cur = el.value; el.innerHTML = '<option value="">Todos os meses</option>';
-  Object.keys(meses).sort().reverse().forEach(function(m) { el.innerHTML += '<option value="' + m + '">' + fml(m) + '</option>'; });
-  if (cur) el.value = cur;
-}
 
-function renderGastosAdmin() {
-  var fs = (document.getElementById('fil-gstatus') || {}).value || '';
-  var fm2 = (document.getElementById('fil-gmes') || {}).value || '';
-  var f = GASTOS_ADMIN.filter(function(g) { return (!fs || g.status === fs) && (!fm2 || g.mes === fm2); });
-  var el = document.getElementById('gastos-admin-cont');
-  if (!f.length) { el.innerHTML = '<div class="empty"><p>Nenhum gasto encontrado.</p></div>'; return; }
-  var pend = f.filter(function(g) { return g.status === 'pendente'; });
-  var totalPend = pend.reduce(function(s, g) { return s + parseFloat(g.valor || 0); }, 0);
-  var h = '<div class="sumgrid" style="margin-bottom:16px">';
-  h += '<div class="sc"><div class="lbl">Total</div><div class="val">' + f.length + '</div></div>';
-  h += '<div class="sc"><div class="lbl">Pendentes</div><div class="val" style="color:var(--am)">' + pend.length + '</div></div>';
-  h += '<div class="sc"><div class="lbl">Valor pendente</div><div class="val" style="color:var(--am)">' + fv(totalPend) + '</div></div>';
-  h += '</div><div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Tipo</th><th>Descrição</th><th>Mês</th><th>Valor</th><th>Anexo</th><th>Status</th><th></th></tr></thead><tbody>';
-  f.forEach(function(g) {
-    var isPend = g.status === 'pendente';
-    var tipLabel = g.tipo === 'cartao' ? 'Cartão Funway' : 'Reembolso';
-    var tipStyle = g.tipo === 'cartao' ? 'background:#EDE9FE;color:#6D28D9' : '';
-    var statusClass = g.status === 'aprovado' ? 'b-aprov' : (g.status === 'rejeitado' ? 'b-rejeit' : 'b-pend');
-    h += '<tr>';
-    h += '<td style="font-size:12px;color:var(--t2)">' + g.colaborador + '</td>';
-    h += '<td><span class="badge" style="' + tipStyle + '">' + tipLabel + '</span></td>';
-    h += '<td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + g.descricao + '</td>';
-    h += '<td><span class="badge b-mes">' + fm(g.mes) + '</span></td>';
-    h += '<td style="font-weight:700;color:var(--gr)">' + fv(g.valor) + '</td>';
-    if (g.arquivo_path) h += '<td><button class="btn btn-ghost btn-sm" data-view="' + g.arquivo_path + '" style="font-size:12px">Ver anexo</button></td>';
-    else h += '<td><span style="color:var(--t3);font-size:12px">-</span></td>';
-    h += '<td><span class="badge ' + statusClass + '">' + g.status + '</span></td>';
-    if (isPend) h += '<td><div style="display:flex;gap:4px"><button class="btn btn-gr btn-sm" data-apv="' + g.id + '">Aprovar</button><button class="btn btn-rd btn-sm" data-rej="' + g.id + '">Rejeitar</button></div></td>';
-    else h += '<td><span style="font-size:11px;color:var(--t3)">Finalizado</span></td>';
-    h += '</tr>';
-    if (g.observacao && g.status === 'rejeitado') h += '<tr><td colspan="8" style="padding:4px 13px 8px;font-size:12px;color:var(--rd)">Motivo: ' + g.observacao + '</td></tr>';
-  });
-  h += '</tbody></table></div>';
-  el.innerHTML = h;
-  el.querySelectorAll('[data-apv]').forEach(function(b) { b.addEventListener('click', function() { aprovarGasto(b.getAttribute('data-apv')); }); });
-  el.querySelectorAll('[data-rej]').forEach(function(b) { b.addEventListener('click', function() { abrirRejeitar(b.getAttribute('data-rej')); }); });
-  el.querySelectorAll('[data-view]').forEach(function(b) { b.addEventListener('click', function() { verAnexo(b.getAttribute('data-view')); }); });
-}
 
 async function aprovarGasto(id) {
   var g = null;
@@ -836,10 +825,10 @@ async function aprovarGasto(id) {
   // 1. Atualiza status no banco
   var r = await SB.from('gastos').update({ status: 'aprovado', atualizado_em: new Date().toISOString() }).eq('id', id);
   if (r.error) { showMsg('msg-ga', 'Erro: ' + r.error.message, 'err'); return; }
-  // 2. Cria lancamento tipo Reembolso para entrar na folha
+  // 2. Cria lancamento APENAS se for Reembolso (Cartao Funway nao entra na folha)
   var chave = 'gasto_' + id;
   var jaExiste = D.some(function(d) { return d.sheetsKey === chave; });
-  if (!jaExiste) {
+  if (!jaExiste && g.tipo === 'reembolso') {
     var lancItem = {
       id: uid(), colaborador: g.colaborador, tipo: 'Reembolso',
       projeto: g.descricao, valor: g.valor, mes: g.mes,
@@ -1050,7 +1039,7 @@ function populateFiltros() {
   var dp = document.getElementById('dl-proj'); if (dp) dp.innerHTML = getProjs().map(function(p) { return '<option value="' + p + '">'; }).join('');
 }
 
-var PAGE_TITLES = { lancar: 'Lançamentos', reembolsos: 'Reembolsos', 'gastos-admin': 'Gastos', colaboradores: 'Colaboradores', projetos: 'Projetos', folha: 'Folha de Pagamento', meses: 'Meses' };
+var PAGE_TITLES = { lancar: 'Lançamentos', 'gastos-admin': 'Gastos', reembolsos: 'Reembolsos', colaboradores: 'Colaboradores', projetos: 'Projetos', folha: 'Folha de Pagamento', meses: 'Meses' };
 function goPage(id) {
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
   document.querySelectorAll('.ni').forEach(function(b) { b.classList.remove('active'); });
@@ -1059,7 +1048,7 @@ function goPage(id) {
   document.getElementById('topbar-title').textContent = PAGE_TITLES[id] || id;
   PA = id; renderAtivePage();
 }
-function renderAtivePage() { if (PA === 'lancar') renderLanc(); else if (PA === 'reembolsos') renderReemb(); else if (PA === 'gastos-admin') renderGastosAdmin(); else if (PA === 'colaboradores') renderColabs(); else if (PA === 'projetos') renderProjs(); else if (PA === 'folha') renderFolha(); else if (PA === 'meses') renderMeses(); }
+function renderAtivePage() { if (PA === 'lancar') renderLanc(); else if (PA === 'gastos-admin') renderGastosAdmin(); else if (PA === 'reembolsos') renderReemb(); else if (PA === 'colaboradores') renderColabs(); else if (PA === 'projetos') renderProjs(); else if (PA === 'folha') renderFolha(); else if (PA === 'meses') renderMeses(); }
 
 function tipBadge(t) { if (t === 'Diaria' || t === 'Di\u00e1ria') return '<span class="badge b-di">Di\u00e1ria</span>'; if (t === 'Reembolso') return '<span class="badge b-re">Reembolso</span>'; return '<span class="badge b-en">Entrega</span>'; }
 function actBtns(id, fechado) {
@@ -1082,16 +1071,14 @@ function renderReemb() {
   var fc = document.getElementById('fil-rcol').value, fm2 = document.getElementById('fil-rmes').value;
   var el = document.getElementById('tbl-reemb');
   var h = '';
-  // Gastos pendentes de aprovacao
+  // Pendentes com badge especial no topo
   var pendentes = GASTOS_ADMIN.filter(function(g) { return g.status === 'pendente'; });
   if (pendentes.length) {
     h += '<div style="background:var(--aml);border:1px solid #FDE68A;border-radius:var(--rl);overflow:hidden;margin-bottom:16px">';
-    h += '<div style="padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #FDE68A">';
-    h += '<div style="font-weight:700;font-size:13px;color:var(--am)">Reembolsos a aprovar (' + pendentes.length + ')</div>';
-    h += '<span style="font-size:11px;color:var(--am)">Aguardando aprovacao</span></div>';
-    h += '<table><thead><tr><th>Funcionario</th><th>Tipo</th><th>Descricao</th><th>Mes</th><th>Valor</th><th>Comprovante</th><th></th></tr></thead><tbody>';
+    h += '<div style="padding:10px 16px;font-weight:700;font-size:13px;color:var(--am);border-bottom:1px solid #FDE68A">Pendentes de aprovação (' + pendentes.length + ')</div>';
+    h += '<table><thead><tr><th>Funcionário</th><th>Tipo</th><th>Descrição</th><th>Mês</th><th>Valor</th><th>Comprovante</th><th></th></tr></thead><tbody>';
     pendentes.forEach(function(g) {
-      var tipLabel = g.tipo === 'cartao' ? 'Cartao Funway' : 'Reembolso';
+      var tipLabel = g.tipo === 'cartao' ? 'Cartão Funway' : 'Reembolso';
       var tipStyle = g.tipo === 'cartao' ? 'background:#EDE9FE;color:#6D28D9' : '';
       h += '<tr style="background:#FFFBEB">';
       h += '<td><div style="display:flex;align-items:center;gap:7px"><div class="av">' + ini(g.colaborador) + '</div>' + g.colaborador + '</div></td>';
@@ -1105,12 +1092,11 @@ function renderReemb() {
     });
     h += '</tbody></table></div>';
   }
-  // Reembolsos aprovados (lancamentos)
-  var f = D.filter(function(d) { return d.tipo === 'Reembolso' && (!fc || d.colaborador === fc) && (!fm2 || d.mes === fm2); });
+  // Todos os reembolsos (lancamentos)
+  var f = D.filter(function(d) { return d.tipo === 'Reembolso' && (!fc || normName(d.colaborador) === normName(fc)) && (!fm2 || d.mes === fm2); });
   if (!f.length && !pendentes.length) { el.innerHTML = '<div class="empty"><p>Nenhum reembolso ainda.</p></div>'; return; }
   if (f.length) {
-    h += '<div class="sec" style="margin-bottom:8px">Reembolsos aprovados</div>';
-    h += '<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Descricao</th><th>Mes</th><th>Valor</th><th></th></tr></thead><tbody>';
+    h += '<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Descrição</th><th>Mês</th><th>Valor</th><th></th></tr></thead><tbody>';
     f.forEach(function(d) { var fec = MS[d.mes] === 'fechado'; h += '<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="av">' + ini(d.colaborador) + '</div>' + d.colaborador + '</div></td><td>' + d.projeto + '</td><td><span class="badge b-mes">' + fm(d.mes) + '</span></td><td style="font-weight:700;color:var(--gr)">' + fv(d.valor) + '</td><td>' + actBtns(d.id, fec) + '</td></tr>'; });
     h += '</tbody></table></div>';
   }
@@ -1122,17 +1108,31 @@ function renderReemb() {
 }
 
 
+function carregarGastosEmp() {
+  SB.from('gastos').select('*').eq('user_id', CURRENT_USER.id).order('criado_em', { ascending: false })
+    .then(function(r) {
+      if (r.error) { showMsg('msg-emp', 'Erro: ' + r.error.message, 'err'); return; }
+      GASTOS_EMP = r.data || []; renderGastosEmp();
+    });
+}
+
 function renderColabs() {
   var fm2 = document.getElementById('fil-mc').value, fn = document.getElementById('fil-nc').value.trim().toLowerCase();
   var f = D.filter(function(d) { return !fm2 || d.mes === fm2; });
-  var byC = {}; f.forEach(function(d) { if (!byC[d.colaborador]) byC[d.colaborador] = []; byC[d.colaborador].push(d); });
-  var cols = Object.keys(byC).filter(function(c) { return !fn || c.toLowerCase().indexOf(fn) >= 0; }).sort();
+  var byC = {};
+  f.forEach(function(d) {
+    var key = normName(d.colaborador);
+    if (!byC[key]) byC[key] = { nome: d.colaborador, items: [] };
+    byC[key].items.push(d);
+  });
+  var cols = Object.keys(byC).filter(function(k) { return !fn || normName(byC[k].nome).indexOf(fn) >= 0; }).sort();
   var el = document.getElementById('colabs-cont');
   if (!cols.length) { el.innerHTML = '<div class="empty"><p>Nenhum colaborador.</p></div>'; return; }
   var tg = f.reduce(function(s, r) { return s + r.valor; }, 0);
   var h = '<div class="sumgrid"><div class="sc"><div class="lbl">Colaboradores</div><div class="val">' + cols.length + '</div><div class="sub">' + (fm2 ? fml(fm2) : 'todos') + '</div></div><div class="sc"><div class="lbl">Total</div><div class="val" style="color:var(--gr)">' + fv(tg) + '</div><div class="sub">soma geral</div></div></div>';
   cols.forEach(function(c) {
-    var regs = byC[c], total = regs.reduce(function(s, r) { return s + r.valor; }, 0);
+    var nome = byC[c].nome;
+    var regs = byC[c].items, total = regs.reduce(function(s, r) { return s + r.valor; }, 0);
     var mm = {}; regs.forEach(function(r) { if (r.mes) mm[r.mes] = 1; }); var ml = Object.keys(mm).sort();
     var det = [];
     var en = regs.filter(function(r) { return r.tipo === 'Entrega'; });
@@ -1157,7 +1157,7 @@ function renderColabs() {
     });
     h += '<div class="folha-wrap" style="margin-bottom:10px">';
     h += '<div class="folha-row" onclick="toggleFD(\'' + eid + '\')" style="padding:13px 18px">';
-    h += '<div><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin-bottom:2px"><div class="av">' + ini(c) + '</div>' + c + '<span id="arr-' + eid + '" style="font-size:10px;color:var(--t3);transition:transform .2s;display:inline-block;margin-left:2px">v</span></div>';
+    h += '<div><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin-bottom:2px"><div class="av">' + ini(nome) + '</div>' + nome + '<span id="arr-' + eid + '" style="font-size:10px;color:var(--t3);transition:transform .2s;display:inline-block;margin-left:2px">v</span></div>';
     h += '<div style="font-size:12px;color:var(--t2);padding-left:35px">' + det.join(' - ') + '</div></div>';
     h += '<div style="font-size:16px;font-weight:700;color:var(--gr)">' + fv(total) + '</div></div>';
     h += '<div id="' + eid + '" style="display:none;border-top:1px solid var(--br)">' + rows + '</div>';
@@ -1176,38 +1176,29 @@ function renderProjs() {
   var h = '';
   projs.forEach(function(p) {
     var regs = byP[p], total = regs.reduce(function(s, r) { return s + r.valor; }, 0);
-    var colabs = {}; regs.forEach(function(r) { colabs[r.colaborador] = 1; });
+    var colabs = {}; regs.forEach(function(r) { colabs[normName(r.colaborador)] = r.colaborador; });
     var nColabs = Object.keys(colabs).length;
     var eid = 'proj-' + p.replace(/\W+/g, '_');
     var rows = '<table style="width:100%"><thead><tr><th>Colaborador</th><th>M\u00eas</th><th>Tipo</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>';
-    regs.forEach(function(r) {
-      var fec = MS[r.mes] === 'fechado';
-      rows += '<tr><td><div style="display:flex;align-items:center;gap:7px"><div class="av">' + ini(r.colaborador) + '</div>' + r.colaborador + '</div></td>';
-      rows += '<td><span class="badge b-mes">' + fm(r.mes) + '</span></td>';
-      rows += '<td>' + tipBadge(r.tipo) + '</td>';
-      rows += '<td style="font-weight:700;color:var(--gr);text-align:right">' + fv(r.valor) + '</td>';
-      rows += '<td>' + actBtns(r.id, fec) + '</td></tr>';
-    });
+    regs.forEach(function(r) { var fec = MS[r.mes] === 'fechado'; rows += '<tr><td><div style="display:flex;align-items:center;gap:7px"><div class="av">' + ini(r.colaborador) + '</div>' + r.colaborador + '</div></td><td><span class="badge b-mes">' + fm(r.mes) + '</span></td><td>' + tipBadge(r.tipo) + '</td><td style="font-weight:700;color:var(--gr);text-align:right">' + fv(r.valor) + '</td><td>' + actBtns(r.id, fec) + '</td></tr>'; });
     rows += '</tbody></table>';
-    h += '<div class="folha-wrap" style="margin-bottom:10px">';
-    h += '<div class="folha-row" onclick="toggleFD(\'' + eid + '\')" style="padding:13px 18px">';
-    h += '<div><div style="font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px">' + p;
-    h += '<span id="arr-' + eid + '" style="font-size:10px;color:var(--t3);transition:transform .2s;display:inline-block">v</span></div>';
-    h += '<div style="font-size:12px;color:var(--t2);margin-top:2px">' + nColabs + ' colaborador' + (nColabs !== 1 ? 'es' : '') + ' - ' + regs.length + ' lan\u00e7amento' + (regs.length !== 1 ? 's' : '') + '</div></div>';
-    h += '<div style="font-size:16px;font-weight:700;color:var(--gr)">' + fv(total) + '</div></div>';
-    h += '<div id="' + eid + '" style="display:none;border-top:1px solid var(--br)">' + rows + '</div>';
-    h += '</div>';
+    h += '<div class="folha-wrap" style="margin-bottom:10px"><div class="folha-row" onclick="toggleFD(\'' + eid + '\')" style="padding:13px 18px"><div><div style="font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px">' + p + '<span id="arr-' + eid + '" style="font-size:10px;color:var(--t3);transition:transform .2s;display:inline-block">v</span></div><div style="font-size:12px;color:var(--t2);margin-top:2px">' + nColabs + ' colaborador' + (nColabs !== 1 ? 'es' : '') + ' - ' + regs.length + ' lan\u00e7amento' + (regs.length !== 1 ? 's' : '') + '</div></div><div style="font-size:16px;font-weight:700;color:var(--gr)">' + fv(total) + '</div></div><div id="' + eid + '" style="display:none;border-top:1px solid var(--br)">' + rows + '</div></div>';
   });
-  el.innerHTML = h;
-  bindActions(el);
+  el.innerHTML = h; bindActions(el);
 }
 
 function renderFolha() {
   var mes = document.getElementById('fil-mf').value, el = document.getElementById('folha-cont');
-  if (!mes) { el.innerHTML = '<div class="empty"><p>Selecione um mes.</p></div>'; return; }
+  if (!mes) { el.innerHTML = '<div class="empty"><p>Selecione um m\u00eas.</p></div>'; return; }
   var f = D.filter(function(d) { return d.mes === mes; });
-  if (!f.length) { el.innerHTML = '<div class="empty"><p>Nenhum lancamento para ' + fml(mes) + '.</p></div>'; return; }
-  var byC = {}; f.forEach(function(d) { if (!byC[d.colaborador]) byC[d.colaborador] = []; byC[d.colaborador].push(d); });
+  if (!f.length) { el.innerHTML = '<div class="empty"><p>Nenhum lan\u00e7amento para ' + fml(mes) + '.</p></div>'; return; }
+  var byCraw = {};
+  f.forEach(function(d) {
+    var key = normName(d.colaborador);
+    if (!byCraw[key]) byCraw[key] = { nome: d.colaborador, items: [] };
+    byCraw[key].items.push(d);
+  });
+  var byC = {}; Object.keys(byCraw).forEach(function(k) { byC[byCraw[k].nome] = byCraw[k].items; });
   var cols = Object.keys(byC).sort(), total = f.reduce(function(s, r) { return s + r.valor; }, 0), fec = MS[mes] === 'fechado';
   var h = '<div class="folha-wrap"><div class="folha-head"><h3 style="font-size:16px;font-weight:700">' + fml(mes) + '</h3><span style="font-size:13px;opacity:.8">' + cols.length + ' colaboradores' + (fec ? ' - Fechado' : '') + '</span></div>';
   cols.forEach(function(c) {
@@ -1224,16 +1215,12 @@ function renderFolha() {
     if (en.length) { detRows += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:8px 20px 3px">Entregas</div>'; en.forEach(function(r) { detRows += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 20px 6px 30px;font-size:13px;border-bottom:1px solid var(--br)"><span style="color:var(--t2)">' + r.projeto + '</span><span style="color:var(--gr);font-weight:600">' + fv(r.valor) + '</span></div>'; }); }
     if (di.length) { detRows += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:8px 20px 3px">Di\u00e1rias</div>'; di.forEach(function(r) { detRows += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 20px 6px 30px;font-size:13px;border-bottom:1px solid var(--br)"><span style="color:var(--t2)">' + r.projeto + '</span><span style="color:var(--gr);font-weight:600">' + fv(r.valor) + '</span></div>'; }); }
     if (rb.length) { detRows += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:8px 20px 3px">Reembolsos</div>'; rb.forEach(function(r) { detRows += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 20px 6px 30px;font-size:13px;border-bottom:1px solid var(--br)"><span style="color:var(--t2)">' + r.projeto + '</span><span style="color:var(--pu);font-weight:600">' + fv(r.valor) + '</span></div>'; }); }
-    h += '<div class="folha-row" onclick="toggleFD(\'' + eid + '\')" style="padding:13px 18px">'
-      + '<div><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:2px"><div class="av">' + ini(c) + '</div>' + c
-      + '<span id="arr-' + eid + '" style="font-size:10px;color:var(--t3);transition:transform .2s;display:inline-block;margin-left:2px">v</span></div>'
-      + '<div style="font-size:12px;color:var(--t2);padding-left:35px">' + det.join(' - ') + '</div></div>'
-      + '<div style="font-size:16px;font-weight:700;color:var(--gr)">' + fv(tot) + '</div></div>'
-      + '<div id="' + eid + '" style="display:none;background:#FAFAF8;border-top:1px solid var(--br)">' + detRows + '</div>';
+    h += '<div class="folha-row" onclick="toggleFD(\'' + eid + '\')" style="padding:13px 18px"><div><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:2px"><div class="av">' + ini(c) + '</div>' + c + '<span id="arr-' + eid + '" style="font-size:10px;color:var(--t3);transition:transform .2s;display:inline-block;margin-left:2px">v</span></div><div style="font-size:12px;color:var(--t2);padding-left:35px">' + det.join(' - ') + '</div></div><div style="font-size:16px;font-weight:700;color:var(--gr)">' + fv(tot) + '</div></div><div id="' + eid + '" style="display:none;background:#FAFAF8;border-top:1px solid var(--br)">' + detRows + '</div>';
   });
   h += '<div class="folha-total"><span style="font-weight:600">Total da folha</span><span style="font-size:18px;font-weight:700;color:var(--gr)">' + fv(total) + '</span></div></div>';
   el.innerHTML = h;
 }
+
 function toggleFD(id) { var el = document.getElementById(id), arr = document.getElementById('arr-' + id); if (!el) return; var open = el.style.display === 'block'; el.style.display = open ? 'none' : 'block'; if (arr) arr.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)'; }
 
 function exportCSV() {
@@ -1249,27 +1236,97 @@ function exportCSV() {
 function renderMeses() {
   var todos = {}; getMeses().forEach(function(m) { todos[m] = 1; }); Object.keys(MS).forEach(function(m) { todos[m] = 1; }); todos = Object.keys(todos).sort().reverse();
   var el = document.getElementById('meses-cont');
-  if (!todos.length) { el.innerHTML = '<div class="empty"><p>Nenhum mes com dados.</p></div>'; return; }
+  if (!todos.length) { el.innerHTML = '<div class="empty"><p>Nenhum m\u00eas com dados.</p></div>'; return; }
   var h = '';
-  todos.forEach(function(m) {
-    var fec = MS[m] === 'fechado';
-    var qtd = D.filter(function(d) { return d.mes === m; }).length;
-    var total = D.filter(function(d) { return d.mes === m; }).reduce(function(s, r) { return s + r.valor; }, 0);
-    h += '<div class="mes-card"><div><div style="font-weight:700;font-size:15px;display:flex;align-items:center;gap:9px;margin-bottom:4px">' + fml(m) + ' <span class="badge ' + (fec ? 'b-lock' : 'b-open') + '">' + (fec ? 'Fechado' : 'Aberto') + '</span></div><div style="font-size:13px;color:var(--t2)">' + qtd + ' lan\u00e7amento' + (qtd !== 1 ? 's' : '') + ' - ' + fv(total) + '</div></div><button class="btn ' + (fec ? '' : 'btn-rd') + ' btn-sm" data-mes="' + m + '">' + (fec ? 'Reabrir' : 'Fechar mes') + '</button></div>';
-  });
+  todos.forEach(function(m) { var fec = MS[m] === 'fechado'; var qtd = D.filter(function(d) { return d.mes === m; }).length; var total = D.filter(function(d) { return d.mes === m; }).reduce(function(s, r) { return s + r.valor; }, 0); h += '<div class="mes-card"><div><div style="font-weight:700;font-size:15px;display:flex;align-items:center;gap:9px;margin-bottom:4px">' + fml(m) + ' <span class="badge ' + (fec ? 'b-lock' : 'b-open') + '">' + (fec ? 'Fechado' : 'Aberto') + '</span></div><div style="font-size:13px;color:var(--t2)">' + qtd + ' lan\u00e7amento' + (qtd !== 1 ? 's' : '') + ' - ' + fv(total) + '</div></div><button class="btn ' + (fec ? '' : 'btn-rd') + ' btn-sm" data-mes="' + m + '">' + (fec ? 'Reabrir' : 'Fechar m\u00eas') + '</button></div>'; });
   el.innerHTML = h;
   el.querySelectorAll('[data-mes]').forEach(function(b) { b.addEventListener('click', function() { toggleMes(b.getAttribute('data-mes')); }); });
 }
+
+// ── Gastos tab (admin) ────────────────────────────────────────────────────────
+var EDIT_GASTO_ADMIN_ID = null;
+
+function renderGastosAdmin() {
+  var fs = (document.getElementById('fil-gstatus') || {}).value || '';
+  var fm2 = (document.getElementById('fil-gmes') || {}).value || '';
+  var f = GASTOS_ADMIN.filter(function(g) { return (!fs || g.status === fs) && (!fm2 || g.mes === fm2); });
+  var el = document.getElementById('gastos-admin-cont');
+  if (!el) return;
+  if (!f.length) { el.innerHTML = '<div class="empty"><p>Nenhum gasto encontrado.</p></div>'; return; }
+  var pend = f.filter(function(g) { return g.status === 'pendente'; });
+  var totalPend = pend.reduce(function(s, g) { return s + parseFloat(g.valor || 0); }, 0);
+  var h = '<div class="sumgrid" style="margin-bottom:16px"><div class="sc"><div class="lbl">Total</div><div class="val">' + f.length + '</div></div><div class="sc"><div class="lbl">Pendentes</div><div class="val" style="color:var(--am)">' + pend.length + '</div></div><div class="sc"><div class="lbl">Valor pendente</div><div class="val" style="color:var(--am)">' + fv(totalPend) + '</div></div></div>';
+  h += '<div class="tbl-wrap"><table><thead><tr><th>Funcion\u00e1rio</th><th>Tipo</th><th>Descri\u00e7\u00e3o</th><th>M\u00eas</th><th>Valor</th><th>Comprovante</th><th>Status</th><th></th></tr></thead><tbody>';
+  f.forEach(function(g) {
+    var isPend = g.status === 'pendente';
+    var tipLabel = g.tipo === 'cartao' ? 'Cart\u00e3o Funway' : 'Reembolso';
+    var tipStyle = g.tipo === 'cartao' ? 'background:#EDE9FE;color:#6D28D9' : '';
+    var statusClass = g.status === 'aprovado' ? 'b-aprov' : (g.status === 'rejeitado' ? 'b-rejeit' : 'b-pend');
+    h += '<tr>';
+    h += '<td><div style="display:flex;align-items:center;gap:7px"><div class="av">' + ini(g.colaborador) + '</div>' + g.colaborador + '</div></td>';
+    h += '<td><span class="badge" style="' + tipStyle + '">' + tipLabel + '</span></td>';
+    h += '<td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + g.descricao + '</td>';
+    h += '<td><span class="badge b-mes">' + fm(g.mes) + '</span></td>';
+    h += '<td style="font-weight:700;color:var(--gr)">' + fv(g.valor) + '</td>';
+    h += '<td>' + (g.arquivo_path ? '<button class="btn btn-ghost btn-sm" data-view="' + g.arquivo_path + '" style="font-size:12px">Ver</button>' : '-') + '</td>';
+    h += '<td><span class="badge ' + statusClass + '">' + g.status + '</span></td>';
+    h += '<td><div style="display:flex;gap:4px">';
+    if (isPend) { h += '<button class="btn btn-gr btn-sm" data-apv="' + g.id + '">Aprovar</button><button class="btn btn-rd btn-sm" data-rej="' + g.id + '">Rejeitar</button>'; }
+    h += '<button class="btn btn-ghost btn-sm" data-edt-g="' + g.id + '" style="color:var(--t2)">Editar</button>';
+    h += '<button class="btn btn-ghost btn-sm" data-del-g="' + g.id + '" style="color:var(--rd)">x</button>';
+    h += '</div></td></tr>';
+    if (g.observacao && g.status === 'rejeitado') { h += '<tr><td colspan="8" style="padding:4px 13px 8px;font-size:12px;color:var(--rd)">Motivo: ' + g.observacao + '</td></tr>'; }
+  });
+  h += '</tbody></table></div>';
+  el.innerHTML = h;
+  el.querySelectorAll('[data-apv]').forEach(function(b) { b.addEventListener('click', function() { aprovarGasto(b.getAttribute('data-apv')); }); });
+  el.querySelectorAll('[data-rej]').forEach(function(b) { b.addEventListener('click', function() { abrirRejeitar(b.getAttribute('data-rej')); }); });
+  el.querySelectorAll('[data-view]').forEach(function(b) { b.addEventListener('click', function() { verAnexo(b.getAttribute('data-view')); }); });
+  el.querySelectorAll('[data-edt-g]').forEach(function(b) { b.addEventListener('click', function() { abrirEditGastoAdmin(b.getAttribute('data-edt-g')); }); });
+  el.querySelectorAll('[data-del-g]').forEach(function(b) { b.addEventListener('click', function() { deletarGastoAdmin(b.getAttribute('data-del-g')); }); });
+}
+
+function populateGastosFiltros() {
+  var meses = {}; GASTOS_ADMIN.forEach(function(g) { if (g.mes) meses[g.mes] = 1; });
+  var el = document.getElementById('fil-gmes'); if (!el) return;
+  var cur = el.value; el.innerHTML = '<option value="">Todos os meses</option>';
+  Object.keys(meses).sort().reverse().forEach(function(m) { el.innerHTML += '<option value="' + m + '">' + fml(m) + '</option>'; });
+  if (cur) el.value = cur;
+}
+
+function abrirEditGastoAdmin(id) {
+  var g = null; for (var i = 0; i < GASTOS_ADMIN.length; i++) { if (GASTOS_ADMIN[i].id === id) { g = GASTOS_ADMIN[i]; break; } }
+  if (!g) return;
+  EDIT_GASTO_ADMIN_ID = id;
+  document.getElementById('eg2-tipo').value = g.tipo;
+  document.getElementById('eg2-mes').value = g.mes;
+  document.getElementById('eg2-desc').value = g.descricao;
+  document.getElementById('eg2-val').value = g.valor;
+  // Reuse the edit modal - add nome field if present
+  var nomeEl = document.getElementById('eg2-nome');
+  if (nomeEl) nomeEl.value = g.colaborador || '';
+  document.getElementById('edit-gasto-bg').classList.add('show');
+}
+
+async function deletarGastoAdmin(id) {
+  if (!confirm('Remover este gasto permanentemente?')) return;
+  var r = await SB.from('gastos').delete().eq('id', id);
+  if (r.error) { alert('Erro: ' + r.error.message); return; }
+  GASTOS_ADMIN = GASTOS_ADMIN.filter(function(g) { return g.id !== id; });
+  renderGastosAdmin();
+  if (PA === 'reembolsos') renderReemb();
+}
+
 function abrirSP() { document.getElementById('overlay').classList.add('show'); }
 function fecharSP(e) { if (!e || e.target === document.getElementById('overlay')) fecharSPdir(); }
 function fecharSPdir() { document.getElementById('overlay').classList.remove('show'); }
 
-// Init
 document.addEventListener('DOMContentLoaded', function() {
   var mesAtual = new Date().toISOString().slice(0, 7);
   document.getElementById('fl-mes').value = mesAtual;
   document.getElementById('fr-mes').value = mesAtual;
-  document.getElementById('eg-mes').value = mesAtual;
+  var egMes = document.getElementById('eg-mes');
+  if (egMes) egMes.value = mesAtual;
   initAuth();
 });
 </script>
