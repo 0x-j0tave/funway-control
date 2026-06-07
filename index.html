@@ -704,7 +704,7 @@ async function enviarGasto() {
   var row = { id: id, user_id: CURRENT_USER.id, colaborador: nomeColab, tipo: tipo, descricao: desc, valor: val, mes: mes, status: 'pendente', arquivo_path: path, arquivo_nome: SEL_FILE.name, arquivo_tipo: SEL_FILE.type, observacao: '', criado_em: new Date().toISOString(), atualizado_em: new Date().toISOString() };
     var r = await SB.from('gastos').insert(row);
     if (r.error) throw new Error(r.error.message);
-    GASTOS_EMP.unshift(row); renderGastosEmp();
+    GASTOS_EMP.unshift(row);
     showMsg('msg-emp', 'Gasto enviado com sucesso!', 'ok');
     document.getElementById('eg-nome').value = ''; document.getElementById('eg-desc').value = ''; document.getElementById('eg-val').value = '';
     document.getElementById('eg-file').value = ''; SEL_FILE = null;
@@ -748,7 +748,7 @@ async function salvarEditGasto() {
     if (r.error) throw new Error(r.error.message);
     var idx = -1; for (var i = 0; i < GASTOS_EMP.length; i++) { if (GASTOS_EMP[i].id === EDIT_GASTO_ID) { idx = i; break; } }
     if (idx >= 0) Object.assign(GASTOS_EMP[idx], u);
-    renderGastosEmp(); fecharEditGastoDir(); showMsg('msg-emp', 'Atualizado!', 'ok');
+    fecharEditGastoDir(); showMsg('msg-emp', 'Atualizado!', 'ok');
   } catch(e) { alert('Erro: ' + e.message); }
 }
 
@@ -756,7 +756,7 @@ async function deletarGasto(id) {
   if (!confirm('Remover este gasto?')) return;
   var r = await SB.from('gastos').delete().eq('id', id).eq('status', 'pendente');
   if (r.error) { alert('Erro: ' + r.error.message); return; }
-  GASTOS_EMP = GASTOS_EMP.filter(function(g) { return g.id !== id; }); renderGastosEmp();
+  GASTOS_EMP = GASTOS_EMP.filter(function(g) { return g.id !== id; });
 }
 
 // Gastos (admin)
