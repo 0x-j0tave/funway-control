@@ -792,9 +792,8 @@ async function aprovarGasto(id) {
   // 3. Atualiza estado local
   var idx = -1; for (var i = 0; i < GASTOS_ADMIN.length; i++) { if (GASTOS_ADMIN[i].id === id) { idx = i; break; } }
   if (idx >= 0) GASTOS_ADMIN[idx].status = 'aprovado';
-  renderGastosAdmin();
-  if (PA === 'reembolsos') renderReemb();
-  showMsg('msg-ga', 'Gasto aprovado e adicionado aos reembolsos!', 'ok');
+  renderReemb();
+  showMsg('msg-r', 'Gasto aprovado!', 'ok');
 }
 
 function abrirRejeitar(id) { REJEITAR_ID = id; document.getElementById('rejeitar-obs').value = ''; document.getElementById('rejeitar-bg').classList.add('show'); }
@@ -807,7 +806,7 @@ async function confirmarRejeitar() {
   if (r.error) { alert('Erro: ' + r.error.message); return; }
   var idx = -1; for (var i = 0; i < GASTOS_ADMIN.length; i++) { if (GASTOS_ADMIN[i].id === REJEITAR_ID) { idx = i; break; } }
   if (idx >= 0) { GASTOS_ADMIN[idx].status = 'rejeitado'; GASTOS_ADMIN[idx].observacao = obs; }
-  fecharRejeitarDir(); renderGastosAdmin(); showMsg('msg-ga', 'Gasto rejeitado.', 'warn');
+  fecharRejeitarDir(); renderReemb(); showMsg('msg-r', 'Gasto rejeitado.', 'warn');
 }
 
 async function verAnexo(path) {
@@ -1193,7 +1192,7 @@ async function deletarGastoAdmin(id) {
   var r = await SB.from('gastos').delete().eq('id', id);
   if (r.error) { alert('Erro: ' + r.error.message); return; }
   GASTOS_ADMIN = GASTOS_ADMIN.filter(function(g) { return g.id !== id; });
-  renderGastosAdmin();
+  renderReemb();
   if (PA === 'reembolsos') renderReemb();
 }
 
