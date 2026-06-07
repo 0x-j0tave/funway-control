@@ -681,7 +681,7 @@ async function enviarGasto() {
   try {
     var ur = await SB.storage.from('notas-fiscais').upload(path, SEL_FILE, { contentType: SEL_FILE.type });
     if (ur.error) throw new Error('Erro no upload: ' + ur.error.message);
-    var row = { id: id, user_id: CURRENT_USER.id, colaborador: CURRENT_USER.email, tipo: tipo, descrição: desc, valor: val, mes: mes, status: 'pendente', arquivo_path: path, arquivo_nome: SEL_FILE.name, arquivo_tipo: SEL_FILE.type, observacao: '', criado_em: new Date().toISOString(), atualizado_em: new Date().toISOString() };
+    var row = { id: id, user_id: CURRENT_USER.id, colaborador: CURRENT_USER.email, tipo: tipo, descricao: desc, valor: val, mes: mes, status: 'pendente', arquivo_path: path, arquivo_nome: SEL_FILE.name, arquivo_tipo: SEL_FILE.type, observacao: '', criado_em: new Date().toISOString(), atualizado_em: new Date().toISOString() };
     var r = await SB.from('gastos').insert(row);
     if (r.error) throw new Error(r.error.message);
     GASTOS_EMP.unshift(row); renderGastosEmp();
@@ -716,7 +716,7 @@ function renderGastosEmp() {
     h += '<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">';
     h += '<span class="badge ' + tipClass + '" style="' + tipStyle + '">' + tipLabel + '</span>';
     h += '<span class="badge ' + statusClass + '">' + g.status + '</span></div>';
-    h += '<div style="font-weight:700;font-size:15px;margin-bottom:2px">' + g.descrição + '</div>';
+    h += '<div style="font-weight:700;font-size:15px;margin-bottom:2px">' + g.descricao + '</div>';
     h += '<div style="font-size:12px;color:var(--t2)">' + fml(g.mes) + ' &middot; ' + new Date(g.criado_em).toLocaleDateString('pt-BR') + '</div>';
     if (g.observacao) h += '<div style="font-size:12px;color:var(--rd);margin-top:4px">Motivo: ' + g.observacao + '</div>';
     h += '</div>';
@@ -738,7 +738,7 @@ function abrirEditGasto(id) {
   if (!g) return;
   document.getElementById('eg2-tipo').value = g.tipo;
   document.getElementById('eg2-mes').value = g.mes;
-  document.getElementById('eg2-desc').value = g.descrição;
+  document.getElementById('eg2-desc').value = g.descricao;
   document.getElementById('eg2-val').value = g.valor;
   SEL_FILE2 = null;
   document.getElementById('up2-placeholder').style.display = 'block';
@@ -750,8 +750,8 @@ function fecharEditGastoDir() { document.getElementById('edit-gasto-bg').classLi
 
 async function salvarEditGasto() {
   if (!EDIT_GASTO_ID) return;
-  var u = { tipo: document.getElementById('eg2-tipo').value, mes: document.getElementById('eg2-mes').value, descrição: document.getElementById('eg2-desc').value.trim(), valor: parseFloat(document.getElementById('eg2-val').value) || 0, atualizado_em: new Date().toISOString() };
-  if (!u.descrição || !u.valor || !u.mes) { alert('Preencha todos os campos.'); return; }
+  var u = { tipo: document.getElementById('eg2-tipo').value, mes: document.getElementById('eg2-mes').value, descricao: document.getElementById('eg2-desc').value.trim(), valor: parseFloat(document.getElementById('eg2-val').value) || 0, atualizado_em: new Date().toISOString() };
+  if (!u.descricao || !u.valor || !u.mes) { alert('Preencha todos os campos.'); return; }
   try {
     if (SEL_FILE2) {
       var ext = SEL_FILE2.name.split('.').pop().toLowerCase();
@@ -805,7 +805,7 @@ function renderGastosAdmin() {
     h += '<tr>';
     h += '<td style="font-size:12px;color:var(--t2)">' + g.colaborador + '</td>';
     h += '<td><span class="badge" style="' + tipStyle + '">' + tipLabel + '</span></td>';
-    h += '<td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + g.descrição + '</td>';
+    h += '<td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + g.descricao + '</td>';
     h += '<td><span class="badge b-mes">' + fm(g.mes) + '</span></td>';
     h += '<td style="font-weight:700;color:var(--gr)">' + fv(g.valor) + '</td>';
     if (g.arquivo_path) h += '<td><button class="btn btn-ghost btn-sm" data-view="' + g.arquivo_path + '" style="font-size:12px">Ver anexo</button></td>';
