@@ -1117,11 +1117,19 @@ function renderProjs() {
     var regs = byP[p], total = regs.reduce(function(s, r) { return s + r.valor; }, 0);
     var colabs = {}; regs.forEach(function(r) { colabs[normName(r.colaborador)] = r.colaborador; });
     var nColabs = Object.keys(colabs).length;
+    var cidades = {}; regs.forEach(function(r) { if (r.cidade) cidades[r.cidade] = 1; });
+    var cidadeStr = Object.keys(cidades).join(' / ');
+    var cliente = regs[0] && regs[0].cliente ? regs[0].cliente : '';
     var eid = 'proj-' + p.replace(/\W+/g, '_');
-    var rows = '<table style="width:100%"><thead><tr><th>Colaborador</th><th>M\u00eas</th><th>Tipo</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>';
-    regs.forEach(function(r) { var fec = MS[r.mes] === 'fechado'; rows += '<tr><td><div style="display:flex;align-items:center;gap:7px"><div class="av">' + ini(r.colaborador) + '</div>' + r.colaborador + '</div></td><td><span class="badge b-mes">' + fm(r.mes) + '</span></td><td>' + tipBadge(r.tipo) + '</td><td style="font-weight:700;color:var(--gr);text-align:right">' + fv(r.valor) + '</td><td>' + actBtns(r.id, fec) + '</td></tr>'; });
+    var rows = '<table style="width:100%"><thead><tr><th>Colaborador</th><th>M\u00eas</th><th>Cidade</th><th>Tipo</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>';
+    regs.forEach(function(r) { var fec = MS[r.mes] === 'fechado'; rows += '<tr><td><div style="display:flex;align-items:center;gap:7px"><div class="av">' + ini(r.colaborador) + '</div>' + r.colaborador + '</div></td><td><span class="badge b-mes">' + fm(r.mes) + '</span></td><td style="color:var(--t2)">' + (r.cidade || '<span style="color:var(--t3)">-</span>') + '</td><td>' + tipBadge(r.tipo) + '</td><td style="font-weight:700;color:var(--gr);text-align:right">' + fv(r.valor) + '</td><td>' + actBtns(r.id, fec) + '</td></tr>'; });
     rows += '</tbody></table>';
-    h += '<div class="folha-wrap" style="margin-bottom:10px"><div class="folha-row" onclick="toggleFD(\'' + eid + '\')" style="padding:13px 18px"><div><div style="font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px">' + p + '<span id="arr-' + eid + '" style="font-size:10px;color:var(--t3);transition:transform .2s;display:inline-block">v</span></div><div style="font-size:12px;color:var(--t2);margin-top:2px">' + nColabs + ' colaborador' + (nColabs !== 1 ? 'es' : '') + ' - ' + regs.length + ' lan\u00e7amento' + (regs.length !== 1 ? 's' : '') + '</div></div><div style="font-size:16px;font-weight:700;color:var(--gr)">' + fv(total) + '</div></div><div id="' + eid + '" style="display:none;border-top:1px solid var(--br)">' + rows + '</div></div>';
+    var meta = [];
+    if (cidadeStr) meta.push('[' + cidadeStr + ']');
+    if (cliente) meta.push(cliente);
+    meta.push(nColabs + ' colaborador' + (nColabs !== 1 ? 'es' : ''));
+    meta.push(regs.length + ' lan\u00e7amento' + (regs.length !== 1 ? 's' : ''));
+    h += '<div class="folha-wrap" style="margin-bottom:10px"><div class="folha-row" onclick="toggleFD(\'' + eid + '\')" style="padding:13px 18px"><div><div style="font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px">' + p + '<span id="arr-' + eid + '" style="font-size:10px;color:var(--t3);transition:transform .2s;display:inline-block">v</span></div><div style="font-size:12px;color:var(--t2);margin-top:2px">' + meta.join(' &middot; ') + '</div></div><div style="font-size:16px;font-weight:700;color:var(--gr)">' + fv(total) + '</div></div><div id="' + eid + '" style="display:none;border-top:1px solid var(--br)">' + rows + '</div></div>';
   });
   el.innerHTML = h; bindActions(el);
 }
