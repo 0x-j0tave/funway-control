@@ -235,7 +235,7 @@ tbody tr:hover td{background:#FAFAF8}
           <span class="topbar-title" id="topbar-title">Lançamentos</span>
         </div>
         <div class="topbar-actions">
-          <button class="tbtn" onclick="carregarDados()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Sincronizar</button>
+          <button class="tbtn" onclick="sincronizarTudo()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Sincronizar</button>
           <button class="tbtn" onclick="exportCSV()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar CSV</button>
         </div>
       </header>
@@ -461,6 +461,59 @@ function getProjs(){var s={};D.filter(function(d){return d.tipo!=='Reembolso';})
 function getClientes(){var s={};D.forEach(function(d){if(d.cliente)s[d.cliente]=1;});return Object.keys(s).sort();}
 function showMsg(id,txt,tipo,persist){var el=document.getElementById(id);if(!el)return;el.innerHTML='<div class="msg msg-'+tipo+'">'+txt+'</div>';if(!persist)setTimeout(function(){if(el)el.innerHTML='';},5000);}
 function setSync(tipo,txt){var el=document.getElementById('sdot');if(el)el.className='sdot'+(tipo?' '+tipo:'');var st=document.getElementById('stxt');if(st)st.textContent=txt;}
+
+async function sincronizarTudo(){
+  await carregarDados();
+  if(!SHEETS_URL){ showMsg('msg-l','Dados atualizados do banco.','ok'); return; }
+  setSync('spin','Sincronizando Sheets...');
+  var hoje=new Date();
+  var ma=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0');
+  if(MS[ma]==='fechado'){ setSync('ok','Sincronizado'); showMsg('msg-l','Dados atualizados.','ok'); return; }
+  // Busca aba do mes atual no Sheets
+  var abaAtual=null;
+  try{
+    var listaResp=await fetch(SHEETS_URL+'?action=listSheets',{redirect:'follow'});
+    if(!listaResp.ok)throw new Error();
+    var lista=await listaResp.json();
+    var abas=Array.isArray(lista)?lista:(lista.sheets||[]);
+    abaAtual=abas.find(function(a){return abaToMes(a)===ma;});
+  }catch(e){ setSync('ok','Sincronizado'); showMsg('msg-l','Banco atualizado. Sheets indisponível.','warn'); return; }
+  if(!abaAtual){ setSync('ok','Sincronizado'); showMsg('msg-l','Banco atualizado.','ok'); return; }
+  try{
+    var sheetResp=await fetch(SHEETS_URL+'?action=getSheet&sheet='+encodeURIComponent(abaAtual),{redirect:'follow'});
+    if(!sheetResp.ok)throw new Error();
+    var sheetData=await sheetResp.json();
+    var itens=parseSheetRows(sheetData.rows||[]).map(function(p){p.mes=ma;return p;});
+    if(!itens.length){ setSync('ok','Sincronizado'); showMsg('msg-l','Banco atualizado.','ok'); return; }
+    var novos=[],atualizados=[];
+    itens.forEach(function(item){
+      item.equipe.forEach(function(col){
+        var cidNorm=normName(item.cidade||'').replace(/[^a-z0-9]/g,'_');
+        var dataNorm=normName(item.data||'').replace(/[^a-z0-9]/g,'_');
+        var chave='sh_'+normName(item.campanha).replace(/[^a-z0-9]/g,'_')+'_'+cidNorm+'_'+dataNorm+'_'+normName(col).replace(/[^a-z0-9]/g,'_')+'_'+ma;
+        var existente=null;
+        for(var i=0;i<D.length;i++){if(D[i].sheetsKey===chave){existente=D[i];break;}}
+        if(existente){
+          if(existente.projeto!==item.campanha){
+            atualizados.push({id:existente.id,colaborador:col,tipo:existente.tipo,projeto:item.campanha,valor:existente.valor,mes:ma});
+            existente.projeto=item.campanha;
+          }
+        } else {
+          novos.push({id:uid(),colaborador:col,tipo:'Entrega',projeto:item.campanha,valor:0,mes:ma,cliente:item.cliente||'',cidade:item.cidade||'',origem:'sheets',sheetsKey:chave,criadoEm:new Date().toISOString()});
+        }
+      });
+    });
+    D=novos.concat(D);populateFiltros();renderAtivePage();
+    for(var i=0;i<novos.length;i++){try{await sbInsert(novos[i]);}catch(e){D=D.filter(function(d){return d.id!==novos[i].id;});}}
+    for(var j=0;j<atualizados.length;j++){try{await sbUpdate(atualizados[j].id,atualizados[j]);}catch(e){}}
+    populateFiltros();renderAtivePage();
+    var partes=['Banco atualizado'];
+    if(novos.length)partes.push(novos.length+' novo(s) do Sheets');
+    if(atualizados.length)partes.push(atualizados.length+' atualizado(s)');
+    setSync('ok','Sincronizado · '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
+    showMsg('msg-l',partes.join(' + ')+'!','ok');
+  }catch(e){ setSync('err','Erro'); showMsg('msg-l','Erro ao sincronizar Sheets: '+e.message,'err'); }
+}
 
 async function initAuth(){var res=await SB.auth.getSession();var session=res.data?res.data.session:null;if(session){CURRENT_USER=session.user;await routeUser();}else{showScreen('login');}
 SB.auth.onAuthStateChange(async function(event,sess){if(event==='SIGNED_IN'&&sess){CURRENT_USER=sess.user;await routeUser();}if(event==='SIGNED_OUT'){CURRENT_USER=null;USER_ROLE=null;showScreen('login');}});}
