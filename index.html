@@ -628,7 +628,7 @@ function fecharSync(e){if(!e||e.target===document.getElementById('sync-bg'))fech
 
 async function confirmarSync(){
   var hoje=new Date();var ma=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0');
-  var novos=[];
+  var novos=[],atualizados=[];
   PEND.forEach(function(item){
     var mes=item.mes||ma;if(MS[mes]==='fechado')return;
     item.equipe.forEach(function(col){
@@ -636,19 +636,34 @@ async function confirmarSync(){
       var cidNorm=normName(item.cidade||'').replace(/[^a-z0-9]/g,'_');
       var dataNorm=normName(item.data||'').replace(/[^a-z0-9]/g,'_');
       var chave='sh_'+normName(item.campanha).replace(/[^a-z0-9]/g,'_')+'_'+cidNorm+'_'+dataNorm+'_'+normName(col).replace(/[^a-z0-9]/g,'_')+'_'+mes;
-      if(D.some(function(d){return d.sheetsKey===chave;}))return;
-      novos.push({id:uid(),colaborador:col,tipo:item._tipo,projeto:item.campanha,valor:val,mes:mes,cliente:item.cliente||'',cidade:item.cidade||'',origem:'sheets',sheetsKey:chave,criadoEm:new Date().toISOString()});
+      var existente=null;
+      for(var i=0;i<D.length;i++){if(D[i].sheetsKey===chave){existente=D[i];break;}}
+      if(existente){
+        // Mesmo sheetsKey: atualiza nome do projeto, tipo e valor (se preenchido no modal)
+        var novoValor=(val>0)?val:existente.valor;
+        var mudou=existente.projeto!==item.campanha||existente.tipo!==item._tipo||existente.valor!==novoValor;
+        if(mudou){
+          atualizados.push({id:existente.id,colaborador:col,tipo:item._tipo,projeto:item.campanha,valor:novoValor,mes:mes});
+          existente.projeto=item.campanha;existente.tipo=item._tipo;existente.valor=novoValor;
+        }
+      } else {
+        novos.push({id:uid(),colaborador:col,tipo:item._tipo,projeto:item.campanha,valor:val,mes:mes,cliente:item.cliente||'',cidade:item.cidade||'',origem:'sheets',sheetsKey:chave,criadoEm:new Date().toISOString()});
+      }
     });
   });
   fecharSyncDir();
-  if(!novos.length){showMsg('msg-s','Nenhuma entrada nova \u2014 tudo j\u00e1 est\u00e1 no sistema.','warn');return;}
+  if(!novos.length&&!atualizados.length){showMsg('msg-s','Nenhuma alteração detectada.','warn');return;}
   D=novos.concat(D);populateFiltros();renderAtivePage();
-  setSync('spin','Salvando '+novos.length+'...');
+  setSync('spin','Salvando...');
   var erros=0;
   for(var i=0;i<novos.length;i++){try{await sbInsert(novos[i]);}catch(e){erros++;D=D.filter(function(d){return d.id!==novos[i].id;});}}
+  for(var j=0;j<atualizados.length;j++){try{await sbUpdate(atualizados[j].id,atualizados[j]);}catch(e){erros++;}}
   populateFiltros();renderAtivePage();
   setSync(erros?'err':'ok',erros?erros+' erro(s)':'Sincronizado');
-  showMsg('msg-s',novos.length-erros+' nova(s) entrada(s) importada(s)!','ok');}
+  var partes=[];
+  if(novos.length)partes.push(novos.length+' novo(s)');
+  if(atualizados.length)partes.push(atualizados.length+' atualizado(s)');
+  showMsg('msg-s',partes.join(' e ')+'!','ok');}
 
 // Populate filters
 function populateFiltros(){
