@@ -247,7 +247,7 @@ tbody tr:hover td{background:#FAFAF8}
           <div class="card" style="padding:16px;margin-bottom:20px">
             <div class="frow">
               <div class="field"><label>Colaborador</label><input id="fl-col" list="dl-col" autocomplete="off" placeholder="Nome"><datalist id="dl-col"></datalist></div>
-              <div class="field" style="max-width:110px"><label>Tipo</label><select id="fl-tip"><option value="Entrega">Entrega</option><option value="Diária">Diária</option></select></div>
+              <div class="field" style="max-width:110px"><label>Tipo</label><select id="fl-tip"><option value="Entrega">Entrega</option><option value="Diária">Diária</option><option value="Edição">Edição</option><option value="Motion">Motion</option></select></div>
               <div class="field"><label>Projeto / Campanha</label><input id="fl-proj" list="dl-proj" autocomplete="off" placeholder="Nome do projeto"><datalist id="dl-proj"></datalist></div>
               <div class="field" style="max-width:110px"><label>Valor (R$)</label><input type="number" id="fl-val" min="0" step="0.01" placeholder="0,00"></div>
               <div class="field" style="max-width:145px"><label>Mês</label><input type="month" id="fl-mes"></div>
@@ -259,7 +259,7 @@ tbody tr:hover td{background:#FAFAF8}
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <select id="fil-col" onchange="renderLanc()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos colaboradores</option></select>
               <select id="fil-ml" onchange="renderLanc()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os meses</option></select>
-              <select id="fil-tl" onchange="renderLanc()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os tipos</option><option value="Entrega">Entrega</option><option value="Diária">Diária</option></select>
+              <select id="fil-tl" onchange="renderLanc()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os tipos</option><option value="Entrega">Entrega</option><option value="Diária">Diária</option><option value="Edição">Edição</option><option value="Motion">Motion</option></select>
             </div>
           </div>
           <div class="tbl-wrap" id="tbl-lanc"></div>
@@ -427,7 +427,7 @@ tbody tr:hover td{background:#FAFAF8}
   <div class="modal" style="max-width:440px">
     <div class="modal-head" style="background:var(--or)"><span style="font-size:15px;font-weight:700">Editar lançamento</span></div>
     <div class="modal-body">
-      <div class="frow"><div class="field"><label>Colaborador</label><input id="edit-col" list="dl-col"></div><div class="field" style="max-width:130px"><label>Tipo</label><select id="edit-tip"><option>Entrega</option><option>Diária</option><option>Reembolso</option></select></div></div>
+      <div class="frow"><div class="field"><label>Colaborador</label><input id="edit-col" list="dl-col"></div><div class="field" style="max-width:130px"><label>Tipo</label><select id="edit-tip"><option>Entrega</option><option>Diária</option><option>Edição</option><option>Motion</option><option>Reembolso</option></select></div></div>
       <div class="frow"><div class="field"><label>Projeto / Descrição</label><input id="edit-proj" list="dl-proj"></div></div>
       <div class="frow"><div class="field" style="max-width:135px"><label>Valor (R$)</label><input type="number" id="edit-val" min="0" step="0.01"></div><div class="field" style="max-width:155px"><label>Mês</label><input type="month" id="edit-mes"></div></div>
     </div>
@@ -773,7 +773,13 @@ function renderProjs(){
   var fm2=document.getElementById('fil-mp').value,fn=document.getElementById('fil-np').value.trim().toLowerCase(),fcl=document.getElementById('fil-cp').value;
   var f=D.filter(function(d){return d.tipo!=='Reembolso'&&(!fm2||d.mes===fm2)&&(!fn||d.projeto.toLowerCase().indexOf(fn)>=0)&&(!fcl||d.cliente===fcl);});
   f.sort(function(a,b){return(b.mes||'').localeCompare(a.mes||'');});
-  var byP={};f.forEach(function(d){var key=normName(d.projeto);if(!byP[key])byP[key]={nome:d.projeto,items:[]};byP[key].items.push(d);});
+  // Cada projeto sempre separado — agrupa só por nome exato
+  var byP={};
+  f.forEach(function(d){
+    var key=normName(d.projeto);
+    if(!byP[key])byP[key]={nome:d.projeto,items:[]};
+    byP[key].items.push(d);
+  });
   var projs=Object.keys(byP).sort(function(a,b){var ma=byP[a].items[0]?byP[a].items[0].mes:'';var mb=byP[b].items[0]?byP[b].items[0].mes:'';return mb.localeCompare(ma);});
   var el=document.getElementById('projs-cont');
   if(!projs.length){el.innerHTML='<div class="empty"><p>Nenhum projeto.</p></div>';return;}
@@ -791,7 +797,7 @@ function renderProjs(){
       var cidRegs=porCidade[cid],cidTotal=cidRegs.reduce(function(s,r){return s+r.valor;},0);
       inner+='<div style="padding:8px 18px 4px;background:var(--bg);font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--br)">'+cid+'</div>';
       inner+='<table style="width:100%"><tbody>';
-      cidRegs.forEach(function(r){var fec=MS[r.mes]==='fechado';inner+='<tr><td style="padding:8px 18px 8px 28px"><div style="display:flex;align-items:center;gap:7px"><div class="av">'+ini(r.colaborador)+'</div>'+r.colaborador+'</div></td><td style="padding:8px 13px"><span class="badge b-mes">'+fm(r.mes)+'</span></td><td style="padding:8px 13px">'+tipBadge(r.tipo)+'</td><td style="padding:8px 13px;font-weight:700;color:var(--gr);text-align:right">'+fv(r.valor)+'</td><td style="padding:8px 13px">'+actBtns(r.id,fec)+'</td></tr>';});
+      cidRegs.forEach(function(r){var fec=MS[r.mes]==='fechado';inner+='<tr><td style="padding:8px 18px 8px 28px"><div style="display:flex;align-items:center;gap:7px"><div class="av">'+ini(r.colaborador)+'</div>'+r.colaborador+'</div></td><td style="padding:8px 13px;font-size:12px;color:var(--t2);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.projeto+'</td><td style="padding:8px 13px"><span class="badge b-mes">'+fm(r.mes)+'</span></td><td style="padding:8px 13px">'+tipBadge(r.tipo)+'</td><td style="padding:8px 13px;font-weight:700;color:var(--gr);text-align:right">'+fv(r.valor)+'</td><td style="padding:8px 13px">'+actBtns(r.id,fec)+'</td></tr>';});
       inner+='<tr style="background:var(--bg)"><td colspan="3" style="padding:6px 18px 6px 28px;font-size:12px;font-weight:700;color:var(--t2)">Total '+cid+'</td><td style="padding:6px 13px;font-weight:700;color:var(--gr);text-align:right">'+fv(cidTotal)+'</td><td></td></tr>';
       inner+='</tbody></table>';
     });
