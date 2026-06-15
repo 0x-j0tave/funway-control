@@ -393,7 +393,7 @@ tbody tr:hover td{background:#FAFAF8}
           <div class="field"><label>Nome do funcionário</label><input id="eg-nome" list="dl-eg-nome" autocomplete="off" placeholder="Nome que aparecerá na folha de pagamento"><datalist id="dl-eg-nome"></datalist></div>
         </div>
         <div class="frow">
-          <div class="field" style="max-width:160px"><label>Tipo</label><select id="eg-tipo"><option value="reembolso">Reembolso</option><option value="cartao">Cartão Funway</option></select></div>
+          <div class="field" style="max-width:160px"><label>Tipo</label><select id="eg-tipo"><option value="reembolso">Reembolso</option><option value="cartao">Cartão Funway</option><option value="gastos_gerais">Gastos em Geral</option></select></div>
           <div class="field" style="max-width:145px"><label>Mês</label><input type="month" id="eg-mes"></div>
         </div>
         <div class="frow">
@@ -878,7 +878,7 @@ async function aprovarGasto(id) {
   var chave = 'gasto_' + id;
   var jaExiste = D.some(function(d) { return d.sheetsKey === chave; });
   if (!jaExiste) {
-    var nomeColab = (g.tipo === 'cartao') ? 'Cartão Funway' : g.colaborador;
+    var nomeColab = g.tipo === 'cartao' ? 'Cartão Funway' : g.tipo === 'gastos_gerais' ? 'Gastos em Geral' : g.colaborador;
     var lancItem = {
       id: uid(), colaborador: nomeColab, tipo: 'Reembolso',
       projeto: g.descricao, valor: g.valor, mes: g.mes,
@@ -1151,8 +1151,8 @@ function renderReemb() {
       h += '<div style="padding:10px 16px;font-weight:700;font-size:13px;color:var(--am);border-bottom:1px solid #FDE68A">Pendentes de aprovação (' + pendentes.length + ')</div>';
       h += '<table><thead><tr><th>Funcionário</th><th>Tipo</th><th>Descrição</th><th>Mês</th><th>Valor</th><th>Comprovante</th><th></th></tr></thead><tbody>';
       pendentes.forEach(function(g) {
-        var tipLabel = g.tipo === 'cartao' ? 'Cartão Funway' : 'Reembolso';
-        var tipStyle = g.tipo === 'cartao' ? 'background:#EDE9FE;color:#6D28D9' : '';
+        var tipLabel = g.tipo === 'cartao' ? 'Cartão Funway' : (g.tipo === 'gastos_gerais' ? 'Gastos em Geral' : 'Reembolso');
+        var tipStyle = g.tipo === 'cartao' ? 'background:#EDE9FE;color:#6D28D9' : (g.tipo === 'gastos_gerais' ? 'background:#DCFCE7;color:#15803D' : '');
         h += '<tr style="background:#FFFBEB">';
         h += '<td><div style="display:flex;align-items:center;gap:7px"><div class="av">' + ini(g.colaborador) + '</div>' + g.colaborador + '</div></td>';
         h += '<td><span class="badge" style="' + tipStyle + '">' + tipLabel + '</span></td>';
@@ -1171,8 +1171,8 @@ function renderReemb() {
       h += '<div style="padding:10px 16px;font-weight:700;font-size:13px;color:var(--t2);border-bottom:1px solid var(--br)">Histórico de gastos submetidos</div>';
       h += '<table><thead><tr><th>Funcionário</th><th>Tipo</th><th>Descrição</th><th>Mês</th><th>Valor</th><th>Comprovante</th><th>Status</th></tr></thead><tbody>';
       finalizados.forEach(function(g) {
-        var tipLabel = g.tipo === 'cartao' ? 'Cartão Funway' : 'Reembolso';
-        var tipStyle = g.tipo === 'cartao' ? 'background:#EDE9FE;color:#6D28D9' : '';
+        var tipLabel = g.tipo === 'cartao' ? 'Cartão Funway' : (g.tipo === 'gastos_gerais' ? 'Gastos em Geral' : 'Reembolso');
+        var tipStyle = g.tipo === 'cartao' ? 'background:#EDE9FE;color:#6D28D9' : (g.tipo === 'gastos_gerais' ? 'background:#DCFCE7;color:#15803D' : '');
         var stClass  = g.status === 'aprovado' ? 'b-aprov' : 'b-rejeit';
         h += '<tr>';
         h += '<td><div style="display:flex;align-items:center;gap:7px"><div class="av">' + ini(g.colaborador) + '</div>' + g.colaborador + '</div></td>';
