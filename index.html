@@ -517,6 +517,15 @@ var SEL_FILE2 = null;
 // Utils
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
+// Termos que indicam entrada incompleta — não devem ser importados
+var PLACEHOLDERS = ['?','a definir','a combinar','a confirmar','a decidir','tbd','indefinido','pendente','em aberto','sem nome','sem definir'];
+function isPlaceholder(str) {
+  if (!str || !str.trim()) return true;
+  var s = (str || '').trim().toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return PLACEHOLDERS.some(function(p) { return s.indexOf(p) >= 0; });
+}
+
 // Normaliza nome: remove acentos, caixa baixa, espaços extras
 // Permite que "Caio", "CAIO", "Cáio" sejam tratados como a mesma pessoa
 function normName(n) {
@@ -645,7 +654,7 @@ async function carregarDados() {
     var r3 = await SB.from('gastos').select('*').order('criado_em', { ascending: false });
     if (!r3.error) GASTOS_ADMIN = r3.data || [];
     if (PA === 'reembolsos') renderReemb();
-    setSync('ok', 'Sincronizado - ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+    setSync('ok', 'Sincronizado · ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
   } catch(e) {
     setSync('err', 'Erro');
     showMsg('msg-l', 'Erro: ' + e.message, 'err');
@@ -926,11 +935,17 @@ function parseSheetRows(rows) {
   if (!rows || !rows.length) return [];
   var keys = Object.keys(rows[0]);
   function find() { var t = Array.prototype.slice.call(arguments); return keys.find(function(k) { return t.some(function(x) { return k.toLowerCase().indexOf(x.toLowerCase()) >= 0; }); }); }
-  var cols = { campanha: find('campanha','campaign','projeto'), equipe: find('equipe','team','colaborador'), cliente: find('cliente','client'), cidade: find('cidade','city') };
+  var cols = { campanha: find('campanha','campaign','projeto'), equipe: find('equipe','team','colaborador'), cliente: find('cliente','client'), cidade: find('cidade','city'), data: find('data','date','dia','dia do job','data do job','dt') };
   return rows.map(function(row) {
     var c = cols.campanha ? row[cols.campanha] : ''; var e = cols.equipe ? row[cols.equipe] : '';
     if (!c || !e) return null;
-    return { campanha: c.trim(), equipe: parseEquipe(e), cliente: cols.cliente ? row[cols.cliente] : '', cidade: cols.cidade ? row[cols.cidade] : '' };
+    // Filtra entradas com placeholders no nome da campanha
+    if (isPlaceholder(c)) return null;
+    // Filtra colaboradores placeholder da equipe
+    var equipe = parseEquipe(e).filter(function(m) { return !isPlaceholder(m) && m.length > 1; });
+    if (!equipe.length) return null;
+    var dataVal = cols.data ? (row[cols.data] || '').toString().trim() : '';
+    return { campanha: c.trim(), equipe: equipe, cliente: cols.cliente ? row[cols.cliente] : '', cidade: cols.cidade ? row[cols.cidade] : '', data: dataVal };
   }).filter(Boolean);
 }
 
@@ -1008,7 +1023,7 @@ async function syncHist() {
 
 function abrirSync(titulo, itens) {
   document.getElementById('sync-title').textContent = titulo;
-  PEND = itens.map(function(p) { return { campanha: p.campanha, equipe: p.equipe, mes: p.mes, cliente: p.cliente, cidade: p.cidade, _vals: {}, _tipo: 'Entrega' }; });
+  PEND = itens.map(function(p) { return { campanha: p.campanha, equipe: p.equipe, mes: p.mes, cliente: p.cliente, cidade: p.cidade, data: p.data || '', _vals: {}, _tipo: 'Entrega' }; });
   var el = document.getElementById('sync-body'); el.innerHTML = '';
   var intro = document.createElement('p'); intro.style.cssText = 'font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.5'; intro.textContent = 'Valores sao opcionais - preencha depois via edicao.'; el.appendChild(intro);
   PEND.forEach(function(item, idx) {
@@ -1048,13 +1063,21 @@ async function confirmarSync() {
     var mes = item.mes || ma; if (MS[mes] === 'fechado') return;
     item.equipe.forEach(function(col) {
       var val = item._vals[col] || 0;
-      var chave = 'sh_' + item.campanha.replace(/\W+/g, '_') + '_' + col.replace(/\W+/g, '_') + '_' + mes;
+      // Chave inclui cidade + data — mesma campanha, cidade, equipe em datas diferentes = entradas distintas
+      var cidNorm  = normName(item.cidade  || '').replace(/\W+/g, '_');
+      var dataNorm = normName(item.data    || '').replace(/\W+/g, '_');
+      var chave = 'sh_' + normName(item.campanha).replace(/\W+/g, '_')
+                + '_' + cidNorm
+                + '_' + dataNorm
+                + '_' + normName(col).replace(/\W+/g, '_')
+                + '_' + mes;
+      // Se essa combinação exata já existe, nunca toca
       if (D.some(function(d) { return d.sheetsKey === chave; })) return;
       novos.push({ id: uid(), colaborador: col, tipo: item._tipo, projeto: item.campanha, valor: val, mes: mes, cliente: item.cliente || '', cidade: item.cidade || '', origem: 'sheets', sheetsKey: chave, criadoEm: new Date().toISOString() });
     });
   });
   fecharSyncDir();
-  if (!novos.length) { showMsg('msg-s', 'Nenhum lançamento novo.', 'warn'); return; }
+  if (!novos.length) { showMsg('msg-s', 'Nenhuma entrada nova — tudo já está no sistema.', 'warn'); return; }
   D = novos.concat(D); populateFiltros(); renderAtivePage();
   setSync('spin', 'Salvando ' + novos.length + '...');
   var erros = 0;
@@ -1064,7 +1087,7 @@ async function confirmarSync() {
   }
   populateFiltros(); renderAtivePage();
   setSync(erros ? 'err' : 'ok', erros ? erros + ' erro(s)' : 'Sincronizado');
-  showMsg('msg-s', (novos.length - erros) + ' importado(s)!', 'ok');
+  showMsg('msg-s', novos.length - erros + ' nova(s) entrada(s) importada(s)!', 'ok');
 }
 
 // Populate + Nav + Renders
@@ -1143,8 +1166,28 @@ function renderReemb() {
   var f = D.filter(function(d) { return d.tipo === 'Reembolso' && (!fc || normName(d.colaborador) === normName(fc)) && (!fm2 || d.mes === fm2); });
   if (!f.length && !pendentes.length) { el.innerHTML = '<div class="empty"><p>Nenhum reembolso ainda.</p></div>'; return; }
   if (f.length) {
-    h += '<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Descrição</th><th>Mês</th><th>Valor</th><th></th></tr></thead><tbody>';
-    f.forEach(function(d) { var fec = MS[d.mes] === 'fechado'; h += '<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="av">' + ini(d.colaborador) + '</div>' + d.colaborador + '</div></td><td>' + d.projeto + '</td><td><span class="badge b-mes">' + fm(d.mes) + '</span></td><td style="font-weight:700;color:var(--gr)">' + fv(d.valor) + '</td><td>' + actBtns(d.id, fec) + '</td></tr>'; });
+    h += '<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Descrição</th><th>Mês</th><th>Valor</th><th>Comprovante</th><th></th></tr></thead><tbody>';
+    f.forEach(function(d) {
+      var fec = MS[d.mes] === 'fechado';
+      var arquivoBtn = '<span style="color:var(--t3);font-size:12px">-</span>';
+      if (d.origem === 'gasto' && d.sheetsKey) {
+        var gastoId = d.sheetsKey.replace('gasto_', '');
+        for (var gi = 0; gi < GASTOS_ADMIN.length; gi++) {
+          if (GASTOS_ADMIN[gi].id === gastoId && GASTOS_ADMIN[gi].arquivo_path) {
+            arquivoBtn = '<button class="btn btn-ghost btn-sm" data-view="' + GASTOS_ADMIN[gi].arquivo_path + '" style="font-size:12px;color:var(--bl);font-weight:600">Ver</button>';
+            break;
+          }
+        }
+      }
+      h += '<tr>';
+      h += '<td><div style="display:flex;align-items:center;gap:8px"><div class="av">' + ini(d.colaborador) + '</div>' + d.colaborador + '</div></td>';
+      h += '<td>' + d.projeto + '</td>';
+      h += '<td><span class="badge b-mes">' + fm(d.mes) + '</span></td>';
+      h += '<td style="font-weight:700;color:var(--gr)">' + fv(d.valor) + '</td>';
+      h += '<td>' + arquivoBtn + '</td>';
+      h += '<td>' + actBtns(d.id, fec) + '</td>';
+      h += '</tr>';
+    });
     h += '</tbody></table></div>';
   }
   el.innerHTML = h;
