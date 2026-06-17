@@ -782,7 +782,7 @@ function renderHome(){
   h+='<div class="sc"><div class="lbl">Reembolsos</div><div class="val" style="color:var(--pu)">'+fv(reembolsosAtual)+'</div><div class="sub">no mês</div></div>';
   h+='<div class="sc"><div class="lbl">Projetos ativos</div><div class="val">'+nProj+'</div><div class="sub">'+fml(mesAtual)+'</div></div>';
   h+='<div class="sc"><div class="lbl">Colaboradores</div><div class="val">'+nColab+'</div><div class="sub">no mês</div></div>';
-  h+='<div class="sc"><div class="lbl">Reembolsos pendentes</div><div class="val" style="color:var(--am)">'+pendentes.length+'</div><div class="sub">'+(pendentes.length>0?'<a href="#" onclick="goPage('reembolsos')" style="color:var(--am);font-size:11px">Ver agora</a>':'Tudo aprovado')+'</div></div>';
+  h+='<div class="sc"><div class="lbl">Reembolsos pendentes</div><div class="val" style="color:var(--am)">'+pendentes.length+'</div><div class="sub">'+(pendentes.length>0?'<a href="#" onclick="goPage(&quot;reembolsos&quot;)" style="color:var(--am);font-size:11px">Ver agora</a>':'Tudo aprovado')+'</div></div>';
   h+='<div class="sc"><div class="lbl">Pagamentos</div><div class="val" style="color:var(--gr)">'+pagos+'/'+nColab+'</div><div class="sub">colaboradores pagos</div></div>';
   h+='</div>';
 
