@@ -210,7 +210,8 @@ tbody tr:hover td{background:#FAFAF8}
         <div class="logo-t"><div>Funway</div><div>Control</div></div>
       </div>
       <nav class="sb-nav">
-        <button class="ni active" id="nb-lancar" onclick="goPage('lancar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>Lançar</button>
+        <button class="ni active" id="nb-home" onclick="goPage('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Visão Geral</button>
+        <button class="ni" id="nb-lancar" onclick="goPage('lancar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>Lançar</button>
         <button class="ni" id="nb-reembolsos" onclick="goPage('reembolsos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Reembolsos</button>
         <button class="ni" id="nb-colaboradores" onclick="goPage('colaboradores')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Colaboradores</button>
         <button class="ni" id="nb-projetos" onclick="goPage('projetos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>Projetos</button>
@@ -241,7 +242,10 @@ tbody tr:hover td{background:#FAFAF8}
       </header>
       <div class="content">
 
-        <div id="pg-lancar" class="page active">
+        <div id="pg-home" class="page active">
+          <div id="home-cont"></div>
+        </div>
+        <div id="pg-lancar" class="page">
           <div id="msg-l"></div>
           <div class="ph"><h2>Novo lançamento</h2><p>Registre uma entrega ou diária de um colaborador.</p></div>
           <div class="card" style="padding:16px;margin-bottom:20px">
@@ -441,7 +445,7 @@ var SBKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6
 var ADMIN_EMAIL='rafa@funway.com.br';
 var SHEETS_URL=localStorage.getItem('fw_sheets_url')||'';
 var SB=supabase.createClient(SBURL,SBKEY);
-var D=[],MS={},PA='lancar',EID=null,PEND=[],ABAS=[],ASEL=[],GASTOS_ADMIN=[],GASTOS_EMP=[],CURRENT_USER=null,USER_ROLE=null,REJEITAR_ID=null,SEL_FILE=null,SEL_FILE2=null,EDIT_GASTO_ID=null;
+var D=[],MS={},PAGAMENTOS={},PA='home',EID=null,PEND=[],ABAS=[],ASEL=[],GASTOS_ADMIN=[],GASTOS_EMP=[],CURRENT_USER=null,USER_ROLE=null,REJEITAR_ID=null,SEL_FILE=null,SEL_FILE2=null,EDIT_GASTO_ID=null;
 
 var PLACEHOLDERS=['?','a definir','a combinar','a confirmar','a decidir','tbd','indefinido','pendente','em aberto','sem nome','sem definir'];
 function isPlaceholder(str){
@@ -740,10 +744,94 @@ function goPage(id){
   if(pg)pg.classList.add('active');if(nb)nb.classList.add('active');
   document.getElementById('topbar-title').textContent=PAGE_TITLES[id]||id;
   PA=id;renderAtivePage();}
-function renderAtivePage(){if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='colaboradores')renderColabs();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
+function renderAtivePage(){if(PA==='home')renderHome();else if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='colaboradores')renderColabs();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
 function tipBadge(t){if(t==='Di\u00e1ria'||t==='Diaria')return'<span class="badge b-di">Di\u00e1ria</span>';if(t==='Reembolso')return'<span class="badge b-re">Reembolso</span>';return'<span class="badge b-en">Entrega</span>';}
 function actBtns(id,fechado){if(fechado)return'<span style="font-size:12px;color:var(--t3)">[fechado]</span>';return'<div style="display:flex;gap:3px"><button class="btn btn-ghost btn-sm" data-edit="'+id+'" style="padding:4px 9px;color:var(--t2)">Editar</button><button class="btn btn-ghost btn-sm" data-del="'+id+'" style="padding:4px 9px;color:var(--rd)">x</button></div>';}
 function bindActions(el){el.querySelectorAll('[data-edit]').forEach(function(b){b.addEventListener('click',function(){abrirEdit(b.getAttribute('data-edit'));});});el.querySelectorAll('[data-del]').forEach(function(b){b.addEventListener('click',function(){deletar(b.getAttribute('data-del'));});});}
+
+function renderHome(){
+  var el=document.getElementById('home-cont');
+  var meses=getMeses();
+  var mesAtual=meses[0]||new Date().toISOString().slice(0,7);
+  var mesPrev=meses[1]||null;
+  var fAtual=D.filter(function(d){return d.mes===mesAtual;});
+  var fPrev=mesPrev?D.filter(function(d){return d.mes===mesPrev;}):[];
+  var totalAtual=fAtual.reduce(function(s,r){return s+r.valor;},0);
+  var totalPrev=fPrev.reduce(function(s,r){return s+r.valor;},0);
+  var diff=mesPrev?(((totalAtual-totalPrev)/totalPrev)*100).toFixed(1):null;
+  var diffStr=diff===null?'':(parseFloat(diff)>=0?'<span style="color:var(--gr)">+'+diff+'% vs '+fm(mesPrev)+'</span>':'<span style="color:var(--rd)">'+diff+'% vs '+fm(mesPrev)+'</span>');
+  var projAtual={}; fAtual.filter(function(d){return d.tipo!=='Reembolso';}).forEach(function(d){projAtual[normName(d.projeto)]=1;});
+  var nProj=Object.keys(projAtual).length;
+  var colabAtual={}; fAtual.forEach(function(d){colabAtual[normName(d.colaborador)]=1;});
+  var nColab=Object.keys(colabAtual).length;
+  var pendentes=GASTOS_ADMIN.filter(function(g){return g.status==='pendente';});
+  var reembolsosAtual=fAtual.filter(function(d){return d.tipo==='Reembolso';}).reduce(function(s,r){return s+r.valor;},0);
+  // Pagamentos do mes atual
+  var colabsAtual=Object.keys(colabAtual);
+  var pagos=colabsAtual.filter(function(k){
+    var nome=colabAtual[k]; // k is normName
+    for(var pk in PAGAMENTOS){if(pk.indexOf('__'+mesAtual)>0&&normName(pk.split('__')[0])===k)return PAGAMENTOS[pk]===true;}
+    return false;
+  }).length;
+
+  var h='<div class="ph"><h2>Visão Geral</h2><p>Resumo do mês de '+fml(mesAtual)+'.</p></div>';
+
+  // KPI cards
+  h+='<div class="sumgrid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:24px">';
+  h+='<div class="sc"><div class="lbl">Folha '+fm(mesAtual)+'</div><div class="val" style="color:var(--or)">'+fv(totalAtual)+'</div><div class="sub">'+diffStr+'</div></div>';
+  h+='<div class="sc"><div class="lbl">Reembolsos</div><div class="val" style="color:var(--pu)">'+fv(reembolsosAtual)+'</div><div class="sub">no mês</div></div>';
+  h+='<div class="sc"><div class="lbl">Projetos ativos</div><div class="val">'+nProj+'</div><div class="sub">'+fml(mesAtual)+'</div></div>';
+  h+='<div class="sc"><div class="lbl">Colaboradores</div><div class="val">'+nColab+'</div><div class="sub">no mês</div></div>';
+  h+='<div class="sc"><div class="lbl">Reembolsos pendentes</div><div class="val" style="color:var(--am)">'+pendentes.length+'</div><div class="sub">'+(pendentes.length>0?'<a href="#" onclick="goPage('reembolsos')" style="color:var(--am);font-size:11px">Ver agora</a>':'Tudo aprovado')+'</div></div>';
+  h+='<div class="sc"><div class="lbl">Pagamentos</div><div class="val" style="color:var(--gr)">'+pagos+'/'+nColab+'</div><div class="sub">colaboradores pagos</div></div>';
+  h+='</div>';
+
+  // Folha do mes - status de pagamento
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
+  h+='<div class="sec" style="margin-bottom:0">Pagamentos — '+fml(mesAtual)+'</div>';
+  h+='<select onchange="renderHome()" id="home-mes" style="font-size:12px;padding:5px 9px;width:auto">';
+  meses.forEach(function(m){h+='<option value="'+m+'"'+(m===mesAtual?' selected':'')+'>'+fml(m)+'</option>';});
+  h+='</select></div>';
+
+  var mesSel=mesAtual; // will update on change
+  var byC={};
+  fAtual.forEach(function(d){
+    var key=normName(d.colaborador);
+    if(!byC[key])byC[key]={nome:d.colaborador,total:0};
+    byC[key].total+=d.valor;
+  });
+  var cols=Object.keys(byC).sort();
+  if(cols.length){
+    h+='<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th style="text-align:right">Total a pagar</th><th style="text-align:center">Status</th><th></th></tr></thead><tbody>';
+    cols.forEach(function(k){
+      var nome=byC[k].nome,total=byC[k].total;
+      var pago=false;
+      for(var pk in PAGAMENTOS){if(normName(pk.split('__')[0])===k&&pk.split('__')[1]===mesAtual){pago=PAGAMENTOS[pk]===true;break;}}
+      h+='<tr'+(pago?' style="background:var(--grl)"':'')+'>';
+      h+='<td><div style="display:flex;align-items:center;gap:8px"><div class="av">'+ini(nome)+'</div>'+nome+'</div></td>';
+      h+='<td style="font-weight:700;font-size:15px;color:var(--or);text-align:right">'+fv(total)+'</td>';
+      h+='<td style="text-align:center">'+(pago?'<span class="badge b-aprov">Pago</span>':'<span class="badge b-pend">Pendente</span>')+'</td>';
+      h+='<td style="text-align:center"><button class="btn btn-sm '+(pago?'':'btn-or')+'" onclick="togglePagamento('+JSON.stringify(nome)+','+JSON.stringify(mesAtual)+')">'+(pago?'Desmarcar':'Marcar pago')+'</button></td>';
+      h+='</tr>';
+    });
+    var totalGeral=cols.reduce(function(s,k){return s+byC[k].total;},0);
+    h+='<tr style="background:var(--bg)"><td style="font-weight:700;padding:10px 13px">Total</td><td style="font-weight:700;font-size:16px;color:var(--or);text-align:right;padding:10px 13px">'+fv(totalGeral)+'</td><td></td><td></td></tr>';
+    h+='</tbody></table></div>';
+  } else {
+    h+='<div class="empty"><p>Nenhum lançamento para '+fml(mesAtual)+'.</p></div>';
+  }
+  el.innerHTML=h;
+}
+
+async function togglePagamento(colaborador,mes){
+  var key=colaborador+'__'+mes;
+  var atual=PAGAMENTOS[key]===true;
+  var novo=!atual;
+  PAGAMENTOS[key]=novo;
+  renderHome();
+  var r=await SB.from('pagamentos').upsert({id:normName(colaborador).replace(/[^a-z0-9]/g,'_')+'_'+mes,colaborador:colaborador,mes:mes,pago:novo,pago_em:novo?new Date().toISOString():''});
+  if(r.error){PAGAMENTOS[key]=atual;renderHome();alert('Erro: '+r.error.message);}
+}
 
 function renderLanc(){
   var fc=document.getElementById('fil-col').value,fm2=document.getElementById('fil-ml').value,ft=document.getElementById('fil-tl').value;
