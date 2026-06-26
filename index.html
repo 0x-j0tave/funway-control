@@ -291,7 +291,6 @@ tbody tr:hover td{background:#FAFAF8}
           <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">
             <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
-          <span class="topbar-title" id="topbar-title">Lançamentos</span>
         </div>
         <div class="topbar-actions">
           <button class="tbtn" onclick="sincronizarTudo()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Sincronizar</button>
@@ -377,7 +376,12 @@ tbody tr:hover td{background:#FAFAF8}
         <div id="pg-pautas" class="page">
           <div id="msg-p"></div>
           <div class="ph"><h2>Pautas</h2><p>Gerencie as pautas do mês. Alterações atualizam automático os lançamentos.</p></div>
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <button class="btn btn-sm" id="pautas-view-edit" onclick="setPautasView('edit')" style="background:var(--or);color:#fff;border-color:var(--or)">Gerenciar</button>
+            <button class="btn btn-sm" id="pautas-view-pub" onclick="setPautasView('pub')">Visualizar completo</button>
+          </div>
           <div id="pautas-admin-cont"></div>
+          <div id="pautas-pub-cont" style="display:none"></div>
         </div>
         <div id="pg-meses" class="page">
           <div id="msg-m"></div>
@@ -814,7 +818,6 @@ function goPage(id){
   document.querySelectorAll('.ni').forEach(function(b){b.classList.remove('active');});
   var pg=document.getElementById('pg-'+id);var nb=document.getElementById('nb-'+id);
   if(pg)pg.classList.add('active');if(nb)nb.classList.add('active');
-  document.getElementById('topbar-title').textContent=PAGE_TITLES[id]||id;
   PA=id;renderAtivePage();}
 function renderAtivePage(){if(PA==='home')renderHome();else if(PA==='pautas'){renderPautasAdmin();}else if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='colaboradores')renderColabs();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
 function tipBadge(t){if(t==='Di\u00e1ria'||t==='Diaria')return'<span class="badge b-di">Di\u00e1ria</span>';if(t==='Reembolso')return'<span class="badge b-re">Reembolso</span>';return'<span class="badge b-en">Entrega</span>';}
@@ -1183,26 +1186,37 @@ function renderPautasPublica(){
   var el=document.getElementById('pauta-publica-cont');
   if(!el)return;
   var f=PAUTAS.filter(function(p){return p.cliente||p.campanha;});
-  if(!f.length){el.innerHTML='<div class="empty" style="padding:40px 0"><p>Nenhuma pauta cadastrada.</p></div>';return;}
-  var h='<table class="pauta-table"><thead><tr>'
-    +'<th class="col-cli">Cliente</th><th class="col-data">Data</th>'
-    +'<th class="col-camp">Campanha</th><th class="col-cid">Cidade</th>'
-    +'<th class="col-eq">Equipe</th><th class="col-st">Status</th>'
-    +'<th class="col-rot">Roteiro</th></tr></thead><tbody>';
-  f.forEach(function(p){
+  f.sort(function(a,b){
+    var da=(a.data_rec||'').replace(/[/]/g,'-');
+    var db=(b.data_rec||'').replace(/[/]/g,'-');
+    return da.localeCompare(db);
+  });
+  if(!f.length){el.innerHTML='<div style="padding:40px 0;text-align:center;color:#9CA3AF;font-size:13px">Nenhuma pauta cadastrada.</div>';return;}
+  var h='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+    +'<thead><tr style="border-bottom:1px solid #E5E5E2">'
+    +'<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Cliente</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Data</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.5px">Campanha</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.5px">Cidade</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.5px">Equipe</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.5px">Status</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.5px">Roteiro</th>'
+    +'</tr></thead><tbody>';
+  f.forEach(function(p,i){
     var camps=chipsFromStr(p.campanha).join(' + ')||'—';
-    var eq=chipsFromStr(p.equipe).join(' • ')||'—';
-    h+='<tr>'
-      +'<td>'+( p.cliente||'—')+'</td>'
-      +'<td style="font-variant-numeric:tabular-nums">'+( p.data_rec||'—')+'</td>'
-      +'<td style="font-weight:500">'+camps+'</td>'
-      +'<td>'+( p.cidade||'—')+'</td>'
-      +'<td style="color:var(--t2)">'+eq+'</td>'
-      +'<td>'+statusBadge(p.status)+'</td>'
-      +'<td>'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
+    var eq=chipsFromStr(p.equipe).join(' · ')||'—';
+    var bg=i%2===0?'#fff':'#FAFAF8';
+    h+='<tr style="background:'+bg+';border-bottom:1px solid #F0F0EE">'
+      +'<td style="padding:9px 10px;font-size:11px;color:#6B7280;white-space:nowrap">'+(p.cliente||'—')+'</td>'
+      +'<td style="padding:9px 10px;font-size:12px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums">'+(p.data_rec||'—')+'</td>'
+      +'<td style="padding:9px 10px;font-weight:500;max-width:220px">'+camps+'</td>'
+      +'<td style="padding:9px 10px;font-size:12px;white-space:nowrap">'+(p.cidade||'—')+'</td>'
+      +'<td style="padding:9px 10px;font-size:11px;color:#6B7280;max-width:180px">'+eq+'</td>'
+      +'<td style="padding:9px 10px">'+statusBadge(p.status)+'</td>'
+      +'<td style="padding:9px 10px">'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
       +'</tr>';
   });
-  el.innerHTML=h+'</tbody></table>';}
+  el.innerHTML=h+'</tbody></table></div>';}
 
 // ── Renderiza aba admin ────────────────────────────────────────────────────────
 function renderPautasAdmin(){
@@ -1226,14 +1240,13 @@ function renderPautasAdmin(){
       +'<td>'+statusBadge(p.status)+'</td>'
       +'<td>'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
       +'<td><div style="display:flex;gap:3px">'
-      +'<button class="btn btn-ghost btn-sm" data-ep="'+p.id+'" style="padding:3px 7px;color:var(--t2)">✎</button>'
+      +'<button class="btn btn-ghost btn-sm" onclick="abrirEditPautaById(this)" data-pid="'+p.id+'" style="padding:3px 7px;color:var(--t2)">✎</button>'
       +'<button class="btn btn-ghost btn-sm" data-dp="'+p.id+'" style="padding:3px 7px;color:var(--rd)">×</button>'
       +'</div></td></tr>';
   });
   h+='</tbody></table></div>';
   h+='<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
   el.innerHTML=h;
-  el.querySelectorAll('[data-ep]').forEach(function(b){b.addEventListener('click',function(){abrirEditPauta(b.getAttribute('data-ep'));});});
   el.querySelectorAll('[data-dp]').forEach(function(b){b.addEventListener('click',function(){deletarPauta(b.getAttribute('data-dp'));});});
 }
 
@@ -1264,7 +1277,6 @@ function renderPautasEmp(){
   h+='</tbody></table></div>';
   h+='<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
   el.innerHTML=h;
-  el.querySelectorAll('[data-epe]').forEach(function(b){b.addEventListener('click',function(){abrirEditPauta(b.getAttribute('data-epe'));});});
   el.querySelectorAll('[data-dpe]').forEach(function(b){b.addEventListener('click',function(){deletarPauta(b.getAttribute('data-dpe'));});});
 }
 
@@ -1319,6 +1331,18 @@ function abrirNovaPauta(){
   document.getElementById('pm-cliente').focus();
 }
 
+async function abrirEditPautaById(btn){
+  var id=btn.getAttribute('data-pid');
+  // Try from cache first, else fetch from DB
+  var p=null;
+  for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===id){p=PAUTAS[i];break;}}
+  if(!p){
+    var r=await SB.from('pautas').select('*').eq('id',id).single();
+    if(r.error||!r.data)return;
+    p=r.data;
+  }
+  abrirEditPauta(p.id);
+}
 function abrirEditPauta(id){
   var p=null;for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===id){p=PAUTAS[i];break;}}
   if(!p)return;
@@ -1426,6 +1450,43 @@ async function sincronizarLancamentosPauta(pautaId,novosDados,dadosAntigos){
   populateFiltros();
 }
 
+function setPautasView(v){
+  var edit=document.getElementById('pautas-admin-cont');
+  var pub=document.getElementById('pautas-pub-cont');
+  var btnE=document.getElementById('pautas-view-edit');
+  var btnP=document.getElementById('pautas-view-pub');
+  if(v==='edit'){
+    edit.style.display='';pub.style.display='none';
+    btnE.style.cssText='background:var(--or);color:#fff;border-color:var(--or)';
+    btnP.style.cssText='';
+  } else {
+    edit.style.display='none';pub.style.display='';
+    btnP.style.cssText='background:var(--or);color:#fff;border-color:var(--or)';
+    btnE.style.cssText='';
+    // Render public view inside admin container
+    var el=document.getElementById('pautas-pub-cont');
+    var f=PAUTAS.filter(function(p){return p.cliente||p.campanha;});
+    f.sort(function(a,b){var da=(a.data_rec||'').replace(/[/]/g,'-');var db=(b.data_rec||'').replace(/[/]/g,'-');return da.localeCompare(db);});
+    if(!f.length){el.innerHTML='<div class="empty"><p>Nenhuma pauta.</p></div>';return;}
+    var h='<div class="tbl-wrap" style="overflow-x:auto"><table class="pauta-table"><thead><tr>'
+      +'<th>Cliente</th><th>Data</th><th>Campanha</th><th>Cidade</th><th>Equipe</th><th>Status</th><th>Roteiro</th>'
+      +'</tr></thead><tbody>';
+    f.forEach(function(p){
+      var camps=chipsFromStr(p.campanha).join(' + ')||'—';
+      var eq=chipsFromStr(p.equipe).join(' · ')||'—';
+      h+='<tr>'
+        +'<td style="font-size:11px;color:var(--t2)">'+(p.cliente||'—')+'</td>'
+        +'<td style="font-weight:600;white-space:nowrap">'+(p.data_rec||'—')+'</td>'
+        +'<td style="font-weight:500">'+camps+'</td>'
+        +'<td>'+(p.cidade||'—')+'</td>'
+        +'<td style="font-size:11px;color:var(--t2)">'+eq+'</td>'
+        +'<td>'+statusBadge(p.status)+'</td>'
+        +'<td>'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
+        +'</tr>';
+    });
+    el.innerHTML=h+'</tbody></table></div>';
+  }
+}
 function switchEmpTab(tab){
   var reimb=document.getElementById('emp-reimb-cont');
   var pautas=document.getElementById('emp-pautas-cont');
