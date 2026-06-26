@@ -230,12 +230,19 @@ tbody tr:hover td{background:#FAFAF8}
 .pauta-modal .field-full{grid-column:1/-1}
 
 
-/* Pauta filters */
-.pauta-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
-.pauta-filters select,.pauta-filters input{font-size:12px;padding:5px 10px;border:1px solid var(--br2);border-radius:var(--r);background:#fff;font-family:'Raleway',inherit;min-width:120px;color:var(--t)}
-.pauta-filters .f-label{font-size:11px;font-weight:600;color:var(--t2);white-space:nowrap}
-.pauta-filters .f-clear{font-size:11px;color:var(--or);cursor:pointer;background:none;border:none;font-family:'Raleway',inherit;padding:0}
-.pauta-filters .f-clear:hover{text-decoration:underline}
+/* Pauta column filters */
+.pf-th{position:relative;cursor:pointer;user-select:none}
+.pf-th:hover .pf-icon{opacity:1}
+.pf-icon{font-size:10px;margin-left:4px;opacity:.6;transition:opacity .15s;vertical-align:middle}
+.pf-active .pf-icon{opacity:1;color:#FEF3C7}
+.pf-active{background-blend-mode:overlay}
+.pf-dropdown{position:absolute;top:100%;left:0;min-width:160px;background:#fff;border:1px solid #E5E5E2;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.12);z-index:100;padding:4px 0;display:none}
+.pf-dropdown.open{display:block}
+.pf-dropdown-item{padding:7px 14px;font-size:12px;cursor:pointer;color:#374151;white-space:nowrap;font-family:'Raleway',sans-serif}
+.pf-dropdown-item:hover{background:#F9FAFB}
+.pf-dropdown-item.selected{font-weight:700;color:#2D5A34}
+.pf-dropdown-clear{padding:6px 14px;font-size:11px;color:#9CA3AF;cursor:pointer;border-top:1px solid #F0F0EE;margin-top:2px}
+.pf-dropdown-clear:hover{color:#374151}
 </style>
 </head>
 <body>
@@ -385,26 +392,6 @@ tbody tr:hover td{background:#FAFAF8}
           <div style="display:flex;gap:8px;margin-bottom:16px">
             <button class="btn btn-sm" id="pautas-view-edit" onclick="setPautasView('edit')" style="background:var(--or);color:#fff;border-color:var(--or)">Gerenciar</button>
             <button class="btn btn-sm" id="pautas-view-pub" onclick="setPautasView('pub')">Visualizar completo</button>
-          </div>
-          <div class="pauta-filters" id="pauta-filter-bar">
-            <span class="f-label">Filtrar:</span>
-            <select onchange="PAUTA_FILTROS.status=this.value;renderPautasAdmin()" id="pf-status">
-              <option value="">Todos os status</option>
-              <option value="PRODUÇÃO">PRODUÇÃO</option>
-              <option value="EDIT">EDIT</option>
-              <option value="ENTREGUE">ENTREGUE</option>
-            </select>
-            <select onchange="PAUTA_FILTROS.cidade=this.value;renderPautasAdmin()" id="pf-cidade">
-              <option value="">Todas as cidades</option>
-              <option>Salvador</option><option>São Paulo</option><option>Rio de Janeiro</option>
-              <option>Belo Horizonte</option><option>Curitiba</option><option>Floripa</option>
-              <option>Fortaleza</option><option>Recife</option><option>Porto Alegre</option>
-              <option>Brasília</option><option>Belém</option><option>Outras</option>
-            </select>
-            <select onchange="PAUTA_FILTROS.mes=this.value;renderPautasAdmin()" id="pf-mes">
-              <option value="">Todos os meses</option>
-            </select>
-            <button class="f-clear" onclick="limparFiltrosPautas()">Limpar filtros</button>
           </div>
           <div id="pautas-admin-cont"></div>
           <div id="pauta-hist-cont" style="margin-top:20px"></div>
@@ -1276,6 +1263,17 @@ function renderPautasPublica(){
 function renderPautasAdmin(){
   var el=document.getElementById('pautas-admin-cont');
   if(!el)return;
+
+  // Build available options from data
+  var allStatus=['PRODUÇÃO','EDIT','ENTREGUE'];
+  var allCidades=[]; var allMeses=[];
+  PAUTAS.forEach(function(p){
+    if(p.cidade&&allCidades.indexOf(p.cidade)<0)allCidades.push(p.cidade);
+    var m=mesFromDataRec(p.data_rec);
+    if(m&&allMeses.indexOf(m)<0)allMeses.push(m);
+  });
+  allCidades.sort(); allMeses.sort();
+
   // Apply filters
   var f=PAUTAS.filter(function(p){
     if(!p.cliente&&!p.campanha)return false;
@@ -1284,29 +1282,43 @@ function renderPautasAdmin(){
     if(PAUTA_FILTROS.mes&&mesFromDataRec(p.data_rec)!==PAUTA_FILTROS.mes)return false;
     return true;
   });
-  // Populate mes dropdown
-  var pfMes=document.getElementById('pf-mes');
-  if(pfMes&&pfMes.options.length<=1){
-    var meses={};PAUTAS.forEach(function(p){var m=mesFromDataRec(p.data_rec);if(m)meses[m]=1;});
-    Object.keys(meses).sort().forEach(function(m){var o=document.createElement('option');o.value=m;o.textContent=fm(m);pfMes.appendChild(o);});
-    if(PAUTA_FILTROS.mes)pfMes.value=PAUTA_FILTROS.mes;
+
+  function thFilter(label,field,opts,fmtFn){
+    var active=PAUTA_FILTROS[field];
+    var cls=active?'pf-active':'';
+    var icon=active?'▼':'⌄';
+    var items=opts.map(function(o){
+      var val=o,txt=fmtFn?fmtFn(o):o;
+      var sel=active===val?' selected':'';
+      return '<div class="pf-dropdown-item'+sel+'" onclick="setPautaFiltro(\''+field+'\',\''+val+'\');event.stopPropagation()">'+txt+'</div>';
+    }).join('');
+    var clearBtn=active?'<div class="pf-dropdown-clear" onclick="setPautaFiltro(\''+field+'\',\'\');event.stopPropagation()">Limpar filtro</div>':'';
+    return '<th class="pf-th '+cls+'" onclick="togglePfDropdown(this)" style="padding:11px 16px;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;border:none;position:relative;background:'+(field==='status'?'#6B7280':field==='cidade'?'#8B4F1A':field==='mes'?'#374151':'')+'"><span>'+label+'</span><span class="pf-icon">'+icon+'</span><div class="pf-dropdown" onclick="event.stopPropagation()">'+items+clearBtn+'</div></th>';
   }
+
+  var thBase='padding:11px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;border:none';
   var h='<div class="tbl-wrap" style="overflow-x:auto"><table class="pauta-table"><thead><tr>'
-    +'<th class="col-cli">Cliente</th><th class="col-data">Data</th>'
-    +'<th class="col-camp">Campanha</th><th class="col-cid">Cidade</th>'
-    +'<th class="col-eq">Equipe</th><th class="col-st">Status</th>'
-    +'<th class="col-rot">Roteiro</th><th class="col-act"></th></tr></thead><tbody>';
+    +'<th style="'+thBase+';background:#2D5A34">Data</th>'
+    +'<th style="'+thBase+';background:#6AAB72">Campanha</th>'
+    +thFilter('Cidade','cidade',allCidades,null)
+    +'<th style="'+thBase+';background:#D4934A">Equipe</th>'
+    +thFilter('Status','status',allStatus,null)
+    +'<th style="'+thBase+';background:#374151">Roteiro</th>'
+    +thFilter('Mês','mes',allMeses,fm)
+    +'<th style="'+thBase+';background:#374151"></th>'
+    +'</tr></thead><tbody>';
+
   f.forEach(function(p){
     var camps=chipsFromStr(p.campanha).join(' + ')||'—';
-    var eq=chipsFromStr(p.equipe).join(' • ')||'—';
+    var eq=chipsFromStr(p.equipe).join(' + ')||'—';
     h+='<tr>'
-      +'<td>'+( p.cliente||'—')+'</td>'
       +'<td>'+( p.data_rec||'—')+'</td>'
       +'<td style="font-weight:500">'+camps+'</td>'
       +'<td>'+( p.cidade||'—')+'</td>'
       +'<td style="color:var(--t2);font-size:11px">'+eq+'</td>'
       +'<td>'+statusBadge(p.status)+'</td>'
       +'<td>'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
+      +'<td style="font-size:11px;color:var(--t3)">'+fm(mesFromDataRec(p.data_rec))+'</td>'
       +'<td><div style="display:flex;gap:3px">'
       +'<button class="btn btn-ghost btn-sm" onclick="abrirEditPautaById(this)" data-pid="'+p.id+'" style="padding:3px 7px;color:var(--t2)">✎</button>'
       +'<button class="btn btn-ghost btn-sm" data-hpid="'+p.id+'" style="padding:3px 7px;color:var(--t3)">&#9201;</button>'
@@ -1320,12 +1332,15 @@ function renderPautasAdmin(){
   el.querySelectorAll('[data-hpid]').forEach(function(b){b.addEventListener('click',function(){
     var pid=b.getAttribute('data-hpid');
     var p=PAUTAS.filter(function(x){return x.id===pid;})[0];
-    var nome=p?chipsFromStr(p.campanha).join(' + '):'';
-    showHistoricoPauta(pid,nome);
+    showHistoricoPauta(pid,p?chipsFromStr(p.campanha).join(' + '):'');
   });});
+  // Close dropdowns when clicking outside
+  document.addEventListener('click',function closePfDrops(){
+    document.querySelectorAll('.pf-dropdown.open').forEach(function(d){d.classList.remove('open');});
+  },{once:true});
 }
 
-// ── Renderiza aba produção ────────────────────────────────────────────────────
+
 function renderPautasEmp(){
   var el=document.getElementById('emp-pautas-cont');
   if(!el)return;
@@ -1433,6 +1448,18 @@ function getChipValues(containerId){
 }
 
 // ── Modal de pauta ────────────────────────────────────────────────────────────
+function setPautaFiltro(field,val){
+  PAUTA_FILTROS[field]=val;
+  document.querySelectorAll('.pf-dropdown.open').forEach(function(d){d.classList.remove('open');});
+  renderPautasAdmin();
+}
+function togglePfDropdown(th){
+  var dd=th.querySelector('.pf-dropdown');
+  if(!dd)return;
+  var wasOpen=dd.classList.contains('open');
+  document.querySelectorAll('.pf-dropdown.open').forEach(function(d){d.classList.remove('open');});
+  if(!wasOpen)dd.classList.add('open');
+}
 function limparFiltrosPautas(){
   PAUTA_FILTROS={status:'',cidade:'',mes:''};
   var fs=document.getElementById('pf-status');if(fs)fs.value='';
