@@ -1383,6 +1383,14 @@ function getChipValues(containerId){
 }
 
 // ── Modal de pauta ────────────────────────────────────────────────────────────
+function fecharPautaModal(e){
+  if(!e||e.target===document.getElementById('pauta-modal-bg'))fecharPautaModalDir();
+}
+function fecharPautaModalDir(){
+  var m=document.getElementById('pauta-modal-bg');
+  if(m)m.classList.remove('show');
+  EDIT_PAUTA_ID=null;
+}
 function abrirNovaPauta(){
   EDIT_PAUTA_ID=null;
   document.getElementById('pm-title').textContent='Nova pauta';
