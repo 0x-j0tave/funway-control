@@ -178,13 +178,65 @@ tbody tr:hover td{background:#FAFAF8}
   .login-btn{padding:13px;font-size:15px}
   .login-field input{font-size:16px;padding:11px 13px}
 }
+/* ── PAUTAS ─────────────────────────────────────────────────────────── */
+.login-split{display:flex;height:100vh;min-height:100vh}
+.login-split-left{width:420px;flex-shrink:0;background:linear-gradient(135deg,#111 0%,#1c1c1c 100%);display:flex;align-items:center;justify-content:center;padding:40px}
+.login-split-right{flex:1;background:var(--bg);overflow-y:auto;padding:28px 24px}
+.login-split-right h3{font-size:16px;font-weight:700;margin-bottom:4px}
+.login-split-right p{font-size:12px;color:var(--t2);margin-bottom:16px}
+@media(max-width:768px){.login-split{flex-direction:column}.login-split-left{width:100%;height:auto;padding:32px 20px}.login-split-right{padding:20px 16px}}
+
+/* Pauta table */
+.pauta-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+.pauta-table th{padding:7px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--br);background:var(--bg);position:sticky;top:0;z-index:2}
+.pauta-table td{padding:7px 10px;border-bottom:1px solid var(--br);vertical-align:middle;word-break:break-word}
+.pauta-table tbody tr:hover td{background:#FAFAF8}
+.pauta-table td input{border:none;background:transparent;font-family:inherit;font-size:12px;width:100%;padding:2px 4px;border-radius:4px;color:var(--t)}
+.pauta-table td input:focus{outline:2px solid var(--or);background:#fff}
+
+/* Status badges pauta */
+.st-entregue{background:#DCFCE7;color:#15803D;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.st-edit{background:#FEF3C7;color:#92400E;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.st-producao{background:#FEE2E2;color:#B91C1C;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+
+/* Roteiro */
+.rot-link{font-size:11px;font-weight:700;color:var(--bl);text-decoration:none;padding:2px 7px;border-radius:4px}
+.rot-link:hover{text-decoration:underline}
+.rot-pendente{background:#FEF3C7;color:#92400E;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px}
+
+/* Chips */
+.chip-wrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-height:28px;padding:3px 6px;border:1px solid var(--br2);border-radius:var(--r);background:#fff;cursor:text}
+.chip-wrap:focus-within{border-color:var(--or);box-shadow:0 0 0 3px rgba(240,92,35,.1)}
+.chip-tag{display:inline-flex;align-items:center;gap:4px;background:var(--orl);color:var(--or);font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.chip-tag button{background:none;border:none;cursor:pointer;color:var(--or);font-size:13px;line-height:1;padding:0;opacity:.7}
+.chip-tag button:hover{opacity:1}
+.chip-input-field{border:none;outline:none;font-size:12px;font-family:inherit;min-width:80px;flex:1;padding:2px 4px;background:transparent}
+.chip-tag-camp{background:var(--bll);color:#1D4ED8}
+.chip-tag-camp button{color:#1D4ED8}
+
+/* Pauta row add */
+.pauta-add-btn{width:100%;padding:8px;border:2px dashed var(--br2);background:transparent;border-radius:var(--r);font-size:12px;color:var(--t3);cursor:pointer;margin-top:8px;font-family:inherit;transition:all .15s}
+.pauta-add-btn:hover{border-color:var(--or);color:var(--or);background:var(--orl)}
+
+/* Cidade select small */
+.cidade-sel{font-size:12px;padding:3px 6px;border:1px solid var(--br2);border-radius:var(--r);background:#fff;font-family:inherit;max-width:140px}
+
+/* Col widths */
+.col-cli{width:90px}.col-data{width:70px}.col-camp{width:200px}
+.col-cid{width:130px}.col-eq{width:200px}.col-st{width:90px}.col-rot{width:70px}.col-act{width:50px}
+
+/* Pauta modal */
+.pauta-modal .modal-body{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pauta-modal .field-full{grid-column:1/-1}
+
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
 <div id="login-screen" style="display:none">
-  <div class="login-wrap">
+  <div class="login-split">
+  <div class="login-split-left">
     <div class="login-card">
       <div class="login-logo">
         <img src="data:image/jpeg;base64,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" alt="Funway">
@@ -197,6 +249,10 @@ tbody tr:hover td{background:#FAFAF8}
       <button class="login-btn" id="login-btn" onclick="fazerLogin()">Entrar</button>
       <div class="login-err" id="login-err"></div>
     </div>
+  </div>
+  <div class="login-split-right">
+    <h3>Pautas do mês</h3>
+    <div id="pauta-publica-cont"><div class="empty"><p>Carregando pautas...</p></div></div>
   </div>
 </div>
 
@@ -216,6 +272,7 @@ tbody tr:hover td{background:#FAFAF8}
         <button class="ni" id="nb-colaboradores" onclick="goPage('colaboradores')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Colaboradores</button>
         <button class="ni" id="nb-projetos" onclick="goPage('projetos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>Projetos</button>
         <button class="ni" id="nb-folha" onclick="goPage('folha')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>Folha</button>
+        <button class="ni" id="nb-pautas" onclick="goPage('pautas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>Pautas</button>
         <button class="ni" id="nb-meses" onclick="goPage('meses')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Meses</button>
       </nav>
       <div class="sb-sync"><div class="sdot" id="sdot"></div><span id="stxt">Conectando...</span></div>
@@ -316,6 +373,11 @@ tbody tr:hover td{background:#FAFAF8}
           <div id="folha-cont"></div>
         </div>
 
+        <div id="pg-pautas" class="page">
+          <div id="msg-p"></div>
+          <div class="ph"><h2>Pautas</h2><p>Gerencie as pautas do mês. Alterações atualizam automático os lançamentos.</p></div>
+          <div id="pautas-admin-cont"></div>
+        </div>
         <div id="pg-meses" class="page">
           <div id="msg-m"></div>
           <div class="ph"><h2>Controle de Meses</h2><p>Feche um mês para proteger os dados.</p></div>
@@ -338,6 +400,11 @@ tbody tr:hover td{background:#FAFAF8}
       <button class="logout-btn" onclick="fazerLogout()">Sair</button>
     </div>
     <div class="emp-content">
+      <div style="display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--br)">
+        <button class="btn btn-ghost" id="emp-tab-reimb" onclick="switchEmpTab('reimb')" style="border-radius:0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px">Reembolsos</button>
+        <button class="btn btn-ghost" id="emp-tab-pautas" onclick="switchEmpTab('pautas')" style="border-radius:0">Pautas</button>
+      </div>
+      <div id="emp-reimb-cont">
       <div id="msg-emp"></div>
       <div class="ph"><h2>Reembolsos</h2><p>Envie comprovantes de reembolso ou gastos no cartão Funway.</p></div>
       <div class="card" style="padding:18px;margin-bottom:24px">
@@ -364,6 +431,8 @@ tbody tr:hover td{background:#FAFAF8}
         </div>
         <button class="btn btn-or" onclick="enviarGasto()" style="width:100%;justify-content:center">Enviar gasto</button>
       </div>
+      </div><!-- /emp-reimb-cont -->
+      <div id="emp-pautas-cont" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -522,7 +591,7 @@ async function sincronizarTudo(){
 
 async function initAuth(){var res=await SB.auth.getSession();var session=res.data?res.data.session:null;if(session){CURRENT_USER=session.user;await routeUser();}else{showScreen('login');}
 SB.auth.onAuthStateChange(async function(event,sess){if(event==='SIGNED_IN'&&sess){CURRENT_USER=sess.user;await routeUser();}if(event==='SIGNED_OUT'){CURRENT_USER=null;USER_ROLE=null;showScreen('login');}});}
-async function routeUser(){var res=await SB.from('user_roles').select('role').eq('id',CURRENT_USER.id).single();if(res.data){USER_ROLE=res.data.role;}else{USER_ROLE=(CURRENT_USER.email===ADMIN_EMAIL)?'admin':'funcionario';}if(USER_ROLE==='admin'){showScreen('admin');await carregarDados();}else{showScreen('emp');}}
+async function routeUser(){var res=await SB.from('user_roles').select('role').eq('id',CURRENT_USER.id).single();if(res.data){USER_ROLE=res.data.role;}else{USER_ROLE=(CURRENT_USER.email===ADMIN_EMAIL)?'admin':'funcionario';}if(USER_ROLE==='admin'){showScreen('admin');await carregarDados();iniciarPollingPautas();}else{showScreen('emp');iniciarPollingPautas();}}
 function showScreen(s){document.getElementById('login-screen').style.display=s==='login'?'flex':'none';document.getElementById('admin-panel').style.display=s==='admin'?'block':'none';document.getElementById('emp-panel').style.display=s==='emp'?'block':'none';}
 async function fazerLogin(){var email=document.getElementById('login-email').value.trim();var pass=document.getElementById('login-pass').value;var err=document.getElementById('login-err');err.style.display='none';var btn=document.getElementById('login-btn');if(!email||!pass){err.textContent='Preencha email e senha.';err.style.display='block';return;}btn.disabled=true;btn.textContent='Entrando...';var res=await SB.auth.signInWithPassword({email:email,password:pass});btn.disabled=false;btn.textContent='Entrar';if(res.error){err.textContent='Email ou senha incorretos.';err.style.display='block';}}
 async function fazerLogout(){await SB.auth.signOut();}
@@ -746,7 +815,7 @@ function goPage(id){
   if(pg)pg.classList.add('active');if(nb)nb.classList.add('active');
   document.getElementById('topbar-title').textContent=PAGE_TITLES[id]||id;
   PA=id;renderAtivePage();}
-function renderAtivePage(){if(PA==='home')renderHome();else if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='colaboradores')renderColabs();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
+function renderAtivePage(){if(PA==='home')renderHome();else if(PA==='pautas'){renderPautasAdmin();}else if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='colaboradores')renderColabs();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
 function tipBadge(t){if(t==='Di\u00e1ria'||t==='Diaria')return'<span class="badge b-di">Di\u00e1ria</span>';if(t==='Reembolso')return'<span class="badge b-re">Reembolso</span>';return'<span class="badge b-en">Entrega</span>';}
 function actBtns(id,fechado){if(fechado)return'<span style="font-size:12px;color:var(--t3)">[fechado]</span>';return'<div style="display:flex;gap:3px"><button class="btn btn-ghost btn-sm" data-edit="'+id+'" style="padding:4px 9px;color:var(--t2)">Editar</button><button class="btn btn-ghost btn-sm" data-del="'+id+'" style="padding:4px 9px;color:var(--rd)">x</button></div>';}
 function bindActions(el){el.querySelectorAll('[data-edit]').forEach(function(b){b.addEventListener('click',function(){abrirEdit(b.getAttribute('data-edit'));});});el.querySelectorAll('[data-del]').forEach(function(b){b.addEventListener('click',function(){deletar(b.getAttribute('data-del'));});});}
@@ -1065,6 +1134,313 @@ function renderMeses(){
   el.innerHTML=h;el.querySelectorAll('[data-mes]').forEach(function(b){b.addEventListener('click',function(){toggleMes(b.getAttribute('data-mes'));});});}
 
 // Sheets panel
+
+// ── PAUTAS ───────────────────────────────────────────────────────────────────
+var PAUTAS = [];
+var PAUTAS_INTERVAL = null;
+var EDIT_PAUTA_ID = null;
+var CIDADES = ['Salvador','São Paulo','Rio de Janeiro','Belo Horizonte','Curitiba','Floripa','Fortaleza','Recife','Porto Alegre','Brasília','Belém','Outras'];
+var STATUS_PAUTAS = ['PRODUÇÃO','EDIT','ENTREGUE'];
+
+async function carregarPautas(){
+  var r = await SB.from('pautas').select('*').order('ordem',{ascending:true}).order('data_rec',{ascending:true});
+  if(r.error){console.error('Erro pautas:',r.error.message);return;}
+  PAUTAS = r.data||[];
+  renderPautasPublica();
+  if(PA==='pautas')renderPautasAdmin();
+  if(document.getElementById('emp-pautas-cont'))renderPautasEmp();
+}
+
+function iniciarPollingPautas(){
+  carregarPautas();
+  if(PAUTAS_INTERVAL)clearInterval(PAUTAS_INTERVAL);
+  PAUTAS_INTERVAL = setInterval(carregarPautas,30000);
+}
+
+function statusBadge(s){
+  if(!s||s==='PRODUÇÃO')return '<span class="st-producao">PRODUÇÃO</span>';
+  if(s==='EDIT')return '<span class="st-edit">EDIT</span>';
+  if(s==='ENTREGUE')return '<span class="st-entregue">ENTREGUE</span>';
+  return '<span class="badge b-src">'+s+'</span>';
+}
+
+function roteiroCell(url,pendente){
+  if(!url&&!pendente)return '<span style="color:var(--t3);font-size:11px">—</span>';
+  if(pendente||!url)return '<span class="rot-pendente">ROTEIRO</span>';
+  return '<a href="'+url+'" target="_blank" class="rot-link">ROTEIRO</a>';
+}
+
+function chipsFromStr(str){
+  if(!str)return[];
+  return str.split(/\s*\+\s*/).map(function(s){return s.trim();}).filter(Boolean);
+}
+
+function strFromChips(arr){return arr.join(' + ');}
+
+// ── Renderiza tabela pública (login screen) ───────────────────────────────────
+function renderPautasPublica(){
+  var el=document.getElementById('pauta-publica-cont');
+  if(!el)return;
+  var f=PAUTAS.filter(function(p){return p.cliente||p.campanha;});
+  if(!f.length){el.innerHTML='<div class="empty" style="padding:40px 0"><p>Nenhuma pauta cadastrada.</p></div>';return;}
+  var h='<table class="pauta-table"><thead><tr>'
+    +'<th class="col-cli">Cliente</th><th class="col-data">Data</th>'
+    +'<th class="col-camp">Campanha</th><th class="col-cid">Cidade</th>'
+    +'<th class="col-eq">Equipe</th><th class="col-st">Status</th>'
+    +'<th class="col-rot">Roteiro</th></tr></thead><tbody>';
+  f.forEach(function(p){
+    var camps=chipsFromStr(p.campanha).join(' + ')||'—';
+    var eq=chipsFromStr(p.equipe).join(' • ')||'—';
+    h+='<tr>'
+      +'<td>'+( p.cliente||'—')+'</td>'
+      +'<td style="font-variant-numeric:tabular-nums">'+( p.data_rec||'—')+'</td>'
+      +'<td style="font-weight:500">'+camps+'</td>'
+      +'<td>'+( p.cidade||'—')+'</td>'
+      +'<td style="color:var(--t2)">'+eq+'</td>'
+      +'<td>'+statusBadge(p.status)+'</td>'
+      +'<td>'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
+      +'</tr>';
+  });
+  el.innerHTML=h+'</tbody></table>';}
+
+// ── Renderiza aba admin ────────────────────────────────────────────────────────
+function renderPautasAdmin(){
+  var el=document.getElementById('pautas-admin-cont');
+  if(!el)return;
+  var f=PAUTAS.filter(function(p){return p.cliente||p.campanha;});
+  var h='<div class="tbl-wrap" style="overflow-x:auto"><table class="pauta-table"><thead><tr>'
+    +'<th class="col-cli">Cliente</th><th class="col-data">Data</th>'
+    +'<th class="col-camp">Campanha</th><th class="col-cid">Cidade</th>'
+    +'<th class="col-eq">Equipe</th><th class="col-st">Status</th>'
+    +'<th class="col-rot">Roteiro</th><th class="col-act"></th></tr></thead><tbody>';
+  f.forEach(function(p){
+    var camps=chipsFromStr(p.campanha).join(' + ')||'—';
+    var eq=chipsFromStr(p.equipe).join(' • ')||'—';
+    h+='<tr>'
+      +'<td>'+( p.cliente||'—')+'</td>'
+      +'<td>'+( p.data_rec||'—')+'</td>'
+      +'<td style="font-weight:500">'+camps+'</td>'
+      +'<td>'+( p.cidade||'—')+'</td>'
+      +'<td style="color:var(--t2);font-size:11px">'+eq+'</td>'
+      +'<td>'+statusBadge(p.status)+'</td>'
+      +'<td>'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
+      +'<td><div style="display:flex;gap:3px">'
+      +'<button class="btn btn-ghost btn-sm" data-ep="'+p.id+'" style="padding:3px 7px;color:var(--t2)">✎</button>'
+      +'<button class="btn btn-ghost btn-sm" data-dp="'+p.id+'" style="padding:3px 7px;color:var(--rd)">×</button>'
+      +'</div></td></tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
+  el.innerHTML=h;
+  el.querySelectorAll('[data-ep]').forEach(function(b){b.addEventListener('click',function(){abrirEditPauta(b.getAttribute('data-ep'));});});
+  el.querySelectorAll('[data-dp]').forEach(function(b){b.addEventListener('click',function(){deletarPauta(b.getAttribute('data-dp'));});});
+}
+
+// ── Renderiza aba produção ────────────────────────────────────────────────────
+function renderPautasEmp(){
+  var el=document.getElementById('emp-pautas-cont');
+  if(!el)return;
+  var f=PAUTAS.filter(function(p){return p.cliente||p.campanha;});
+  var h='<div class="tbl-wrap" style="overflow-x:auto"><table class="pauta-table"><thead><tr>'
+    +'<th class="col-cli">Cliente</th><th class="col-data">Data</th>'
+    +'<th class="col-camp">Campanha</th><th class="col-cid">Cidade</th>'
+    +'<th class="col-eq">Equipe</th><th class="col-st">Status</th>'
+    +'<th class="col-rot">Roteiro</th><th class="col-act"></th></tr></thead><tbody>';
+  f.forEach(function(p){
+    var camps=chipsFromStr(p.campanha).join(' + ')||'—';
+    var eq=chipsFromStr(p.equipe).join(' • ')||'—';
+    h+='<tr>'
+      +'<td>'+( p.cliente||'—')+'</td>'
+      +'<td>'+( p.data_rec||'—')+'</td>'
+      +'<td style="font-weight:500">'+camps+'</td>'
+      +'<td>'+( p.cidade||'—')+'</td>'
+      +'<td style="color:var(--t2);font-size:11px">'+eq+'</td>'
+      +'<td>'+statusBadge(p.status)+'</td>'
+      +'<td>'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
+      +'<td><div style="display:flex;gap:3px"><button class="btn btn-ghost btn-sm" data-epe="'+p.id+'" style="padding:3px 7px;color:var(--t2)">✎</button><button class="btn btn-ghost btn-sm" data-dpe="'+p.id+'" style="padding:3px 7px;color:var(--rd)">×</button></div></td>'
+      +'</tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
+  el.innerHTML=h;
+  el.querySelectorAll('[data-epe]').forEach(function(b){b.addEventListener('click',function(){abrirEditPauta(b.getAttribute('data-epe'));});});
+  el.querySelectorAll('[data-dpe]').forEach(function(b){b.addEventListener('click',function(){deletarPauta(b.getAttribute('data-dpe'));});});
+}
+
+// ── Chip input helper ─────────────────────────────────────────────────────────
+function criarChipInput(containerId,valorInicial,colorClass){
+  var container=document.getElementById(containerId);
+  if(!container)return;
+  container.innerHTML='';
+  var chips=chipsFromStr(valorInicial);
+  var wrap=document.createElement('div');wrap.className='chip-wrap';
+  var inputEl=document.createElement('input');inputEl.type='text';inputEl.className='chip-input-field';inputEl.placeholder='Digite e Enter...';
+  function addChip(val){
+    val=val.trim().toUpperCase();if(!val)return;
+    var tag=document.createElement('span');tag.className='chip-tag '+(colorClass||'');
+    var txt=document.createElement('span');txt.textContent=val;
+    var btn=document.createElement('button');btn.textContent='×';btn.type='button';
+    btn.addEventListener('click',function(){tag.remove();});
+    tag.appendChild(txt);tag.appendChild(btn);wrap.insertBefore(tag,inputEl);
+  }
+  chips.forEach(function(c){addChip(c);});
+  inputEl.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===','){e.preventDefault();addChip(inputEl.value);inputEl.value='';}
+    if(e.key==='Backspace'&&!inputEl.value){var tags=wrap.querySelectorAll('.chip-tag');if(tags.length)tags[tags.length-1].remove();}
+  });
+  wrap.appendChild(inputEl);wrap.addEventListener('click',function(){inputEl.focus();});
+  container.appendChild(wrap);
+}
+
+function getChipValues(containerId){
+  var container=document.getElementById(containerId);
+  if(!container)return'';
+  var tags=container.querySelectorAll('.chip-tag span:first-child');
+  var vals=Array.prototype.map.call(tags,function(t){return t.textContent.trim();}).filter(Boolean);
+  var inputEl=container.querySelector('.chip-input-field');
+  if(inputEl&&inputEl.value.trim())vals.push(inputEl.value.trim().toUpperCase());
+  return strFromChips(vals);
+}
+
+// ── Modal de pauta ────────────────────────────────────────────────────────────
+function abrirNovaPauta(){
+  EDIT_PAUTA_ID=null;
+  document.getElementById('pm-title').textContent='Nova pauta';
+  document.getElementById('pm-cliente').value='';
+  document.getElementById('pm-data').value='';
+  document.getElementById('pm-cidade').value='Salvador';
+  document.getElementById('pm-status').value='PRODUÇÃO';
+  document.getElementById('pm-roteiro').value='';
+  document.getElementById('pm-rot-pend').checked=false;
+  criarChipInput('pm-campanha-cont','','chip-tag-camp');
+  criarChipInput('pm-equipe-cont','','');
+  document.getElementById('pauta-modal-bg').classList.add('show');
+  document.getElementById('pm-cliente').focus();
+}
+
+function abrirEditPauta(id){
+  var p=null;for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===id){p=PAUTAS[i];break;}}
+  if(!p)return;
+  EDIT_PAUTA_ID=id;
+  document.getElementById('pm-title').textContent='Editar pauta';
+  document.getElementById('pm-cliente').value=p.cliente||'';
+  document.getElementById('pm-data').value=p.data_rec||'';
+  document.getElementById('pm-cidade').value=p.cidade||'Salvador';
+  document.getElementById('pm-status').value=p.status||'PRODUÇÃO';
+  document.getElementById('pm-roteiro').value=(p.roteiro&&p.roteiro!=='PENDENTE')?p.roteiro:'';
+  document.getElementById('pm-rot-pend').checked=(p.roteiro==='PENDENTE');
+  criarChipInput('pm-campanha-cont',p.campanha||'','chip-tag-camp');
+  criarChipInput('pm-equipe-cont',p.equipe||'','');
+  document.getElementById('pauta-modal-bg').classList.add('show');
+}
+
+function fecharPautaModal(e){if(!e||e.target===document.getElementById('pauta-modal-bg'))fecharPautaModalDir();}
+function fecharPautaModalDir(){document.getElementById('pauta-modal-bg').classList.remove('show');EDIT_PAUTA_ID=null;}
+
+async function salvarPauta(){
+  var campanha=getChipValues('pm-campanha-cont');
+  var equipe=getChipValues('pm-equipe-cont');
+  var cliente=document.getElementById('pm-cliente').value.trim();
+  var data_rec=document.getElementById('pm-data').value.trim();
+  var cidade=document.getElementById('pm-cidade').value;
+  var status=document.getElementById('pm-status').value;
+  var roteiroUrl=document.getElementById('pm-roteiro').value.trim();
+  var rotPend=document.getElementById('pm-rot-pend').checked;
+  var roteiro=rotPend?'PENDENTE':(roteiroUrl||'');
+
+  if(!cliente&&!campanha){alert('Preencha ao menos cliente ou campanha.');return;}
+
+  var now=new Date().toISOString();
+  if(EDIT_PAUTA_ID){
+    var pOld=null;for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===EDIT_PAUTA_ID){pOld=PAUTAS[i];break;}}
+    var upd={cliente:cliente,data_rec:data_rec,campanha:campanha,cidade:cidade,equipe:equipe,status:status,roteiro:roteiro,atualizado_em:now};
+    var r=await SB.from('pautas').update(upd).eq('id',EDIT_PAUTA_ID);
+    if(r.error){alert('Erro: '+r.error.message);return;}
+    // Sync lancamentos vinculados
+    await sincronizarLancamentosPauta(EDIT_PAUTA_ID,upd,pOld);
+  } else {
+    var newId=uid();
+    var insert={id:newId,cliente:cliente,data_rec:data_rec,campanha:campanha,cidade:cidade,equipe:equipe,status:status,roteiro:roteiro,mes:mesAtualStr(),ordem:PAUTAS.length,criado_em:now,atualizado_em:now};
+    var r2=await SB.from('pautas').insert(insert);
+    if(r2.error){alert('Erro: '+r2.error.message);return;}
+    await criarLancamentosDePauta(newId,insert);
+  }
+  fecharPautaModalDir();
+  await carregarPautas();
+  if(PA==='pautas')renderPautasAdmin();
+  if(USER_ROLE!=='admin')renderPautasEmp();
+}
+
+async function deletarPauta(id){
+  if(!confirm('Remover esta pauta? Os lançamentos vinculados também serão removidos.'))return;
+  // Remove lancamentos vinculados
+  await SB.from('lancamentos').delete().eq('pauta_id',id);
+  D=D.filter(function(d){return d.pauta_id!==id;});
+  var r=await SB.from('pautas').delete().eq('id',id);
+  if(r.error){alert('Erro: '+r.error.message);return;}
+  PAUTAS=PAUTAS.filter(function(p){return p.id!==id;});
+  renderPautasAdmin();populateFiltros();renderAtivePage();
+}
+
+function mesAtualStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+
+async function criarLancamentosDePauta(pautaId,pauta){
+  var mes=pauta.mes||mesAtualStr();
+  var membros=chipsFromStr(pauta.equipe);
+  var novos=[];
+  membros.forEach(function(m){
+    novos.push({id:uid(),colaborador:m,tipo:'Entrega',projeto:pauta.campanha,valor:0,mes:mes,cliente:pauta.cliente||'',cidade:pauta.cidade||'',origem:'pauta',sheets_key:'pauta_'+pautaId+'_'+normName(m).replace(/[^a-z0-9]/g,'_'),pauta_id:pautaId,criado_em:new Date().toISOString()});
+  });
+  for(var i=0;i<novos.length;i++){
+    var r=await SB.from('lancamentos').insert(novos[i]);
+    if(!r.error)D.unshift(novos[i]);
+  }
+  populateFiltros();
+}
+
+async function sincronizarLancamentosPauta(pautaId,novosDados,dadosAntigos){
+  var membrosNovos=chipsFromStr(novosDados.equipe);
+  var membrosAntigos=chipsFromStr(dadosAntigos?dadosAntigos.equipe:'');
+  var mes=mesAtualStr();
+  // Atualiza projeto/cidade nos lancamentos existentes
+  var r=await SB.from('lancamentos').update({projeto:novosDados.campanha,cidade:novosDados.cidade,cliente:novosDados.cliente}).eq('pauta_id',pautaId);
+  D.forEach(function(d){if(d.pauta_id===pautaId){d.projeto=novosDados.campanha;d.cidade=novosDados.cidade;d.cliente=novosDados.cliente;}});
+  // Adiciona novos membros
+  var novos=membrosNovos.filter(function(m){return membrosAntigos.indexOf(m)<0;});
+  for(var i=0;i<novos.length;i++){
+    var item={id:uid(),colaborador:novos[i],tipo:'Entrega',projeto:novosDados.campanha,valor:0,mes:mes,cliente:novosDados.cliente||'',cidade:novosDados.cidade||'',origem:'pauta',sheets_key:'pauta_'+pautaId+'_'+normName(novos[i]).replace(/[^a-z0-9]/g,'_'),pauta_id:pautaId,criado_em:new Date().toISOString()};
+    var r2=await SB.from('lancamentos').insert(item);
+    if(!r2.error)D.unshift(item);
+  }
+  // Remove membros removidos (só os com valor=0 e não editados)
+  var removidos=membrosAntigos.filter(function(m){return membrosNovos.indexOf(m)<0;});
+  for(var j=0;j<removidos.length;j++){
+    var key='pauta_'+pautaId+'_'+normName(removidos[j]).replace(/[^a-z0-9]/g,'_');
+    var existente=D.find(function(d){return d.sheetsKey===key;});
+    if(existente){
+      await SB.from('lancamentos').delete().eq('id',existente.id);
+      D=D.filter(function(d){return d.id!==existente.id;});
+    }
+  }
+  populateFiltros();
+}
+
+function switchEmpTab(tab){
+  var reimb=document.getElementById('emp-reimb-cont');
+  var pautas=document.getElementById('emp-pautas-cont');
+  var tbR=document.getElementById('emp-tab-reimb');
+  var tbP=document.getElementById('emp-tab-pautas');
+  if(tab==='reimb'){
+    reimb.style.display='';pautas.style.display='none';
+    tbR.style.cssText='border-radius:0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px';
+    tbP.style.cssText='border-radius:0';
+  } else {
+    reimb.style.display='none';pautas.style.display='';
+    tbP.style.cssText='border-radius:0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px';
+    tbR.style.cssText='border-radius:0';
+    renderPautasEmp();
+  }
+}
 function abrirSP(){document.getElementById('overlay').classList.add('show');}
 function fecharSP(e){if(!e||e.target===document.getElementById('overlay'))fecharSPdir();}
 function fecharSPdir(){document.getElementById('overlay').classList.remove('show');}
@@ -1076,8 +1452,49 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('fr-mes').value=ma;
   var eg=document.getElementById('eg-mes');if(eg)eg.value=ma;
   var egdata=document.getElementById('eg-data');if(egdata)egdata.value=new Date().toISOString().slice(0,10);
+  // Carrega pautas antes do login (visão pública)
+  SB.from('pautas').select('*').order('ordem',{ascending:true}).order('data_rec',{ascending:true}).then(function(r){if(!r.error){PAUTAS=r.data||[];renderPautasPublica();}});
   initAuth();});
 
 </script>
+
+<!-- PAUTA MODAL -->
+<div id="pauta-modal-bg" class="modal-bg" onclick="fecharPautaModal(event)">
+  <div class="modal pauta-modal" style="max-width:560px">
+    <div class="modal-head" style="background:var(--or)"><span id="pm-title" style="font-size:15px;font-weight:700">Nova pauta</span></div>
+    <div class="modal-body">
+      <div class="field"><label>Cliente</label><input id="pm-cliente" placeholder="Ex: Eletromidia"></div>
+      <div class="field"><label>Data</label><input id="pm-data" placeholder="Ex: 01/07"></div>
+      <div class="field-full field"><label>Campanha (Enter para adicionar)</label><div id="pm-campanha-cont"></div></div>
+      <div class="field"><label>Cidade</label>
+        <select id="pm-cidade" class="cidade-sel" style="max-width:none;width:100%">
+          <option>Salvador</option><option>São Paulo</option><option>Rio de Janeiro</option>
+          <option>Belo Horizonte</option><option>Curitiba</option><option>Floripa</option>
+          <option>Fortaleza</option><option>Recife</option><option>Porto Alegre</option>
+          <option>Brasília</option><option>Belém</option><option>Outras</option>
+        </select>
+      </div>
+      <div class="field"><label>Status</label>
+        <select id="pm-status" style="width:100%">
+          <option value="PRODUÇÃO">PRODUÇÃO</option>
+          <option value="EDIT">EDIT</option>
+          <option value="ENTREGUE">ENTREGUE</option>
+        </select>
+      </div>
+      <div class="field-full field"><label>Equipe (Enter para adicionar)</label><div id="pm-equipe-cont"></div></div>
+      <div class="field-full field"><label>Roteiro (URL)</label>
+        <input id="pm-roteiro" placeholder="https://...">
+        <div style="margin-top:6px;display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="pm-rot-pend" style="width:auto">
+          <label for="pm-rot-pend" style="font-size:12px;margin-bottom:0;display:inline">Marcar como pendente (amarelo)</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="fecharPautaModalDir()">Cancelar</button>
+      <button class="btn btn-or" onclick="salvarPauta()">Salvar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
