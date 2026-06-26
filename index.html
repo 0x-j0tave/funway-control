@@ -854,13 +854,13 @@ function renderReemb(){
     if(pendentes.length){
       h+='<div style="background:var(--aml);border:1px solid #FDE68A;border-radius:var(--rl);overflow:hidden;margin-bottom:10px">';
       h+='<div style="padding:10px 16px;font-weight:700;font-size:13px;color:var(--am);border-bottom:1px solid #FDE68A">Pendentes de aprova\u00e7\u00e3o ('+pendentes.length+')</div>';
-      h+='<table><thead><tr><th>Funcion\u00e1rio</th><th>Tipo</th><th>Descri\u00e7\u00e3o</th><th>M\u00eas</th><th>Valor</th><th>Comprovante</th><th></th></tr></thead><tbody>';
+      h+='<table><thead><tr><th>Funcion\u00e1rio</th><th>Tipo</th><th>Descri\u00e7\u00e3o</th><th>Data</th><th>Valor</th><th>Comprovante</th><th></th></tr></thead><tbody>';
       pendentes.forEach(function(g){
         var tipLabel=g.tipo==='cartao'?'Cart\u00e3o Funway':(g.tipo==='gastos_gerais'?'Gastos em Geral':'Reembolso');
         var tipStyle=g.tipo==='cartao'?'background:#EDE9FE;color:#6D28D9':(g.tipo==='gastos_gerais'?'background:#DCFCE7;color:#15803D':'');
         h+='<tr style="background:#FFFBEB"><td><div style="display:flex;align-items:center;gap:7px"><div class="av">'+ini(g.colaborador)+'</div>'+g.colaborador+'</div></td>';
         h+='<td><span class="badge" style="'+tipStyle+'">'+tipLabel+'</span></td><td>'+g.descricao+'</td>';
-        h+=(g.data_gasto?'<span style="font-size:13px;color:var(--t2)">'+g.data_gasto.split('-').reverse().join('/')+'</span>':'<span class="badge b-mes">'+fm(g.mes)+'</span>')+'</td><td style="font-weight:700;color:var(--gr)">'+fv(g.valor)+'</td>';
+        h+='<td>'+(g.data_gasto?'<span style="font-size:13px;color:var(--t2)">'+g.data_gasto.split('-').reverse().join('/')+'</span>':'<span class="badge b-mes">'+fm(g.mes)+'</span>')+'</td><td style="font-weight:700;color:var(--gr)">'+fv(g.valor)+'</td>';
         h+='<td>'+(g.arquivo_path?'<button class="btn btn-ghost btn-sm" data-view="'+g.arquivo_path+'" style="font-size:12px;color:var(--bl);font-weight:600">Ver</button>':'-')+'</td>';
         h+='<td><div style="display:flex;gap:4px"><button class="btn btn-gr btn-sm" data-apv="'+g.id+'">Aprovar</button><button class="btn btn-rd btn-sm" data-rej="'+g.id+'">Rejeitar</button></div></td></tr>';
       });
@@ -868,7 +868,7 @@ function renderReemb(){
     if(finalizados.length){
       h+='<div style="background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);overflow:hidden;margin-bottom:16px">';
       h+='<div style="padding:10px 16px;font-weight:700;font-size:13px;color:var(--t2);border-bottom:1px solid var(--br)">Hist\u00f3rico de gastos submetidos</div>';
-      h+='<table><thead><tr><th>Funcion\u00e1rio</th><th>Tipo</th><th>Descri\u00e7\u00e3o</th><th>M\u00eas</th><th>Valor</th><th>Comprovante</th><th>Status</th></tr></thead><tbody>';
+      h+='<table><thead><tr><th>Funcion\u00e1rio</th><th>Tipo</th><th>Descri\u00e7\u00e3o</th><th>Data</th><th>Valor</th><th>Comprovante</th><th>Status</th></tr></thead><tbody>';
       finalizados.forEach(function(g){
         var tipLabel=g.tipo==='cartao'?'Cart\u00e3o Funway':(g.tipo==='gastos_gerais'?'Gastos em Geral':'Reembolso');
         var tipStyle=g.tipo==='cartao'?'background:#EDE9FE;color:#6D28D9':(g.tipo==='gastos_gerais'?'background:#DCFCE7;color:#15803D':'');
@@ -876,14 +876,14 @@ function renderReemb(){
         h+='<tr><td><div style="display:flex;align-items:center;gap:7px"><div class="av">'+ini(g.colaborador)+'</div>'+g.colaborador+'</div></td>';
         h+='<td><span class="badge" style="'+tipStyle+'">'+tipLabel+'</span></td>';
         h+='<td>'+g.descricao+(g.observacao?'<div style="font-size:11px;color:var(--rd);margin-top:2px">Motivo: '+g.observacao+'</div>':'')+'</td>';
-        h+=(g.data_gasto?'<span style="font-size:13px;color:var(--t2)">'+g.data_gasto.split('-').reverse().join('/')+'</span>':'<span class="badge b-mes">'+fm(g.mes)+'</span>')+'</td><td style="font-weight:700;color:var(--gr)">'+fv(g.valor)+'</td>';
+        h+='<td>'+(g.data_gasto?'<span style="font-size:13px;color:var(--t2)">'+g.data_gasto.split('-').reverse().join('/')+'</span>':'<span class="badge b-mes">'+fm(g.mes)+'</span>')+'</td><td style="font-weight:700;color:var(--gr)">'+fv(g.valor)+'</td>';
         h+='<td>'+(g.arquivo_path?'<button class="btn btn-ghost btn-sm" data-view="'+g.arquivo_path+'" style="font-size:12px;color:var(--bl);font-weight:600">Ver</button>':'<span style="color:var(--t3);font-size:12px">-</span>')+'</td>';
         h+='<td><span class="badge '+stClass+'">'+g.status+'</span></td></tr>';
       });
       h+='</tbody></table></div>';}}
   var f=D.filter(function(d){return d.tipo==='Reembolso'&&(!fc||normName(d.colaborador)===normName(fc))&&(!fm2||d.mes===fm2);});
   if(f.length){
-    h+='<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Descri\u00e7\u00e3o</th><th>M\u00eas</th><th>Valor</th><th>Comprovante</th><th></th></tr></thead><tbody>';
+    h+='<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Descri\u00e7\u00e3o</th><th>Data</th><th>Valor</th><th>Comprovante</th><th></th></tr></thead><tbody>';
     f.forEach(function(d){
       var fec=MS[d.mes]==='fechado';
       var arquivoBtn='<span style="color:var(--t3);font-size:12px">-</span>';
