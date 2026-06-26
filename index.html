@@ -1169,7 +1169,7 @@ function statusBadge(s){
 
 function roteiroCell(url,pendente){
   var link=url&&url!=='PENDENTE'?'<a href="'+url+'" target="_blank" style="font-size:11px;font-weight:600;color:#2563EB;text-decoration:none">ROTEIRO ↗</a>':'';
-  var pend=pendente?'<span style="font-size:10px;font-weight:600;background:#FEF3C7;color:#92400E;padding:2px 7px;border-radius:20px;margin-left:4px">pendente</span>':'';
+  var pend=pendente?'<span style="font-size:10px;font-weight:600;background:#FEF3C7;color:#92400E;padding:2px 7px;border-radius:20px;margin-left:4px">PENDENTE</span>':'';
   if(!link&&!pend)return '<span style="color:#9CA3AF;font-size:11px">—</span>';
   return link+pend;
 }
@@ -1208,9 +1208,9 @@ function renderPautasPublica(){
     return '<span style="font-size:13px;color:#374151;font-family:\'Raleway\',sans-serif">'+c+'</span>';
   }
   function stBadge(s){
-    if(s==='ENTREGUE')return '<span style="font-size:11px;font-weight:700;background:#DCFCE7;color:#15803D;padding:3px 10px;border-radius:20px;font-family:\'Raleway\',sans-serif">entregue</span>';
-    if(s==='EDIT')return '<span style="font-size:11px;font-weight:700;background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:20px;font-family:\'Raleway\',sans-serif">edit</span>';
-    return '<span style="font-size:11px;font-weight:700;background:#FEE2E2;color:#B91C1C;padding:3px 10px;border-radius:20px;font-family:\'Raleway\',sans-serif">produção</span>';
+    if(s==='ENTREGUE')return '<span style="font-size:11px;font-weight:700;background:#DCFCE7;color:#15803D;padding:3px 10px;border-radius:20px;font-family:\'Raleway\',sans-serif">ENTREGUE</span>';
+    if(s==='EDIT')return '<span style="font-size:11px;font-weight:700;background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:20px;font-family:\'Raleway\',sans-serif">EDIT</span>';
+    return '<span style="font-size:11px;font-weight:700;background:#FEE2E2;color:#B91C1C;padding:3px 10px;border-radius:20px;font-family:\'Raleway\',sans-serif">PRODUÇÃO</span>';
   }
 
   var thBase='padding:11px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;border:none;font-family:\'Raleway\',sans-serif';
@@ -1219,10 +1219,10 @@ function renderPautasPublica(){
     +'<table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">'
     +'<colgroup><col style="width:72px"><col style="width:28%"><col style="width:17%"><col style="width:20%"><col style="width:14%"><col style="width:90px"></colgroup>'
     +'<thead><tr style="position:sticky;top:0;z-index:2">'
-    +'<th style="'+thBase+';background:#4B7F52">Data</th>'
-    +'<th style="'+thBase+';background:#4B7F52">Campanha</th>'
-    +'<th style="'+thBase+';background:#C2762F">Cidade</th>'
-    +'<th style="'+thBase+';background:#C2762F">Equipe</th>'
+    +'<th style="'+thBase+';background:#2D5A34">Data</th>'
+    +'<th style="'+thBase+';background:#6AAB72">Campanha</th>'
+    +'<th style="'+thBase+';background:#8B4F1A">Cidade</th>'
+    +'<th style="'+thBase+';background:#D4934A">Equipe</th>'
     +'<th style="'+thBase+';background:#6B7280">Status</th>'
     +'<th style="'+thBase+';background:#374151">Roteiro</th>'
     +'</tr></thead><tbody>';
@@ -1488,30 +1488,15 @@ function setPautasView(v){
     edit.style.display='none';pub.style.display='';
     btnP.style.cssText='background:var(--or);color:#fff;border-color:var(--or)';
     btnE.style.cssText='';
-    // Render public view inside admin container
-    var el=document.getElementById('pautas-pub-cont');
-    var f=PAUTAS.filter(function(p){return p.cliente||p.campanha;});
-    f.sort(function(a,b){var da=(a.data_rec||'').replace(/[/]/g,'-');var db=(b.data_rec||'').replace(/[/]/g,'-');return da.localeCompare(db);});
-    if(!f.length){el.innerHTML='<div class="empty"><p>Nenhuma pauta.</p></div>';return;}
-    var h='<div class="tbl-wrap" style="overflow-x:auto"><table class="pauta-table"><thead><tr>'
-      +'<th>Cliente</th><th>Data</th><th>Campanha</th><th>Cidade</th><th>Equipe</th><th>Status</th><th>Roteiro</th>'
-      +'</tr></thead><tbody>';
-    f.forEach(function(p){
-      var camps=chipsFromStr(p.campanha).join(' + ')||'—';
-      var eq=chipsFromStr(p.equipe).join(' + ')||'—';
-      h+='<tr>'
-        +'<td style="font-size:11px;color:var(--t2)">'+(p.cliente||'—')+'</td>'
-        +'<td style="font-weight:600;white-space:nowrap">'+(p.data_rec||'—')+'</td>'
-        +'<td style="font-weight:500">'+camps+'</td>'
-        +'<td>'+(p.cidade||'—')+'</td>'
-        +'<td style="font-size:11px;color:var(--t2)">'+eq+'</td>'
-        +'<td>'+statusBadge(p.status)+'</td>'
-        +'<td>'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
-        +'</tr>';
-    });
-    el.innerHTML=h+'</tbody></table></div>';
+    var orig=document.getElementById('pauta-publica-cont');
+    if(orig)orig.id='_ppc_hidden';
+    pub.id='pauta-publica-cont';
+    renderPautasPublica();
+    pub.id='pautas-pub-cont';
+    if(orig)orig.id='pauta-publica-cont';
   }
 }
+
 function switchEmpTab(tab){
   var reimb=document.getElementById('emp-reimb-cont');
   var pautas=document.getElementById('emp-pautas-cont');
