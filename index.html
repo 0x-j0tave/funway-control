@@ -436,7 +436,7 @@ tbody tr:hover td{background:#FAFAF8}
         <button class="btn btn-or" onclick="enviarGasto()" style="width:100%;justify-content:center">Enviar gasto</button>
       </div>
       </div><!-- /emp-reimb-cont -->
-      <div id="emp-pautas-cont" style="display:none"></div>
+      <div id="emp-pautas-cont" style="display:none;margin:-20px -20px 0;overflow:hidden"></div>
     </div>
   </div>
 </div>
@@ -1280,30 +1280,77 @@ function renderPautasEmp(){
   var el=document.getElementById('emp-pautas-cont');
   if(!el)return;
   var f=PAUTAS.filter(function(p){return p.cliente||p.campanha;});
-  var h='<div class="tbl-wrap" style="overflow-x:auto"><table class="pauta-table"><thead><tr>'
-    +'<th class="col-cli">Cliente</th><th class="col-data">Data</th>'
-    +'<th class="col-camp">Campanha</th><th class="col-cid">Cidade</th>'
-    +'<th class="col-eq">Equipe</th><th class="col-st">Status</th>'
-    +'<th class="col-rot">Roteiro</th><th class="col-act"></th></tr></thead><tbody>';
-  f.forEach(function(p){
+  f.sort(function(a,b){
+    var da=(a.data_rec||'').replace(/[/]/g,'-');
+    var db=(b.data_rec||'').replace(/[/]/g,'-');
+    return da.localeCompare(db);
+  });
+
+  function statusBorderE(s){
+    if(s==='ENTREGUE')return '3px solid #16A34A';
+    if(s==='EDIT')return '3px solid #D97706';
+    return '3px solid #DC2626';
+  }
+  function cidadePillE(c){
+    if(!c)return '<span style="color:#9CA3AF">—</span>';
+    if(normName(c)==='salvador')
+      return '<span style="font-size:12px;font-weight:700;background:#FEE2E2;color:#991B1B;padding:3px 10px;border-radius:20px;font-family:\'Raleway\',sans-serif">'+c+'</span>';
+    return '<span style="font-size:13px;color:#374151;font-family:\'Raleway\',sans-serif">'+c+'</span>';
+  }
+  function stBadgeE(s){
+    if(s==='ENTREGUE')return '<span style="font-size:11px;font-weight:700;background:#DCFCE7;color:#15803D;padding:3px 10px;border-radius:20px;font-family:\'Raleway\',sans-serif">ENTREGUE</span>';
+    if(s==='EDIT')return '<span style="font-size:11px;font-weight:700;background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:20px;font-family:\'Raleway\',sans-serif">EDIT</span>';
+    return '<span style="font-size:11px;font-weight:700;background:#FEE2E2;color:#B91C1C;padding:3px 10px;border-radius:20px;font-family:\'Raleway\',sans-serif">PRODUÇÃO</span>';
+  }
+
+  var thBase='padding:11px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;border:none;font-family:\'Raleway\',sans-serif';
+
+  if(!f.length){
+    el.innerHTML='<div style="padding:60px 24px;text-align:center;color:#9CA3AF;font-family:\'Raleway\',sans-serif;font-size:15px">Nenhuma pauta cadastrada.</div>'
+      +'<div style="padding:0 24px 24px"><button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button></div>';
+    return;
+  }
+
+  var h='<table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">'
+    +'<colgroup><col style="width:68px"><col style="width:26%"><col style="width:16%"><col style="width:19%"><col style="width:13%"><col style="width:80px"><col style="width:72px"></colgroup>'
+    +'<thead><tr style="position:sticky;top:0;z-index:2">'
+    +'<th style="'+thBase+';background:#2D5A34">Data</th>'
+    +'<th style="'+thBase+';background:#6AAB72">Campanha</th>'
+    +'<th style="'+thBase+';background:#8B4F1A">Cidade</th>'
+    +'<th style="'+thBase+';background:#D4934A">Equipe</th>'
+    +'<th style="'+thBase+';background:#6B7280">Status</th>'
+    +'<th style="'+thBase+';background:#374151">Roteiro</th>'
+    +'<th style="'+thBase+';background:#374151"></th>'
+    +'</tr></thead><tbody>';
+
+  f.forEach(function(p,i){
     var camps=chipsFromStr(p.campanha).join(' + ')||'—';
-    var eq=chipsFromStr(p.equipe).join(' • ')||'—';
-    h+='<tr>'
-      +'<td>'+( p.cliente||'—')+'</td>'
-      +'<td>'+( p.data_rec||'—')+'</td>'
-      +'<td style="font-weight:500">'+camps+'</td>'
-      +'<td>'+( p.cidade||'—')+'</td>'
-      +'<td style="color:var(--t2);font-size:11px">'+eq+'</td>'
-      +'<td>'+statusBadge(p.status)+'</td>'
-      +'<td>'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
-      +'<td><div style="display:flex;gap:3px"><button class="btn btn-ghost btn-sm" data-epe="'+p.id+'" style="padding:3px 7px;color:var(--t2)">✎</button><button class="btn btn-ghost btn-sm" data-dpe="'+p.id+'" style="padding:3px 7px;color:var(--rd)">×</button></div></td>'
+    var eq=chipsFromStr(p.equipe).join(' + ')||'—';
+    var bg=i%2===0?'#fff':'#FAFAF8';
+    h+='<tr style="background:'+bg+';border-bottom:1px solid #EFEFED;border-left:'+statusBorderE(p.status)+'">'
+      +'<td style="padding:12px 16px;font-size:13px;font-weight:700;color:#374151;white-space:nowrap;font-family:\'Raleway\',sans-serif">'+(p.data_rec||'—')+'</td>'
+      +'<td style="padding:12px 16px;font-size:14px;font-weight:600;color:#111827;max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:\'Raleway\',sans-serif" title="'+camps+'">'+camps+'</td>'
+      +'<td style="padding:12px 16px;font-family:\'Raleway\',sans-serif">'+cidadePillE(p.cidade)+'</td>'
+      +'<td style="padding:12px 16px;font-size:12px;color:#4B5563;max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:\'Raleway\',sans-serif" title="'+eq+'">'+eq+'</td>'
+      +'<td style="padding:12px 16px;font-family:\'Raleway\',sans-serif">'+stBadgeE(p.status)+'</td>'
+      +'<td style="padding:12px 16px;font-family:\'Raleway\',sans-serif">'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
+      +'<td style="padding:8px 10px"><div style="display:flex;gap:4px">'
+      +'<button class="btn btn-ghost btn-sm" onclick="abrirEditPautaById(this)" data-pid="'+p.id+'" style="padding:4px 8px;color:#6B7280;font-size:13px">✎</button>'
+      +'<button class="btn btn-ghost btn-sm" data-dpe="'+p.id+'" style="padding:4px 8px;color:#DC2626;font-size:13px">×</button>'
+      +'</div></td>'
       +'</tr>';
   });
-  h+='</tbody></table></div>';
-  h+='<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
+  h+='</tbody></table>'
+   +'<div style="padding:16px 20px;border-top:1px solid #EFEFED">'
+   +'<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>'
+   +'</div>';
+
   el.innerHTML=h;
-  el.querySelectorAll('[data-dpe]').forEach(function(b){b.addEventListener('click',function(){deletarPauta(b.getAttribute('data-dpe'));});});
+  el.querySelectorAll('[data-dpe]').forEach(function(b){
+    b.addEventListener('click',function(){deletarPauta(b.getAttribute('data-dpe'));});
+  });
 }
+
 
 // ── Chip input helper ─────────────────────────────────────────────────────────
 function criarChipInput(containerId,valorInicial,colorClass){
@@ -1356,36 +1403,46 @@ function abrirNovaPauta(){
   document.getElementById('pm-cliente').focus();
 }
 
-async function abrirEditPautaById(btn){
+function abrirEditPautaById(btn){
   var id=btn.getAttribute('data-pid');
-  // Try from cache first, else fetch from DB
+  if(!id)return;
+  // Try cache first
   var p=null;
-  for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===id){p=PAUTAS[i];break;}}
-  if(!p){
-    var r=await SB.from('pautas').select('*').eq('id',id).single();
-    if(r.error||!r.data)return;
-    p=r.data;
-  }
-  abrirEditPauta(p.id);
-}
-function abrirEditPauta(id){
-  var p=null;for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===id){p=PAUTAS[i];break;}}
-  if(!p)return;
-  EDIT_PAUTA_ID=id;
-  document.getElementById('pm-title').textContent='Editar pauta';
-  document.getElementById('pm-cliente').value=p.cliente||'';
-  document.getElementById('pm-data').value=p.data_rec||'';
-  document.getElementById('pm-cidade').value=p.cidade||'Salvador';
-  document.getElementById('pm-status').value=p.status||'PRODUÇÃO';
-  document.getElementById('pm-roteiro').value=(p.roteiro&&p.roteiro!=='PENDENTE')?p.roteiro:'';
-  document.getElementById('pm-rot-pend').checked=(p.roteiro==='PENDENTE');
-  criarChipInput('pm-campanha-cont',p.campanha||'','chip-tag-camp');
-  criarChipInput('pm-equipe-cont',p.equipe||'','');
-  document.getElementById('pauta-modal-bg').classList.add('show');
+  for(var i=0;i<PAUTAS.length;i++){if(String(PAUTAS[i].id)===String(id)){p=PAUTAS[i];break;}}
+  if(p){_abrirModalPauta(p);return;}
+  // Fallback: fetch from DB
+  SB.from('pautas').select('*').eq('id',id).single().then(function(r){
+    if(r.error||!r.data){alert('Pauta não encontrada.');return;}
+    PAUTAS.push(r.data);
+    _abrirModalPauta(r.data);
+  });
 }
 
-function fecharPautaModal(e){if(!e||e.target===document.getElementById('pauta-modal-bg'))fecharPautaModalDir();}
-function fecharPautaModalDir(){document.getElementById('pauta-modal-bg').classList.remove('show');EDIT_PAUTA_ID=null;}
+function abrirEditPauta(id){
+  var p=null;
+  for(var i=0;i<PAUTAS.length;i++){if(String(PAUTAS[i].id)===String(id)){p=PAUTAS[i];break;}}
+  if(p){_abrirModalPauta(p);}
+}
+
+function _abrirModalPauta(p){
+  try{
+    EDIT_PAUTA_ID=p.id;
+    document.getElementById('pm-title').textContent='Editar pauta';
+    document.getElementById('pm-cliente').value=p.cliente||'';
+    document.getElementById('pm-data').value=p.data_rec||'';
+    var selCid=document.getElementById('pm-cidade');
+    if(selCid)selCid.value=p.cidade||'Salvador';
+    var selSt=document.getElementById('pm-status');
+    if(selSt)selSt.value=p.status||'PRODUÇÃO';
+    document.getElementById('pm-roteiro').value=(p.roteiro&&p.roteiro!=='PENDENTE')?p.roteiro:'';
+    document.getElementById('pm-rot-pend').checked=(p.roteiro==='PENDENTE');
+    criarChipInput('pm-campanha-cont',p.campanha||'','chip-tag-camp');
+    criarChipInput('pm-equipe-cont',p.equipe||'','');
+    var modal=document.getElementById('pauta-modal-bg');
+    if(modal)modal.classList.add('show');
+  }catch(e){console.error('Erro ao abrir modal:',e.message);}
+}
+
 
 async function salvarPauta(){
   var campanha=getChipValues('pm-campanha-cont');
