@@ -229,6 +229,13 @@ tbody tr:hover td{background:#FAFAF8}
 .pauta-modal .modal-body{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .pauta-modal .field-full{grid-column:1/-1}
 
+
+/* Pauta filters */
+.pauta-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.pauta-filters select,.pauta-filters input{font-size:12px;padding:5px 10px;border:1px solid var(--br2);border-radius:var(--r);background:#fff;font-family:'Raleway',inherit;min-width:120px;color:var(--t)}
+.pauta-filters .f-label{font-size:11px;font-weight:600;color:var(--t2);white-space:nowrap}
+.pauta-filters .f-clear{font-size:11px;color:var(--or);cursor:pointer;background:none;border:none;font-family:'Raleway',inherit;padding:0}
+.pauta-filters .f-clear:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -379,7 +386,28 @@ tbody tr:hover td{background:#FAFAF8}
             <button class="btn btn-sm" id="pautas-view-edit" onclick="setPautasView('edit')" style="background:var(--or);color:#fff;border-color:var(--or)">Gerenciar</button>
             <button class="btn btn-sm" id="pautas-view-pub" onclick="setPautasView('pub')">Visualizar completo</button>
           </div>
+          <div class="pauta-filters" id="pauta-filter-bar">
+            <span class="f-label">Filtrar:</span>
+            <select onchange="PAUTA_FILTROS.status=this.value;renderPautasAdmin()" id="pf-status">
+              <option value="">Todos os status</option>
+              <option value="PRODUÇÃO">PRODUÇÃO</option>
+              <option value="EDIT">EDIT</option>
+              <option value="ENTREGUE">ENTREGUE</option>
+            </select>
+            <select onchange="PAUTA_FILTROS.cidade=this.value;renderPautasAdmin()" id="pf-cidade">
+              <option value="">Todas as cidades</option>
+              <option>Salvador</option><option>São Paulo</option><option>Rio de Janeiro</option>
+              <option>Belo Horizonte</option><option>Curitiba</option><option>Floripa</option>
+              <option>Fortaleza</option><option>Recife</option><option>Porto Alegre</option>
+              <option>Brasília</option><option>Belém</option><option>Outras</option>
+            </select>
+            <select onchange="PAUTA_FILTROS.mes=this.value;renderPautasAdmin()" id="pf-mes">
+              <option value="">Todos os meses</option>
+            </select>
+            <button class="f-clear" onclick="limparFiltrosPautas()">Limpar filtros</button>
+          </div>
           <div id="pautas-admin-cont"></div>
+          <div id="pauta-hist-cont" style="margin-top:20px"></div>
           <div id="pautas-pub-cont" style="display:none"></div>
         </div>
         <div id="pg-meses" class="page">
@@ -1140,6 +1168,7 @@ function renderMeses(){
 
 // ── PAUTAS ───────────────────────────────────────────────────────────────────
 var PAUTAS = [];
+var PAUTA_FILTROS = {status:'',cidade:'',mes:''};
 var PAUTAS_INTERVAL = null;
 var EDIT_PAUTA_ID = null;
 var CIDADES = ['Salvador','São Paulo','Rio de Janeiro','Belo Horizonte','Curitiba','Floripa','Fortaleza','Recife','Porto Alegre','Brasília','Belém','Outras'];
@@ -1247,7 +1276,21 @@ function renderPautasPublica(){
 function renderPautasAdmin(){
   var el=document.getElementById('pautas-admin-cont');
   if(!el)return;
-  var f=PAUTAS.filter(function(p){return p.cliente||p.campanha;});
+  // Apply filters
+  var f=PAUTAS.filter(function(p){
+    if(!p.cliente&&!p.campanha)return false;
+    if(PAUTA_FILTROS.status&&p.status!==PAUTA_FILTROS.status)return false;
+    if(PAUTA_FILTROS.cidade&&p.cidade!==PAUTA_FILTROS.cidade)return false;
+    if(PAUTA_FILTROS.mes&&mesFromDataRec(p.data_rec)!==PAUTA_FILTROS.mes)return false;
+    return true;
+  });
+  // Populate mes dropdown
+  var pfMes=document.getElementById('pf-mes');
+  if(pfMes&&pfMes.options.length<=1){
+    var meses={};PAUTAS.forEach(function(p){var m=mesFromDataRec(p.data_rec);if(m)meses[m]=1;});
+    Object.keys(meses).sort().forEach(function(m){var o=document.createElement('option');o.value=m;o.textContent=fm(m);pfMes.appendChild(o);});
+    if(PAUTA_FILTROS.mes)pfMes.value=PAUTA_FILTROS.mes;
+  }
   var h='<div class="tbl-wrap" style="overflow-x:auto"><table class="pauta-table"><thead><tr>'
     +'<th class="col-cli">Cliente</th><th class="col-data">Data</th>'
     +'<th class="col-camp">Campanha</th><th class="col-cid">Cidade</th>'
@@ -1266,6 +1309,7 @@ function renderPautasAdmin(){
       +'<td>'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
       +'<td><div style="display:flex;gap:3px">'
       +'<button class="btn btn-ghost btn-sm" onclick="abrirEditPautaById(this)" data-pid="'+p.id+'" style="padding:3px 7px;color:var(--t2)">✎</button>'
+      +'<button class="btn btn-ghost btn-sm" data-hpid="'+p.id+'" style="padding:3px 7px;color:var(--t3)">&#9201;</button>'
       +'<button class="btn btn-ghost btn-sm" data-dp="'+p.id+'" style="padding:3px 7px;color:var(--rd)">×</button>'
       +'</div></td></tr>';
   });
@@ -1273,6 +1317,12 @@ function renderPautasAdmin(){
   h+='<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
   el.innerHTML=h;
   el.querySelectorAll('[data-dp]').forEach(function(b){b.addEventListener('click',function(){deletarPauta(b.getAttribute('data-dp'));});});
+  el.querySelectorAll('[data-hpid]').forEach(function(b){b.addEventListener('click',function(){
+    var pid=b.getAttribute('data-hpid');
+    var p=PAUTAS.filter(function(x){return x.id===pid;})[0];
+    var nome=p?chipsFromStr(p.campanha).join(' + '):'';
+    showHistoricoPauta(pid,nome);
+  });});
 }
 
 // ── Renderiza aba produção ────────────────────────────────────────────────────
@@ -1383,6 +1433,39 @@ function getChipValues(containerId){
 }
 
 // ── Modal de pauta ────────────────────────────────────────────────────────────
+function limparFiltrosPautas(){
+  PAUTA_FILTROS={status:'',cidade:'',mes:''};
+  var fs=document.getElementById('pf-status');if(fs)fs.value='';
+  var fc=document.getElementById('pf-cidade');if(fc)fc.value='';
+  var fm2=document.getElementById('pf-mes');if(fm2)fm2.value='';
+  renderPautasAdmin();
+}
+
+async function showHistoricoPauta(pautaId,nomePauta){
+  var el=document.getElementById('pauta-hist-cont');
+  if(!el)return;
+  el.innerHTML='<div style="font-size:12px;color:var(--t2);padding:8px 0">Carregando histórico...</div>';
+  var r=await SB.from('pautas_historico').select('*').eq('pauta_id',pautaId).order('criado_em',{ascending:false}).limit(50);
+  if(r.error||!r.data||!r.data.length){el.innerHTML='';return;}
+  var campoLabel={status:'Status',campanha:'Campanha',cidade:'Cidade',equipe:'Equipe',roteiro:'Roteiro',cliente:'Cliente',data_rec:'Data'};
+  var h='<div style="margin-top:8px;border-top:1px solid var(--br);padding-top:12px">'
+    +'<div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:10px">Histórico — '+nomePauta+'</div>'
+    +'<div style="display:flex;flex-direction:column;gap:6px">';
+  r.data.forEach(function(e){
+    var dt=new Date(e.criado_em);
+    var dtStr=dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    h+='<div style="display:flex;gap:12px;align-items:flex-start;font-size:12px;padding:8px 12px;background:var(--bg);border-radius:var(--r)">'
+      +'<span style="color:var(--t3);white-space:nowrap;flex-shrink:0">'+dtStr+'</span>'
+      +'<span style="font-weight:600;color:var(--t2);white-space:nowrap;flex-shrink:0">'+(campoLabel[e.campo]||e.campo)+'</span>'
+      +'<span style="color:var(--t3);text-decoration:line-through;flex-shrink:0">'+( e.valor_anterior||'—')+'</span>'
+      +'<span style="color:var(--t2)">→</span>'
+      +'<span style="color:var(--t);font-weight:500">'+( e.valor_novo||'—')+'</span>'
+      +'<span style="color:var(--t3);margin-left:auto;white-space:nowrap">'+( e.usuario||'')+'</span>'
+      +'</div>';
+  });
+  el.innerHTML=h+'</div></div>';
+}
+
 function fecharPautaModal(e){
   if(!e||e.target===document.getElementById('pauta-modal-bg'))fecharPautaModalDir();
 }
@@ -1463,14 +1546,16 @@ async function salvarPauta(){
   var now=new Date().toISOString();
   if(EDIT_PAUTA_ID){
     var pOld=null;for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===EDIT_PAUTA_ID){pOld=PAUTAS[i];break;}}
-    var upd={cliente:cliente,data_rec:data_rec,campanha:campanha,cidade:cidade,equipe:equipe,status:status,roteiro:roteiro,atualizado_em:now};
+    var upd={cliente:cliente,data_rec:data_rec,campanha:campanha,cidade:cidade,equipe:equipe,status:status,roteiro:roteiro,mes:mesFromDataRec(data_rec),atualizado_em:now};
     var r=await SB.from('pautas').update(upd).eq('id',EDIT_PAUTA_ID);
     if(r.error){alert('Erro: '+r.error.message);return;}
+    // Registra historico de alterações
+    await registrarHistoricoPauta(EDIT_PAUTA_ID,pOld,upd);
     // Sync lancamentos vinculados
     await sincronizarLancamentosPauta(EDIT_PAUTA_ID,upd,pOld);
   } else {
     var newId=uid();
-    var insert={id:newId,cliente:cliente,data_rec:data_rec,campanha:campanha,cidade:cidade,equipe:equipe,status:status,roteiro:roteiro,mes:mesAtualStr(),ordem:PAUTAS.length,criado_em:now,atualizado_em:now};
+    var insert={id:newId,cliente:cliente,data_rec:data_rec,campanha:campanha,cidade:cidade,equipe:equipe,status:status,roteiro:roteiro,mes:mesFromDataRec(data_rec),ordem:PAUTAS.length,criado_em:now,atualizado_em:now};
     var r2=await SB.from('pautas').insert(insert);
     if(r2.error){alert('Erro: '+r2.error.message);return;}
     await criarLancamentosDePauta(newId,insert);
@@ -1493,9 +1578,33 @@ async function deletarPauta(id){
 }
 
 function mesAtualStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function mesFromDataRec(dr){
+  if(!dr)return mesAtualStr();
+  var p=dr.split('/');
+  if(p.length<2||!p[1])return mesAtualStr();
+  var mm=String(parseInt(p[1],10)).padStart(2,'0');
+  var ano=new Date().getFullYear();
+  return ano+'-'+mm;
+}
 
+async function registrarHistoricoPauta(pautaId,antigo,novo){
+  var campos=['status','campanha','cidade','equipe','roteiro','cliente','data_rec'];
+  var usuario=CURRENT_USER?CURRENT_USER.email:'';
+  var now=new Date().toISOString();
+  for(var i=0;i<campos.length;i++){
+    var c=campos[i];
+    var va=String(antigo&&antigo[c]!=null?antigo[c]:'');
+    var vn=String(novo&&novo[c]!=null?novo[c]:'');
+    if(va!==vn){
+      await SB.from('pautas_historico').insert({
+        id:uid(),pauta_id:pautaId,usuario:usuario,
+        campo:c,valor_anterior:va,valor_novo:vn,criado_em:now
+      });
+    }
+  }
+}
 async function criarLancamentosDePauta(pautaId,pauta){
-  var mes=pauta.mes||mesAtualStr();
+  var mes=pauta.mes||mesFromDataRec(pauta.data_rec);
   var membros=chipsFromStr(pauta.equipe);
   var novos=[];
   membros.forEach(function(m){
