@@ -1192,7 +1192,7 @@ function renderPautasPublica(){
     return da.localeCompare(db);
   });
   if(!f.length){
-    el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;font-family:\'Raleway\',sans-serif;color:#9CA3AF;font-size:15px">Nenhuma pauta cadastrada.</div>';
+    el.innerHTML='';
     return;
   }
 
@@ -1300,7 +1300,7 @@ function renderPautasEmp(){
   var thB='padding:11px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;border:none';
 
   if(!f.length){
-    el.innerHTML='<div style="padding:60px 24px;text-align:center;color:#9CA3AF;font-size:15px">Nenhuma pauta cadastrada.</div>'
+    el.innerHTML=''
       +'<div style="padding:0 24px 24px"><button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button></div>';
     return;
   }
