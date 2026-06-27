@@ -286,6 +286,7 @@ tbody tr:hover td{background:#FAFAF8}
         <button class="ni" id="nb-colaboradores" onclick="goPage('colaboradores')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Colaboradores</button>
         <button class="ni" id="nb-projetos" onclick="goPage('projetos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>Projetos</button>
         <button class="ni" id="nb-folha" onclick="goPage('folha')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>Folha</button>
+        <button class="ni" id="nb-logs" onclick="goPage('logs')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Logs</button>
         <button class="ni" id="nb-pautas" onclick="goPage('pautas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>Pautas</button>
         <button class="ni" id="nb-meses" onclick="goPage('meses')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Meses</button>
       </nav>
@@ -306,6 +307,7 @@ tbody tr:hover td{background:#FAFAF8}
           </button>
         </div>
         <div class="topbar-actions">
+          <button class="tbtn" onclick="goPage('logs')" style="background:var(--bg2,#f5f4f0);border:1px solid var(--br)">Logs</button>
           <button class="tbtn" onclick="sincronizarTudo()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Sincronizar</button>
           <button class="tbtn" onclick="exportCSV()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar CSV</button>
         </div>
@@ -386,6 +388,31 @@ tbody tr:hover td{background:#FAFAF8}
           <div id="folha-cont"></div>
         </div>
 
+        <div id="pg-logs" class="page">
+          <div class="ph"><h2>Logs de atividade</h2><p>Registro de tudo que foi feito e por quem.</p></div>
+          <div id="msg-logs"></div>
+          <div id="logs-filters" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+            <select id="lf-entidade" onchange="renderLogs()" style="font-size:12px;padding:5px 10px;border:1px solid var(--br2);border-radius:var(--r);background:#fff;font-family:'Raleway',inherit">
+              <option value="">Todas as entidades</option>
+              <option value="Pauta">Pautas</option>
+              <option value="Lançamento">Lançamentos</option>
+              <option value="Reembolso">Reembolsos</option>
+              <option value="Pagamento">Pagamentos</option>
+            </select>
+            <select id="lf-acao" onchange="renderLogs()" style="font-size:12px;padding:5px 10px;border:1px solid var(--br2);border-radius:var(--r);background:#fff;font-family:'Raleway',inherit">
+              <option value="">Todas as ações</option>
+              <option value="criou">Criou</option>
+              <option value="editou">Editou</option>
+              <option value="deletou">Deletou</option>
+              <option value="aprovou">Aprovou</option>
+              <option value="rejeitou">Rejeitou</option>
+              <option value="marcou pago">Marcou pago</option>
+              <option value="desmarcou pago">Desmarcou pago</option>
+            </select>
+            <button onclick="carregarLogs()" style="font-size:12px;padding:5px 12px;border:1px solid var(--br2);border-radius:var(--r);background:#fff;cursor:pointer;font-family:'Raleway',inherit">↺ Atualizar</button>
+          </div>
+          <div id="logs-cont"><div class="empty"><p>Carregando...</p></div></div>
+        </div>
         <div id="pg-pautas" class="page">
           <div id="msg-p"></div>
           <div class="ph"><h2>Pautas</h2><p>Gerencie as pautas do mês.</p></div>
@@ -630,11 +657,11 @@ async function sbSetMes(mes,status){var r=status==='aberto'?await SB.from('meses
 
 async function lancar(){var col=document.getElementById('fl-col').value.trim();var tip=document.getElementById('fl-tip').value;var proj=document.getElementById('fl-proj').value.trim();var val=parseFloat(document.getElementById('fl-val').value);var mes=document.getElementById('fl-mes').value;if(!col){showMsg('msg-l','Informe o colaborador.','err');return;}if(!proj){showMsg('msg-l','Informe o projeto.','err');return;}if(!val||val<=0){showMsg('msg-l','Valor inv\u00e1lido.','err');return;}if(!mes){showMsg('msg-l','Informe o m\u00eas.','err');return;}if(MS[mes]==='fechado'){showMsg('msg-l','Este m\u00eas est\u00e1 fechado.','err');return;}var item={id:uid(),colaborador:col,tipo:tip,projeto:proj,valor:val,mes:mes,cliente:'',cidade:'',origem:'manual',sheetsKey:'',criadoEm:new Date().toISOString()};D.unshift(item);populateFiltros();renderLanc();document.getElementById('fl-proj').value='';document.getElementById('fl-val').value='';setSync('spin','Salvando...');try{await sbInsert(item);setSync('ok','Salvo');showMsg('msg-l','Lan\u00e7amento adicionado!','ok');}catch(e){D=D.filter(function(d){return d.id!==item.id;});populateFiltros();renderLanc();setSync('err','Erro');showMsg('msg-l','Erro: '+e.message,'err');}}
 async function lancarReemb(){var col=document.getElementById('fr-col').value.trim();var desc=document.getElementById('fr-desc').value.trim();var val=parseFloat(document.getElementById('fr-val').value);var mes=document.getElementById('fr-mes').value;if(!col){showMsg('msg-r','Informe o colaborador.','err');return;}if(!desc){showMsg('msg-r','Informe a descri\u00e7\u00e3o.','err');return;}if(!val||val<=0){showMsg('msg-r','Valor inv\u00e1lido.','err');return;}if(!mes){showMsg('msg-r','Informe o m\u00eas.','err');return;}if(MS[mes]==='fechado'){showMsg('msg-r','M\u00eas fechado.','err');return;}var item={id:uid(),colaborador:col,tipo:'Reembolso',projeto:desc,valor:val,mes:mes,cliente:'',cidade:'',origem:'manual',sheetsKey:'',criadoEm:new Date().toISOString()};D.unshift(item);populateFiltros();renderReemb();document.getElementById('fr-desc').value='';document.getElementById('fr-val').value='';setSync('spin','Salvando...');try{await sbInsert(item);setSync('ok','Salvo');showMsg('msg-r','Reembolso adicionado!','ok');}catch(e){D=D.filter(function(d){return d.id!==item.id;});populateFiltros();renderReemb();setSync('err','Erro');showMsg('msg-r','Erro: '+e.message,'err');}}
-async function deletar(id){if(!confirm('Remover este lan\u00e7amento?'))return;var bk=D.slice();D=D.filter(function(d){return d.id!==id;});populateFiltros();renderAtivePage();try{await sbDelete(id);}catch(e){D=bk;populateFiltros();renderAtivePage();showMsg('msg-l','Erro: '+e.message,'err');}}
+async function deletar(id){if(!confirm('Remover este lan\u00e7amento?'))return;var bk=D.slice();D=D.filter(function(d){return d.id!==id;});populateFiltros();renderAtivePage();var dl=D.filter(function(x){return x.id===id;})[0];try{await sbDelete(id);if(dl)registrarLog('deletou','Lan\u00e7amento',id,dl.colaborador+' — '+dl.projeto);}catch(e){D=bk;populateFiltros();renderAtivePage();showMsg('msg-l','Erro: '+e.message,'err');}}
 function abrirEdit(id){EID=id;var d=null;for(var i=0;i<D.length;i++){if(D[i].id===id){d=D[i];break;}}if(!d)return;document.getElementById('edit-col').value=d.colaborador||'';document.getElementById('edit-tip').value=d.tipo||'Entrega';document.getElementById('edit-proj').value=d.projeto||'';document.getElementById('edit-val').value=d.valor||'';document.getElementById('edit-mes').value=d.mes||'';document.getElementById('edit-bg').classList.add('show');}
 function fecharEditDir(){document.getElementById('edit-bg').classList.remove('show');EID=null;}
 function fecharEdit(e){if(!e||e.target===document.getElementById('edit-bg'))fecharEditDir();}
-async function salvarEdit(){if(!EID)return;var u={colaborador:document.getElementById('edit-col').value.trim(),tipo:document.getElementById('edit-tip').value,projeto:document.getElementById('edit-proj').value.trim(),valor:parseFloat(document.getElementById('edit-val').value)||0,mes:document.getElementById('edit-mes').value};if(!u.colaborador||!u.projeto||!u.valor||!u.mes){alert('Preencha todos os campos.');return;}var idx=-1;for(var i=0;i<D.length;i++){if(D[i].id===EID){idx=i;break;}}if(idx<0)return;var bk=JSON.parse(JSON.stringify(D[idx]));var id=EID;Object.assign(D[idx],u);populateFiltros();renderAtivePage();fecharEditDir();setSync('spin','Salvando...');try{await sbUpdate(id,u);setSync('ok','Salvo');}catch(e){Object.assign(D[idx],bk);populateFiltros();renderAtivePage();setSync('err','Erro');alert('Erro: '+e.message);}}
+async function salvarEdit(){if(!EID)return;var u={colaborador:document.getElementById('edit-col').value.trim(),tipo:document.getElementById('edit-tip').value,projeto:document.getElementById('edit-proj').value.trim(),valor:parseFloat(document.getElementById('edit-val').value)||0,mes:document.getElementById('edit-mes').value};if(!u.colaborador||!u.projeto||!u.valor||!u.mes){alert('Preencha todos os campos.');return;}var idx=-1;for(var i=0;i<D.length;i++){if(D[i].id===EID){idx=i;break;}}if(idx<0)return;var bk=JSON.parse(JSON.stringify(D[idx]));var id=EID;Object.assign(D[idx],u);populateFiltros();renderAtivePage();fecharEditDir();setSync('spin','Salvando...');try{await sbUpdate(id,u);setSync('ok','Salvo');await registrarLog('editou','Lançamento',id,D[idx].colaborador+' — '+D[idx].projeto+' '+fv(D[idx].valor));}catch(e){Object.assign(D[idx],bk);populateFiltros();renderAtivePage();setSync('err','Erro');alert('Erro: '+e.message);}}
 async function toggleMes(m){var fechado=MS[m]==='fechado';if(!confirm((fechado?'Reabrir':'Fechar')+' o m\u00eas '+fml(m)+'?'))return;var prev=MS[m];if(fechado)delete MS[m];else MS[m]='fechado';renderMeses();try{await sbSetMes(m,fechado?'aberto':'fechado');showMsg('msg-m','M\u00eas atualizado.','ok');}catch(e){MS[m]=prev;if(!prev)delete MS[m];renderMeses();showMsg('msg-m','Erro: '+e.message,'err');}}
 
 function onFileSelect(e){var f=e.target.files[0];if(!f)return;SEL_FILE=f;document.getElementById('up-placeholder').style.display='none';document.getElementById('up-selected').style.display='block';document.getElementById('up-filename').textContent=f.name;document.getElementById('upload-area').classList.add('has-file');}
@@ -676,6 +703,7 @@ async function aprovarGasto(id){
   if(!g)return;
   var r=await SB.from('gastos').update({status:'aprovado',atualizado_em:new Date().toISOString()}).eq('id',id);
   if(r.error){showMsg('msg-r','Erro: '+r.error.message,'err');return;}
+  if(g)await registrarLog('aprovou','Reembolso',id,'Aprovou reembolso de '+(g.colaborador||'')+' — '+fv(g.valor||0));
   var chave='gasto_'+id;
   var jaExiste=D.some(function(d){return d.sheetsKey===chave;});
   if(!jaExiste){
@@ -695,6 +723,8 @@ async function confirmarRejeitar(){
   var r=await SB.from('gastos').update({status:'rejeitado',observacao:obs,atualizado_em:new Date().toISOString()}).eq('id',REJEITAR_ID);
   if(r.error){alert('Erro: '+r.error.message);return;}
   for(var i=0;i<GASTOS_ADMIN.length;i++){if(GASTOS_ADMIN[i].id===REJEITAR_ID){GASTOS_ADMIN[i].status='rejeitado';GASTOS_ADMIN[i].observacao=obs;break;}}
+  var grj=GASTOS_ADMIN.filter(function(x){return x.id===REJEITAR_ID;})[0];
+  if(grj)await registrarLog('rejeitou','Reembolso',REJEITAR_ID,'Rejeitou reembolso de '+(grj.colaborador||'')+' — '+fv(grj.valor||0));
   fecharRejeitarDir();renderReemb();showMsg('msg-r','Gasto rejeitado.','warn');}
 
 async function verAnexo(path){var res=await SB.storage.from('notas-fiscais').createSignedUrl(path,120);if(res.error){alert('Erro ao abrir: '+res.error.message);return;}window.open(res.data.signedUrl,'_blank');}
@@ -828,7 +858,7 @@ function goPage(id){
   var pg=document.getElementById('pg-'+id);var nb=document.getElementById('nb-'+id);
   if(pg)pg.classList.add('active');if(nb)nb.classList.add('active');
   PA=id;renderAtivePage();}
-function renderAtivePage(){if(PA==='home')renderHome();else if(PA==='pautas'){renderPautasAdmin();}else if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='colaboradores')renderColabs();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
+function renderAtivePage(){if(PA==='home')renderHome();else if(PA==='logs'){carregarLogs();}else if(PA==='pautas'){renderPautasAdmin();}else if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='colaboradores')renderColabs();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
 function tipBadge(t){if(t==='Di\u00e1ria'||t==='Diaria')return'<span class="badge b-di">Di\u00e1ria</span>';if(t==='Reembolso')return'<span class="badge b-re">Reembolso</span>';return'<span class="badge b-en">Entrega</span>';}
 function actBtns(id,fechado){if(fechado)return'<span style="font-size:12px;color:var(--t3)">[fechado]</span>';return'<div style="display:flex;gap:3px"><button class="btn btn-ghost btn-sm" data-edit="'+id+'" style="padding:4px 9px;color:var(--t2)">Editar</button><button class="btn btn-ghost btn-sm" data-del="'+id+'" style="padding:4px 9px;color:var(--rd)">x</button></div>';}
 function bindActions(el){el.querySelectorAll('[data-edit]').forEach(function(b){b.addEventListener('click',function(){abrirEdit(b.getAttribute('data-edit'));});});el.querySelectorAll('[data-del]').forEach(function(b){b.addEventListener('click',function(){deletar(b.getAttribute('data-del'));});});}
@@ -870,40 +900,6 @@ function renderHome(){
   h+='<div class="sc"><div class="lbl">Pagamentos</div><div class="val" style="color:var(--gr)">'+pagos+'/'+nColab+'</div><div class="sub">colaboradores pagos</div></div>';
   h+='</div>';
 
-  // Folha do mes - status de pagamento
-  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
-  h+='<div class="sec" style="margin-bottom:0">Pagamentos — '+fml(mesAtual)+'</div>';
-  h+='<select onchange="renderHome()" id="home-mes" style="font-size:12px;padding:5px 9px;width:auto">';
-  meses.forEach(function(m){h+='<option value="'+m+'"'+(m===mesAtual?' selected':'')+'>'+fml(m)+'</option>';});
-  h+='</select></div>';
-
-  var mesSel=mesAtual; // will update on change
-  var byC={};
-  fAtual.forEach(function(d){
-    var key=normName(d.colaborador);
-    if(!byC[key])byC[key]={nome:d.colaborador,total:0};
-    byC[key].total+=d.valor;
-  });
-  var cols=Object.keys(byC).sort();
-  if(cols.length){
-    h+='<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th style="text-align:right">Total a pagar</th><th style="text-align:center">Status</th><th></th></tr></thead><tbody>';
-    cols.forEach(function(k){
-      var nome=byC[k].nome,total=byC[k].total;
-      var pago=false;
-      for(var pk in PAGAMENTOS){if(normName(pk.split('__')[0])===k&&pk.split('__')[1]===mesAtual){pago=PAGAMENTOS[pk]===true;break;}}
-      h+='<tr'+(pago?' style="background:var(--grl)"':'')+'>';
-      h+='<td><div style="display:flex;align-items:center;gap:8px"><div class="av">'+ini(nome)+'</div>'+nome+'</div></td>';
-      h+='<td style="font-weight:700;font-size:15px;color:var(--or);text-align:right">'+fv(total)+'</td>';
-      h+='<td style="text-align:center">'+(pago?'<span class="badge b-aprov">Pago</span>':'<span class="badge b-pend">Pendente</span>')+'</td>';
-      h+='<td style="text-align:center"><button class="btn btn-sm '+(pago?'':'btn-or')+'" onclick="togglePagamento('+JSON.stringify(nome)+','+JSON.stringify(mesAtual)+')">'+(pago?'Desmarcar':'Marcar pago')+'</button></td>';
-      h+='</tr>';
-    });
-    var totalGeral=cols.reduce(function(s,k){return s+byC[k].total;},0);
-    h+='<tr style="background:var(--bg)"><td style="font-weight:700;padding:10px 13px">Total</td><td style="font-weight:700;font-size:16px;color:var(--or);text-align:right;padding:10px 13px">'+fv(totalGeral)+'</td><td></td><td></td></tr>';
-    h+='</tbody></table></div>';
-  } else {
-    h+='<div class="empty"><p>Nenhum lançamento para '+fml(mesAtual)+'.</p></div>';
-  }
   el.innerHTML=h;
 }
 
@@ -915,6 +911,7 @@ async function togglePagamento(colaborador,mes){
   renderHome();
   var r=await SB.from('pagamentos').upsert({id:normName(colaborador).replace(/[^a-z0-9]/g,'_')+'_'+mes,colaborador:colaborador,mes:mes,pago:novo,pago_em:novo?new Date().toISOString():''});
   if(r.error){PAGAMENTOS[key]=atual;renderHome();alert('Erro: '+r.error.message);}
+  else await registrarLog(novo?'marcou pago':'desmarcou pago','Pagamento',key,colaborador+' — '+fm(mes));
 }
 
 function renderLanc(){
@@ -1114,29 +1111,102 @@ function renderProjs() {
 
 
 function renderFolha(){
-  var mes=document.getElementById('fil-mf').value,el=document.getElementById('folha-cont');
+  var mes=document.getElementById('fil-mf').value;
+  var el=document.getElementById('folha-cont');
   if(!mes){el.innerHTML='<div class="empty"><p>Selecione um m\u00eas.</p></div>';return;}
   var f=D.filter(function(d){return d.mes===mes;});
-  if(!f.length){el.innerHTML='<div class="empty"><p>Nenhum lan\u00e7amento para '+fml(mes)+'.</p></div>';return;}
-  var byCraw={};f.forEach(function(d){var key=normName(d.colaborador);if(!byCraw[key])byCraw[key]={nome:d.colaborador,items:[]};byCraw[key].items.push(d);});
-  var byC={};Object.keys(byCraw).forEach(function(k){byC[byCraw[k].nome]=byCraw[k].items;});
-  var cols=Object.keys(byC).sort(),total=f.reduce(function(s,r){return s+r.valor;},0),fec=MS[mes]==='fechado';
-  var h='<div class="folha-wrap"><div class="folha-head"><h3 style="font-size:16px;font-weight:700">'+fml(mes)+'</h3><span style="font-size:13px;opacity:.8">'+cols.length+' colaboradores'+(fec?' - Fechado':'')+'</span></div>';
-  cols.forEach(function(c){
-    var regs=byC[c],tot=regs.reduce(function(s,r){return s+r.valor;},0);
-    var en=regs.filter(function(r){return r.tipo==='Entrega';});var di=regs.filter(function(r){return r.tipo==='Di\u00e1ria'||r.tipo==='Diaria';});var rb=regs.filter(function(r){return r.tipo==='Reembolso';});
-    var det=[];if(en.length)det.push(en.length+' entrega'+(en.length>1?'s':''));if(di.length)det.push(di.length+' di\u00e1ria'+(di.length>1?'s':''));if(rb.length)det.push(rb.length+' reembolso'+(rb.length>1?'s':''));
-    var eid='fd-'+c.replace(/[^a-z0-9]/gi,'_');var detRows='';
-    if(en.length){detRows+='<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:8px 20px 3px">Entregas</div>';en.forEach(function(r){detRows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 20px 6px 30px;font-size:13px;border-bottom:1px solid var(--br)"><span style="color:var(--t2)">'+r.projeto+'</span><span style="color:var(--gr);font-weight:600">'+fv(r.valor)+'</span></div>';});}
-    if(di.length){detRows+='<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:8px 20px 3px">Di\u00e1rias</div>';di.forEach(function(r){detRows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 20px 6px 30px;font-size:13px;border-bottom:1px solid var(--br)"><span style="color:var(--t2)">'+r.projeto+'</span><span style="color:var(--gr);font-weight:600">'+fv(r.valor)+'</span></div>';});}
-    if(rb.length){detRows+='<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:8px 20px 3px">Reembolsos</div>';rb.forEach(function(r){detRows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 20px 6px 30px;font-size:13px;border-bottom:1px solid var(--br)"><span style="color:var(--t2)">'+r.projeto+'</span><span style="color:var(--pu);font-weight:600">'+fv(r.valor)+'</span></div>';});}
-    h+='<div class="folha-row" onclick="toggleFD(\''+eid+'\')" style="padding:13px 18px"><div><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:2px"><div class="av">'+ini(c)+'</div>'+c+'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);transition:transform .2s;display:inline-block;margin-left:2px">v</span></div><div style="font-size:12px;color:var(--t2);padding-left:35px">'+det.join(' - ')+'</div></div><div style="font-size:16px;font-weight:700;color:var(--gr)">'+fv(tot)+'</div></div><div id="'+eid+'" style="display:none;background:#FAFAF8;border-top:1px solid var(--br)">'+detRows+'</div>';
-  });
-  h+='<div class="folha-total"><span style="font-weight:600">Total da folha</span><span style="font-size:18px;font-weight:700;color:var(--gr)">'+fv(total)+'</span></div></div>';
-  el.innerHTML=h;}
+  if(!f.length){el.innerHTML='<div class="empty"><p>Sem lan\u00e7amentos para '+fm(mes)+'.</p></div>';return;}
+  var fec=MS[mes]==='fechado';
 
-function toggleFD(id){var el=document.getElementById(id),arr=document.getElementById('arr-'+id);if(!el)return;var open=el.style.display==='block';el.style.display=open?'none':'block';if(arr)arr.style.transform=open?'rotate(0deg)':'rotate(180deg)';}
-function exportCSV(){var mes=document.getElementById('fil-mf').value,mesV=mes||(getMeses()[0]||'');if(!mesV){alert('Nenhum dado.');return;}var f=D.filter(function(d){return d.mes===mesV;});var csv='\uFEFFColaborador,Tipo,Projeto,Cliente,Cidade,Mes,Valor\n';f.forEach(function(d){csv+='"'+d.colaborador+'","'+d.tipo+'","'+d.projeto+'","'+(d.cliente||'')+'","'+(d.cidade||'')+'","'+fml(d.mes)+'","'+d.valor.toFixed(2)+'"\n';});csv+='\n"TOTAL","","","","","","'+f.reduce(function(s,r){return s+r.valor;},0).toFixed(2)+'"\n';var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='folha_'+mesV+'.csv';a.click();}
+  // Group by normalized collaborator name
+  var byC={};
+  f.forEach(function(d){
+    var key=normName(d.colaborador);
+    if(!byC[key])byC[key]={nome:d.colaborador,items:[],total:0};
+    byC[key].items.push(d);
+    byC[key].total+=d.valor;
+  });
+
+  var totalGeral=f.reduce(function(s,d){return s+d.valor;},0);
+  var pagoCount=0;
+  var cols=Object.keys(byC).sort();
+  cols.forEach(function(k){
+    for(var pk in PAGAMENTOS){
+      if(normName(pk.split('__')[0])===k&&pk.split('__')[1]===mes&&PAGAMENTOS[pk]===true){pagoCount++;break;}
+    }
+  });
+
+  var h='<div class="tbl-wrap"><table><thead><tr>'
+    +'<th>Colaborador</th><th>Tipo</th><th>Projeto</th>'
+    +'<th style="text-align:right">Valor</th>'
+    +'<th style="text-align:center">Pago</th>'
+    +'<th></th>'
+    +'</tr></thead><tbody>';
+
+  cols.forEach(function(k){
+    var nome=byC[k].nome;
+    var total=byC[k].total;
+    var pago=false;
+    for(var pk in PAGAMENTOS){if(normName(pk.split('__')[0])===k&&pk.split('__')[1]===mes){pago=PAGAMENTOS[pk]===true;break;}}
+    var rowBg=pago?'background:var(--grl)':'';
+
+    // Collaborator header row
+    h+='<tr style="'+rowBg+';border-top:2px solid var(--br)">'
+      +'<td colspan="2" style="padding:10px 13px"><div style="display:flex;align-items:center;gap:8px"><div class="av">'+ini(nome)+'</div><span style="font-weight:700">'+nome+'</span></div></td>'
+      +'<td></td>'
+      +'<td style="padding:10px 13px;font-weight:700;font-size:15px;color:var(--or);text-align:right">'+fv(total)+'</td>'
+      +'<td style="padding:10px 13px;text-align:center">'
+      +(pago?'<span class="badge b-aprov" style="font-size:10px">PAGO</span>':'<span class="badge b-pend" style="font-size:10px">PENDENTE</span>')
+      +'</td>'
+      +'<td style="padding:10px 13px;text-align:center">'
+      +'<button class="btn btn-sm '+(pago?'':'btn-or')+'" onclick="togglePagamento('+JSON.stringify(nome)+','+JSON.stringify(mes)+')" style="font-size:11px;padding:3px 10px">'
+      +(pago?'Desmarcar':'Marcar pago')+'</button>'
+      +'</td>'
+      +'</tr>';
+
+    // Individual entries
+    byC[k].items.forEach(function(d){
+      h+='<tr style="'+rowBg+'">'
+        +'<td style="padding:6px 13px 6px 40px;font-size:12px;color:var(--t2)"></td>'
+        +'<td style="padding:6px 13px">'+tipBadge(d.tipo)+'</td>'
+        +'<td style="padding:6px 13px;font-size:12px;color:var(--t)">'+d.projeto+'</td>'
+        +'<td style="padding:6px 13px;text-align:right">'
+        +'<input type="number" value="'+d.valor+'" min="0" step="0.01" '
+        +(fec?'disabled':'onchange="atualizarValorFolha(\''+d.id+'\',this.value)"')
+        +' style="width:90px;text-align:right;font-size:13px;font-weight:600;color:var(--or);border:1px solid var(--br2);border-radius:4px;padding:3px 6px;background:'+(fec?'var(--bg)':'#fff')+'">'
+        +'</td>'
+        +'<td></td>'
+        +'<td style="padding:6px 13px">'+actBtns(d.id,fec)+'</td>'
+        +'</tr>';
+    });
+  });
+
+  h+='<tr style="background:var(--bg);border-top:2px solid var(--br)">'
+    +'<td colspan="3" style="padding:12px 13px;font-weight:700">Total geral — '+fml(mes)+'</td>'
+    +'<td style="padding:12px 13px;font-weight:700;font-size:16px;color:var(--or);text-align:right">'+fv(totalGeral)+'</td>'
+    +'<td style="padding:12px 13px;text-align:center;font-size:12px;color:var(--t2)">'+pagoCount+'/'+cols.length+' pagos</td>'
+    +'<td></td>'
+    +'</tr>';
+
+  el.innerHTML=h+'</tbody></table></div>';
+  bindActions(el);
+}
+
+async function atualizarValorFolha(id,val){
+  var valor=parseFloat(val)||0;
+  var d=D.filter(function(x){return x.id===id;})[0];
+  if(!d)return;
+  var antigo=d.valor;
+  d.valor=valor;
+  try{
+    await sbUpdate(id,{valor:valor});
+    await registrarLog('editou','Lançamento',id,d.colaborador+' — '+d.projeto+' '+fv(antigo)+' → '+fv(valor));
+  }catch(e){
+    d.valor=antigo;
+    alert('Erro ao salvar: '+e.message);
+  }
+}
+
 
 function renderMeses(){
   var todos={};getMeses().forEach(function(m){todos[m]=1;});Object.keys(MS).forEach(function(m){todos[m]=1;});todos=Object.keys(todos).sort().reverse();
@@ -1326,7 +1396,6 @@ function renderPautasAdmin(){
       +'<td style="padding:12px 16px;font-family:\'Raleway\',sans-serif">'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
       +'<td style="padding:8px 10px"><div style="display:flex;gap:3px">'
       +'<button class="btn btn-ghost btn-sm" onclick="abrirEditPautaById(this)" data-pid="'+p.id+'" style="padding:3px 7px;color:var(--t2)">✎</button>'
-      +'<button class="btn btn-ghost btn-sm" data-hpid="'+p.id+'" style="padding:3px 7px;color:var(--t3)">&#9201;</button>'
       +'<button class="btn btn-ghost btn-sm" data-dp="'+p.id+'" style="padding:3px 7px;color:var(--rd)">×</button>'
       +'</div></td></tr>';
   });
@@ -1334,11 +1403,7 @@ function renderPautasAdmin(){
   h+='<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
   el.innerHTML=h;
   el.querySelectorAll('[data-dp]').forEach(function(b){b.addEventListener('click',function(){deletarPauta(b.getAttribute('data-dp'));});});
-  el.querySelectorAll('[data-hpid]').forEach(function(b){b.addEventListener('click',function(){
-    var pid=b.getAttribute('data-hpid');
-    var p=PAUTAS.filter(function(x){return x.id===pid;})[0];
-    showHistoricoPauta(pid,p?chipsFromStr(p.campanha).join(' + '):'');
-  });});
+
   document.addEventListener('click',function(){
     document.querySelectorAll('.pf-dropdown.open').forEach(function(d){d.classList.remove('open');});
   },{once:true});
@@ -1590,6 +1655,7 @@ async function salvarPauta(){
     var r2=await SB.from('pautas').insert(insert);
     if(r2.error){alert('Erro: '+r2.error.message);return;}
     await criarLancamentosDePauta(newId,insert);
+    await registrarLog('criou','Pauta',newId,'Criou pauta: '+campanha+' — '+cidade);
   }
   fecharPautaModalDir();
   await carregarPautas();
@@ -1605,7 +1671,89 @@ async function deletarPauta(id){
   var r=await SB.from('pautas').delete().eq('id',id);
   if(r.error){alert('Erro: '+r.error.message);return;}
   PAUTAS=PAUTAS.filter(function(p){return p.id!==id;});
+  await registrarLog('deletou','Pauta',id,'Removeu pauta');
   renderPautasAdmin();populateFiltros();renderAtivePage();
+}
+
+
+// ── ACTIVITY LOG ──────────────────────────────────────────────────────────────
+var LOGS_DATA = [];
+
+async function registrarLog(acao, entidade, entidadeId, descricao){
+  try {
+    var usuario = CURRENT_USER ? CURRENT_USER.email.split('@')[0] : 'sistema';
+    await SB.from('activity_log').insert({
+      id: uid(), usuario: usuario, acao: acao,
+      entidade: entidade, entidade_id: entidadeId||'',
+      descricao: descricao||'', criado_em: new Date().toISOString()
+    });
+  } catch(e){ console.warn('Log error:', e.message); }
+}
+
+async function carregarLogs(){
+  var el = document.getElementById('logs-cont');
+  if(!el) return;
+  el.innerHTML = '<div class="empty"><p>Carregando...</p></div>';
+  var r = await SB.from('activity_log').select('*').order('criado_em',{ascending:false}).limit(300);
+  if(r.error){ el.innerHTML='<div class="empty"><p>Erro ao carregar logs.</p></div>'; return; }
+  LOGS_DATA = r.data||[];
+  renderLogs();
+}
+
+function renderLogs(){
+  var el = document.getElementById('logs-cont');
+  if(!el) return;
+  var fEnt = (document.getElementById('lf-entidade')||{}).value||'';
+  var fAcao = (document.getElementById('lf-acao')||{}).value||'';
+  var f = LOGS_DATA.filter(function(l){
+    if(fEnt && l.entidade !== fEnt) return false;
+    if(fAcao && l.acao !== fAcao) return false;
+    return true;
+  });
+  if(!f.length){ el.innerHTML='<div class="empty"><p>Nenhum log encontrado.</p></div>'; return; }
+
+  function acaoBadge(a){
+    var map = {
+      'criou':'#DCFCE7|#15803D','editou':'#EFF6FF|#1D4ED8',
+      'deletou':'#FEE2E2|#B91C1C','aprovou':'#DCFCE7|#15803D',
+      'rejeitou':'#FEE2E2|#B91C1C','marcou pago':'#DCFCE7|#15803D',
+      'desmarcou pago':'#FEF3C7|#92400E','submeteu':'#F3E8FF|#7C3AED'
+    };
+    var c = map[a]||'#F3F4F6|#374151';
+    var parts = c.split('|');
+    return '<span style="font-size:10px;font-weight:700;background:'+parts[0]+';color:'+parts[1]+';padding:2px 8px;border-radius:20px;text-transform:uppercase">'+a+'</span>';
+  }
+  function entBadge(e){
+    var map = {'Pauta':'#4B7F52','Lançamento':'#C2762F','Reembolso':'#6B3FA0','Pagamento':'#1D6FA4'};
+    var bg = map[e]||'#6B7280';
+    return '<span style="font-size:10px;font-weight:700;background:'+bg+';color:#fff;padding:2px 8px;border-radius:20px">'+e+'</span>';
+  }
+
+  var h = '<div style="border:1px solid #E5E5E2;border-radius:10px;overflow:hidden">'
+    + '<table style="width:100%;border-collapse:collapse;font-size:12px">'
+    + '<thead><tr style="background:#FAFAF8;border-bottom:2px solid #E5E5E2">'
+    + '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Data/hora</th>'
+    + '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.5px">Usuário</th>'
+    + '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.5px">Ação</th>'
+    + '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.5px">Entidade</th>'
+    + '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.5px">Descrição</th>'
+    + '</tr></thead><tbody>';
+
+  f.forEach(function(l, i){
+    var dt = new Date(l.criado_em);
+    var dtStr = dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    var bg = i%2===0 ? '#fff' : '#FAFAF8';
+    h += '<tr style="background:'+bg+';border-bottom:1px solid #F0F0EE">'
+      + '<td style="padding:10px 14px;color:#6B7280;white-space:nowrap;font-variant-numeric:tabular-nums">'+dtStr+'</td>'
+      + '<td style="padding:10px 14px;font-weight:600;color:#374151">'+( l.usuario||'—')+'</td>'
+      + '<td style="padding:10px 14px">'+acaoBadge(l.acao)+'</td>'
+      + '<td style="padding:10px 14px">'+entBadge(l.entidade)+'</td>'
+      + '<td style="padding:10px 14px;color:#374151;max-width:400px">'+( l.descricao||'—')+'</td>'
+      + '</tr>';
+  });
+  el.innerHTML = h + '</tbody></table></div>';
+  var ct = document.getElementById('msg-logs');
+  if(ct) ct.innerHTML = '<div style="font-size:11px;color:#9CA3AF;margin-bottom:8px">'+f.length+' registro(s)'+( fEnt||fAcao?' (filtrado)':'')+'</div>';
 }
 
 function mesAtualStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
@@ -1707,6 +1855,284 @@ document.addEventListener('DOMContentLoaded',function(){
   initAuth();});
 
 </script>
+
+<!-- PAUTA MODAL -->
+<div id="pauta-modal-bg" class="modal-bg" onclick="fecharPautaModal(event)">
+  <div class="modal pauta-modal" style="max-width:560px">
+    <div class="modal-head" style="background:var(--or)"><span id="pm-title" style="font-size:15px;font-weight:700">Nova pauta</span></div>
+    <div class="modal-body">
+      <div class="field"><label>Cliente</label><input id="pm-cliente" placeholder="Ex: Eletromidia"></div>
+      <div class="field"><label>Data</label><input id="pm-data" placeholder="Ex: 01/07"></div>
+      <div class="field-full field"><label>Campanha (Enter para adicionar)</label><div id="pm-campanha-cont"></div></div>
+      <div class="field"><label>Cidade</label>
+        <select id="pm-cidade" class="cidade-sel" style="max-width:none;width:100%">
+          <option>Salvador</option><option>São Paulo</option><option>Rio de Janeiro</option>
+          <option>Belo Horizonte</option><option>Curitiba</option><option>Floripa</option>
+          <option>Fortaleza</option><option>Recife</option><option>Porto Alegre</option>
+          <option>Brasília</option><option>Belém</option><option>Outras</option>
+        </select>
+      </div>
+      <div class="field"><label>Status</label>
+        <select id="pm-status" style="width:100%">
+          <option value="PRODUÇÃO">PRODUÇÃO</option>
+          <option value="EDIT">EDIT</option>
+          <option value="ENTREGUE">ENTREGUE</option>
+        </select>
+      </div>
+      <div class="field-full field"><label>Equipe (Enter para adicionar)</label><div id="pm-equipe-cont"></div></div>
+      <div class="field-full field"><label>Roteiro (URL)</label>
+        <input id="pm-roteiro" placeholder="https://...">
+        <div style="margin-top:6px;display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="pm-rot-pend" style="width:auto">
+          <label for="pm-rot-pend" style="font-size:12px;margin-bottom:0;display:inline">Marcar como pendente (amarelo)</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="fecharPautaModalDir()">Cancelar</button>
+      <button class="btn btn-or" onclick="salvarPauta()">Salvar</button>
+    </div>
+  </div>
+</div>
+</body>
+</html
+        <div id="pg-home" class="page active">
+          <div id="home-cont"></div>
+        </div>
+        <div id="pg-lancar" class="page">
+          <div id="msg-l"></div>
+          <div class="ph"><h2>Novo lançamento</h2><p>Registre uma entrega ou diária de um colaborador.</p></div>
+          <div class="card" style="padding:16px;margin-bottom:20px">
+            <div class="frow">
+              <div class="field"><label>Colaborador</label><input id="fl-col" list="dl-col" autocomplete="off" placeholder="Nome"><datalist id="dl-col"></datalist></div>
+              <div class="field" style="max-width:110px"><label>Tipo</label><select id="fl-tip"><option value="Entrega">Entrega</option><option value="Diária">Diária</option><option value="Edição">Edição</option><option value="Motion">Motion</option></select></div>
+              <div class="field"><label>Projeto / Campanha</label><input id="fl-proj" list="dl-proj" autocomplete="off" placeholder="Nome do projeto"><datalist id="dl-proj"></datalist></div>
+              <div class="field" style="max-width:110px"><label>Valor (R$)</label><input type="number" id="fl-val" min="0" step="0.01" placeholder="0,00"></div>
+              <div class="field" style="max-width:145px"><label>Mês</label><input type="month" id="fl-mes"></div>
+              <div style="align-self:flex-end"><button class="btn btn-or" onclick="lancar()">+ Adicionar</button></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:8px">
+            <div class="sec" style="margin-bottom:0">Lançamentos</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <select id="fil-col" onchange="renderLanc()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos colaboradores</option></select>
+              <select id="fil-ml" onchange="renderLanc()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os meses</option></select>
+              <select id="fil-tl" onchange="renderLanc()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os tipos</option><option value="Entrega">Entrega</option><option value="Diária">Diária</option><option value="Edição">Edição</option><option value="Motion">Motion</option></select>
+            </div>
+          </div>
+          <div class="tbl-wrap" id="tbl-lanc"></div>
+        </div>
+
+        <div id="pg-reembolsos" class="page">
+          <div id="msg-r"></div>
+          <div class="ph"><h2>Reembolsos</h2><p>Valores a reembolsar que entram no total da folha.</p></div>
+          <div class="card" style="padding:16px;margin-bottom:20px">
+            <div class="frow">
+              <div class="field"><label>Colaborador</label><input id="fr-col" list="dl-col" autocomplete="off" placeholder="Nome"></div>
+              <div class="field"><label>Descrição</label><input id="fr-desc" placeholder="Ex: Uber, Hotel..."></div>
+              <div class="field" style="max-width:110px"><label>Valor (R$)</label><input type="number" id="fr-val" min="0" step="0.01" placeholder="0,00"></div>
+              <div class="field" style="max-width:145px"><label>Mês</label><input type="month" id="fr-mes"></div>
+              <div style="align-self:flex-end"><button class="btn btn-or" onclick="lancarReemb()">+ Adicionar</button></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:8px">
+            <div class="sec" style="margin-bottom:0">Reembolsos</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <select id="fil-rcol" onchange="renderReemb()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos colaboradores</option></select>
+              <select id="fil-rmes" onchange="renderReemb()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os meses</option></select>
+            </div>
+          </div>
+          <div id="tbl-reemb"></div>
+        </div>
+
+        <div id="pg-colaboradores" class="page">
+          <div class="ph"><h2>Colaboradores</h2><p>Diárias, entregas e reembolsos por pessoa.</p></div>
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            <select id="fil-mc" onchange="renderColabs()" style="width:auto"><option value="">Todos os meses</option></select>
+            <input id="fil-nc" placeholder="Buscar por nome..." oninput="renderColabs()" style="max-width:190px">
+          </div>
+          <div id="colabs-cont"></div>
+        </div>
+
+        <div id="pg-projetos" class="page">
+          <div class="ph"><h2>Projetos</h2><p>Campanhas agrupadas por projeto e cidade.</p></div>
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            <select id="fil-mp" onchange="renderProjs()" style="width:auto"><option value="">Todos os meses</option></select>
+            <select id="fil-cp" onchange="renderProjs()" style="width:auto"><option value="">Todos clientes</option></select>
+            <input id="fil-np" placeholder="Buscar campanha..." oninput="renderProjs()" style="max-width:190px">
+          </div>
+          <div id="projs-cont"></div>
+        </div>
+
+        <div id="pg-folha" class="page">
+          <div class="ph"><h2>Folha de Pagamento</h2><p>Consolidado mensal para fechamento.</p></div>
+          <div style="margin-bottom:16px"><select id="fil-mf" onchange="renderFolha()" style="width:auto;font-size:14px;padding:8px 13px"><option value="">Selecione um mês</option></select></div>
+          <div id="folha-cont"></div>
+        </div>
+
+        <div id="pg-logs" class="page">
+          <div class="ph"><h2>Logs de atividade</h2><p>Registro de tudo que foi feito e por quem.</p></div>
+          <div id="msg-logs"></div>
+          <div id="logs-filters" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+            <select id="lf-entidade" onchange="renderLogs()" style="font-size:12px;padding:5px 10px;border:1px solid var(--br2);border-radius:var(--r);background:#fff;font-family:'Raleway',inherit">
+              <option value="">Todas as entidades</option>
+              <option value="Pauta">Pautas</option>
+              <option value="Lançamento">Lançamentos</option>
+              <option value="Reembolso">Reembolsos</option>
+              <option value="Pagamento">Pagamentos</option>
+            </select>
+            <select id="lf-acao" onchange="renderLogs()" style="font-size:12px;padding:5px 10px;border:1px solid var(--br2);border-radius:var(--r);background:#fff;font-family:'Raleway',inherit">
+              <option value="">Todas as ações</option>
+              <option value="criou">Criou</option>
+              <option value="editou">Editou</option>
+              <option value="deletou">Deletou</option>
+              <option value="aprovou">Aprovou</option>
+              <option value="rejeitou">Rejeitou</option>
+              <option value="marcou pago">Marcou pago</option>
+              <option value="desmarcou pago">Desmarcou pago</option>
+            </select>
+            <button onclick="carregarLogs()" style="font-size:12px;padding:5px 12px;border:1px solid var(--br2);border-radius:var(--r);background:#fff;cursor:pointer;font-family:'Raleway',inherit">↺ Atualizar</button>
+          </div>
+          <div id="logs-cont"><div class="empty"><p>Carregando...</p></div></div>
+        </div>
+        <div id="pg-pautas" class="page">
+          <div id="msg-p"></div>
+          <div class="ph"><h2>Pautas</h2><p>Gerencie as pautas do mês.</p></div>
+          <div id="pautas-admin-cont"></div>
+          <div id="pauta-hist-cont" style="margin-top:20px"></div>
+        </div>
+        <div id="pg-meses" class="page">
+          <div id="msg-m"></div>
+          <div class="ph"><h2>Controle de Meses</h2><p>Feche um mês para proteger os dados.</p></div>
+          <div id="meses-cont"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EMPLOYEE -->
+<div id="emp-panel" style="display:none">
+  <div class="emp-shell">
+    <div class="emp-header">
+      <div class="emp-header-logo">
+        <img src="data:image/jpeg;base64,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" alt="Funway">
+        <span>Funway Control</span>
+      </div>
+      <button class="logout-btn" onclick="fazerLogout()">Sair</button>
+    </div>
+    <div class="emp-content">
+      <div style="display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--br)">
+        <button class="btn btn-ghost" id="emp-tab-reimb" onclick="switchEmpTab('reimb')" style="border-radius:0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px">Reembolsos</button>
+        <button class="btn btn-ghost" id="emp-tab-pautas" onclick="switchEmpTab('pautas')" style="border-radius:0">Pautas</button>
+      </div>
+      <div id="emp-reimb-cont">
+      <div id="msg-emp"></div>
+      <div class="ph"><h2>Reembolsos</h2><p>Envie comprovantes de reembolso ou gastos no cartão Funway.</p></div>
+      <div class="card" style="padding:18px;margin-bottom:24px">
+        <div class="sec">Novo gasto</div>
+        <div class="frow">
+          <div class="field"><label>Nome do funcionário</label><input id="eg-nome" list="dl-eg-nome" autocomplete="off" placeholder="Nome que aparecerá na folha de pagamento"><datalist id="dl-eg-nome"></datalist></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Tipo</label><select id="eg-tipo"><option value="reembolso">Reembolso</option><option value="cartao">Cartão Funway</option><option value="gastos_gerais">Gastos em Geral</option></select></div>
+          <div class="field"><label>Mês</label><input type="month" id="eg-mes"></div>
+          <div class="field"><label>Data do gasto</label><input type="date" id="eg-data"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Descrição</label><input id="eg-desc" placeholder="Ex: Almoço com cliente, passagem aérea..."></div>
+          <div class="field" style="max-width:130px"><label>Valor (R$)</label><input type="number" id="eg-val" min="0" step="0.01" placeholder="0,00"></div>
+        </div>
+        <div style="margin-bottom:13px">
+          <label style="margin-bottom:6px">Comprovante / Nota fiscal</label>
+          <div class="upload-area" id="upload-area" onclick="document.getElementById('eg-file').click()">
+            <input type="file" id="eg-file" accept=".pdf,.png,.jpg,.jpeg" onchange="onFileSelect(event)" style="display:none">
+            <div id="up-placeholder"><div style="font-size:13px;font-weight:500;color:var(--t2)">Clique para anexar</div><div style="font-size:12px;color:var(--t3);margin-top:3px">PDF, PNG ou JPEG</div></div>
+            <div id="up-selected" style="display:none"><div style="font-size:13px;font-weight:600;color:var(--gr)" id="up-filename"></div><div style="font-size:12px;color:var(--t2);margin-top:3px">Clique para trocar</div></div>
+          </div>
+        </div>
+        <button class="btn btn-or" onclick="enviarGasto()" style="width:100%;justify-content:center">Enviar gasto</button>
+      </div>
+      </div><!-- /emp-reimb-cont -->
+      <div id="emp-pautas-cont" style="display:none;margin:-20px -24px 0;overflow:hidden"></div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT GASTO -->
+<div id="edit-gasto-bg" class="modal-bg" onclick="fecharEditGasto(event)">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head" style="background:var(--or)"><span style="font-size:15px;font-weight:700">Editar gasto</span></div>
+    <div class="modal-body">
+      <div class="frow"><div class="field"><label>Tipo</label><select id="eg2-tipo"><option value="reembolso">Reembolso</option><option value="cartao">Cartão Funway</option><option value="gastos_gerais">Gastos em Geral</option></select></div><div class="field" style="max-width:155px"><label>Mês</label><input type="month" id="eg2-mes"></div></div>
+      <div class="frow"><div class="field"><label>Descrição</label><input id="eg2-desc"></div><div class="field" style="max-width:160px"><label>Data do gasto</label><input type="date" id="eg2-data"></div></div>
+      <div class="frow"><div class="field" style="max-width:135px"><label>Valor (R$)</label><input type="number" id="eg2-val" min="0" step="0.01"></div></div>
+      <div style="margin-bottom:8px"><label style="margin-bottom:6px">Trocar anexo (opcional)</label>
+        <div class="upload-area" onclick="document.getElementById('eg2-file').click()" style="padding:12px">
+          <input type="file" id="eg2-file" accept=".pdf,.png,.jpg,.jpeg" onchange="onFileSelect2(event)" style="display:none">
+          <div id="up2-placeholder" style="font-size:12px;color:var(--t2)">Clique para trocar o arquivo</div>
+          <div id="up2-selected" style="display:none"><span id="up2-filename" style="font-size:12px;color:var(--gr);font-weight:600"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="fecharEditGastoDir()">Cancelar</button><button class="btn btn-or" onclick="salvarEditGasto()">Salvar</button></div>
+  </div>
+</div>
+
+<!-- REJEITAR -->
+<div id="rejeitar-bg" class="modal-bg" onclick="fecharRejeitar(event)">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head" style="background:var(--rd)"><span style="font-size:15px;font-weight:700">Rejeitar gasto</span></div>
+    <div class="modal-body"><div class="field"><label>Motivo (opcional)</label><textarea id="rejeitar-obs" placeholder="Ex: Comprovante ilegível, valor incorreto..."></textarea></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="fecharRejeitarDir()">Cancelar</button><button class="btn btn-rd" onclick="confirmarRejeitar()">Rejeitar</button></div>
+  </div>
+</div>
+
+<!-- SHEETS PANEL -->
+<div id="overlay" class="overlay" onclick="fecharSP(event)">
+  <div class="sp">
+    <div class="sp-head"><span style="font-size:15px;font-weight:700">Importar do Sheets</span><button class="btn btn-ghost btn-sm" onclick="fecharSPdir()">x Fechar</button></div>
+    <div class="sp-body">
+      <div id="msg-s"></div>
+      <div style="margin-bottom:14px;padding:12px;background:var(--bg);border-radius:var(--r)">
+        <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px">URL do Apps Script</div>
+        <button class="btn btn-sm" onclick="abrirConfigSheets()">Configurar URL</button>
+      </div>
+      <div class="sec">Abas de projetos</div>
+      <div class="chips" id="abas-chips"><p style="font-size:13px;color:var(--t2)">Configure a URL e clique em Buscar histórico.</p></div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="buscarAbas()">Buscar histórico</button>
+        <button class="btn btn-or btn-sm" onclick="syncMes()">Importar mês atual</button>
+        <button class="btn btn-sm" onclick="syncHist()">Importar meses selecionados</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SYNC MODAL -->
+<div id="sync-bg" class="modal-bg" onclick="fecharSync(event)">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head" style="background:var(--or)"><span id="sync-title" style="font-size:15px;font-weight:700">Confirmar importação</span></div>
+    <div class="modal-body" id="sync-body"></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="fecharSyncDir()">Cancelar</button><button class="btn btn-gr" onclick="confirmarSync()">Confirmar</button></div>
+  </div>
+</div>
+
+<!-- EDIT LANCAMENTO -->
+<div id="edit-bg" class="modal-bg" onclick="fecharEdit(event)">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head" style="background:var(--or)"><span style="font-size:15px;font-weight:700">Editar lançamento</span></div>
+    <div class="modal-body">
+      <div class="frow"><div class="field"><label>Colaborador</label><input id="edit-col" list="dl-col"></div><div class="field" style="max-width:130px"><label>Tipo</label><select id="edit-tip"><option>Entrega</option><option>Diária</option><option>Edição</option><option>Motion</option><option>Reembolso</option></select></div></div>
+      <div class="frow"><div class="field"><label>Projeto / Descrição</label><input id="edit-proj" list="dl-proj"></div></div>
+      <div class="frow"><div class="field" style="max-width:135px"><label>Valor (R$)</label><input type="number" id="edit-val" min="0" step="0.01"></div><div class="field" style="max-width:155px"><label>Mês</label><input type="month" id="edit-mes"></div></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="fecharEditDir()">Cancelar</button><button class="btn btn-or" onclick="salvarEdit()">Salvar alterações</button></div>
+  </div>
+</div>
+
+
 
 <!-- PAUTA MODAL -->
 <div id="pauta-modal-bg" class="modal-bg" onclick="fecharPautaModal(event)">
