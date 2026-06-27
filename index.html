@@ -281,14 +281,13 @@ tbody tr:hover td{background:#FAFAF8}
       </div>
       <nav class="sb-nav">
         <button class="ni active" id="nb-home" onclick="goPage('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Visão Geral</button>
+        <button class="ni" id="nb-pautas" onclick="goPage('pautas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>Pautas</button>
         <button class="ni" id="nb-lancar" onclick="goPage('lancar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>Lançar</button>
         <button class="ni" id="nb-reembolsos" onclick="goPage('reembolsos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Reembolsos</button>
-        <button class="ni" id="nb-colaboradores" onclick="goPage('colaboradores')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Colaboradores</button>
         <button class="ni" id="nb-projetos" onclick="goPage('projetos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>Projetos</button>
         <button class="ni" id="nb-folha" onclick="goPage('folha')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>Folha</button>
-        <button class="ni" id="nb-logs" onclick="goPage('logs')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Logs</button>
-        <button class="ni" id="nb-pautas" onclick="goPage('pautas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>Pautas</button>
         <button class="ni" id="nb-meses" onclick="goPage('meses')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Meses</button>
+        <button class="ni" id="nb-logs" onclick="goPage('logs')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Logs</button>
       </nav>
       <div class="sb-sync"><div class="sdot" id="sdot"></div><span id="stxt">Conectando...</span></div>
       <div class="sb-foot">
@@ -316,6 +315,8 @@ tbody tr:hover td{background:#FAFAF8}
 
         <div id="pg-home" class="page active">
           <div id="home-cont"></div>
+          <div id="home-pautas-cont" style="margin-top:12px"></div>
+          <div id="home-pautas-cont" style="margin-top:8px"></div>
         </div>
         <div id="pg-lancar" class="page">
           <div id="msg-l"></div>
@@ -361,15 +362,6 @@ tbody tr:hover td{background:#FAFAF8}
             </div>
           </div>
           <div id="tbl-reemb"></div>
-        </div>
-
-        <div id="pg-colaboradores" class="page">
-          <div class="ph"><h2>Colaboradores</h2><p>Diárias, entregas e reembolsos por pessoa.</p></div>
-          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-            <select id="fil-mc" onchange="renderColabs()" style="width:auto"><option value="">Todos os meses</option></select>
-            <input id="fil-nc" placeholder="Buscar por nome..." oninput="renderColabs()" style="max-width:190px">
-          </div>
-          <div id="colabs-cont"></div>
         </div>
 
         <div id="pg-projetos" class="page">
@@ -739,7 +731,7 @@ async function salvarEditGasto(){if(!EDIT_GASTO_ID)return;var u={tipo:document.g
 // Sheets import
 var MMAP={jan:'01',fev:'02',feb:'02',mar:'03',abr:'04',apr:'04',mai:'05',may:'05',jun:'06',jul:'07',ago:'08',aug:'08',set:'09',sep:'09',out:'10',oct:'10',nov:'11',dez:'12',dec:'12',maio:'05',junho:'06',julho:'07',agosto:'08',setembro:'09',outubro:'10',novembro:'11',dezembro:'12',janeiro:'01',fevereiro:'02',marco:'03'};
 function abaToMes(n){var s=n.toLowerCase().replace(/[^a-z0-9]/g,'_');var m=s.match(/([a-z]+)[_]?(\d{2,4})/);if(!m)return null;var mo=null,w=m[1];for(var k in MMAP){if(w===k||w.slice(0,k.length)===k){mo=MMAP[k];break;}}if(!mo)return null;var y=m[2].length===2?'20'+m[2]:m[2];return y+'-'+mo;}
-function parseEquipe(s){if(!s)return[];return s.split(/[+,&\/]/).map(function(x){return x.trim();}).filter(Boolean);}
+function parseEquipe(s){if(!s)return[];return s.split(/[+&,]+/).map(function(x){return x.trim();}).filter(Boolean);}
 function parseSheetRows(rows){
   if(!rows||!rows.length)return[];
   var keys=Object.keys(rows[0]);
@@ -901,6 +893,16 @@ function renderHome(){
   h+='</div>';
 
   el.innerHTML=h;
+  // Render pautas below KPI cards (read-only)
+  var ep=document.getElementById('home-pautas-cont');
+  if(ep){
+    var origEl=document.getElementById('pauta-publica-cont');
+    if(origEl)origEl.id='_ppc_tmp';
+    ep.id='pauta-publica-cont';
+    renderPautasPublica();
+    ep.id='home-pautas-cont';
+    if(origEl)origEl.id='pauta-publica-cont';
+  }
 }
 
 async function togglePagamento(colaborador,mes){
@@ -1150,9 +1152,12 @@ function renderFolha(){
     for(var pk in PAGAMENTOS){if(normName(pk.split('__')[0])===k&&pk.split('__')[1]===mes){pago=PAGAMENTOS[pk]===true;break;}}
     var rowBg=pago?'background:var(--grl)':'';
 
-    // Collaborator header row
-    h+='<tr style="'+rowBg+';border-top:2px solid var(--br)">'
-      +'<td colspan="2" style="padding:10px 13px"><div style="display:flex;align-items:center;gap:8px"><div class="av">'+ini(nome)+'</div><span style="font-weight:700">'+nome+'</span></div></td>'
+    // Collaborator header row (collapsible)
+    var eid='fc_'+k;
+    h+='<tr style="'+rowBg+';border-top:2px solid var(--br);cursor:pointer" onclick="toggleFolhaColab(\''+eid+'\')">'
+      +'<td colspan="2" style="padding:10px 13px"><div style="display:flex;align-items:center;gap:8px">'
+      +'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);display:inline-block;transition:transform .2s">v</span>'
+      +'<div class="av">'+ini(nome)+'</div><span style="font-weight:700">'+nome+'</span></div></td>'
       +'<td></td>'
       +'<td style="padding:10px 13px;font-weight:700;font-size:15px;color:var(--or);text-align:right">'+fv(total)+'</td>'
       +'<td style="padding:10px 13px;text-align:center">'
@@ -1166,15 +1171,12 @@ function renderFolha(){
 
     // Individual entries
     byC[k].items.forEach(function(d){
-      h+='<tr style="'+rowBg+'">'
+      h+='<tr class="fc-detail-'+eid+'" style="'+rowBg+';display:none">'
         +'<td style="padding:6px 13px 6px 40px;font-size:12px;color:var(--t2)"></td>'
         +'<td style="padding:6px 13px">'+tipBadge(d.tipo)+'</td>'
         +'<td style="padding:6px 13px;font-size:12px;color:var(--t)">'+d.projeto+'</td>'
         +'<td style="padding:6px 13px;text-align:right">'
-        +'<input type="number" value="'+d.valor+'" min="0" step="0.01" '
-        +(fec?'disabled':'onchange="atualizarValorFolha(\''+d.id+'\',this.value)"')
-        +' style="width:90px;text-align:right;font-size:13px;font-weight:600;color:var(--or);border:1px solid var(--br2);border-radius:4px;padding:3px 6px;background:'+(fec?'var(--bg)':'#fff')+'">'
-        +'</td>'
+        +'<span style="font-weight:600;color:var(--or)">'+fv(d.valor)+'</span></td>'
         +'<td></td>'
         +'<td style="padding:6px 13px">'+actBtns(d.id,fec)+'</td>'
         +'</tr>';
@@ -1268,8 +1270,8 @@ function renderPautasPublica(){
   if(!el)return;
   var f=PAUTAS.filter(function(p){return p.cliente||p.campanha;});
   f.sort(function(a,b){
-    var da=(a.data_rec||'').replace(/[/]/g,'-');
-    var db=(b.data_rec||'').replace(/[/]/g,'-');
+    var da=(a.data_rec||'').split('/').join('-');
+    var db=(b.data_rec||'').split('/').join('-');
     return da.localeCompare(db);
   });
   if(!f.length){
@@ -1341,8 +1343,8 @@ function renderPautasAdmin(){
     return true;
   });
   f.sort(function(a,b){
-    var da=(a.data_rec||'').replace(/[/]/g,'-');
-    var db=(b.data_rec||'').replace(/[/]/g,'-');
+    var da=(a.data_rec||'').split('/').join('-');
+    var db=(b.data_rec||'').split('/').join('-');
     return da.localeCompare(db);
   });
 
@@ -1415,8 +1417,8 @@ function renderPautasEmp(){
   if(!el)return;
   var f=PAUTAS.filter(function(p){return p.cliente||p.campanha;});
   f.sort(function(a,b){
-    var da=(a.data_rec||'').replace(/[/]/g,'-');
-    var db=(b.data_rec||'').replace(/[/]/g,'-');
+    var da=(a.data_rec||'').split('/').join('-');
+    var db=(b.data_rec||'').split('/').join('-');
     return da.localeCompare(db);
   });
 
@@ -1562,6 +1564,14 @@ async function showHistoricoPauta(pautaId,nomePauta){
   el.innerHTML=h+'</div></div>';
 }
 
+function toggleFolhaColab(eid){
+  var rows=document.querySelectorAll('.fc-detail-'+eid);
+  var arr=document.getElementById('arr-'+eid);
+  if(!rows.length)return;
+  var hidden=rows[0].style.display==='none';
+  rows.forEach(function(r){r.style.display=hidden?'':'none';});
+  if(arr)arr.style.transform=hidden?'rotate(-90deg)':'';
+}
 function fecharPautaModal(e){
   if(!e||e.target===document.getElementById('pauta-modal-bg'))fecharPautaModalDir();
 }
@@ -1855,284 +1865,6 @@ document.addEventListener('DOMContentLoaded',function(){
   initAuth();});
 
 </script>
-
-<!-- PAUTA MODAL -->
-<div id="pauta-modal-bg" class="modal-bg" onclick="fecharPautaModal(event)">
-  <div class="modal pauta-modal" style="max-width:560px">
-    <div class="modal-head" style="background:var(--or)"><span id="pm-title" style="font-size:15px;font-weight:700">Nova pauta</span></div>
-    <div class="modal-body">
-      <div class="field"><label>Cliente</label><input id="pm-cliente" placeholder="Ex: Eletromidia"></div>
-      <div class="field"><label>Data</label><input id="pm-data" placeholder="Ex: 01/07"></div>
-      <div class="field-full field"><label>Campanha (Enter para adicionar)</label><div id="pm-campanha-cont"></div></div>
-      <div class="field"><label>Cidade</label>
-        <select id="pm-cidade" class="cidade-sel" style="max-width:none;width:100%">
-          <option>Salvador</option><option>São Paulo</option><option>Rio de Janeiro</option>
-          <option>Belo Horizonte</option><option>Curitiba</option><option>Floripa</option>
-          <option>Fortaleza</option><option>Recife</option><option>Porto Alegre</option>
-          <option>Brasília</option><option>Belém</option><option>Outras</option>
-        </select>
-      </div>
-      <div class="field"><label>Status</label>
-        <select id="pm-status" style="width:100%">
-          <option value="PRODUÇÃO">PRODUÇÃO</option>
-          <option value="EDIT">EDIT</option>
-          <option value="ENTREGUE">ENTREGUE</option>
-        </select>
-      </div>
-      <div class="field-full field"><label>Equipe (Enter para adicionar)</label><div id="pm-equipe-cont"></div></div>
-      <div class="field-full field"><label>Roteiro (URL)</label>
-        <input id="pm-roteiro" placeholder="https://...">
-        <div style="margin-top:6px;display:flex;align-items:center;gap:6px">
-          <input type="checkbox" id="pm-rot-pend" style="width:auto">
-          <label for="pm-rot-pend" style="font-size:12px;margin-bottom:0;display:inline">Marcar como pendente (amarelo)</label>
-        </div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="fecharPautaModalDir()">Cancelar</button>
-      <button class="btn btn-or" onclick="salvarPauta()">Salvar</button>
-    </div>
-  </div>
-</div>
-</body>
-</html
-        <div id="pg-home" class="page active">
-          <div id="home-cont"></div>
-        </div>
-        <div id="pg-lancar" class="page">
-          <div id="msg-l"></div>
-          <div class="ph"><h2>Novo lançamento</h2><p>Registre uma entrega ou diária de um colaborador.</p></div>
-          <div class="card" style="padding:16px;margin-bottom:20px">
-            <div class="frow">
-              <div class="field"><label>Colaborador</label><input id="fl-col" list="dl-col" autocomplete="off" placeholder="Nome"><datalist id="dl-col"></datalist></div>
-              <div class="field" style="max-width:110px"><label>Tipo</label><select id="fl-tip"><option value="Entrega">Entrega</option><option value="Diária">Diária</option><option value="Edição">Edição</option><option value="Motion">Motion</option></select></div>
-              <div class="field"><label>Projeto / Campanha</label><input id="fl-proj" list="dl-proj" autocomplete="off" placeholder="Nome do projeto"><datalist id="dl-proj"></datalist></div>
-              <div class="field" style="max-width:110px"><label>Valor (R$)</label><input type="number" id="fl-val" min="0" step="0.01" placeholder="0,00"></div>
-              <div class="field" style="max-width:145px"><label>Mês</label><input type="month" id="fl-mes"></div>
-              <div style="align-self:flex-end"><button class="btn btn-or" onclick="lancar()">+ Adicionar</button></div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:8px">
-            <div class="sec" style="margin-bottom:0">Lançamentos</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <select id="fil-col" onchange="renderLanc()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos colaboradores</option></select>
-              <select id="fil-ml" onchange="renderLanc()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os meses</option></select>
-              <select id="fil-tl" onchange="renderLanc()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os tipos</option><option value="Entrega">Entrega</option><option value="Diária">Diária</option><option value="Edição">Edição</option><option value="Motion">Motion</option></select>
-            </div>
-          </div>
-          <div class="tbl-wrap" id="tbl-lanc"></div>
-        </div>
-
-        <div id="pg-reembolsos" class="page">
-          <div id="msg-r"></div>
-          <div class="ph"><h2>Reembolsos</h2><p>Valores a reembolsar que entram no total da folha.</p></div>
-          <div class="card" style="padding:16px;margin-bottom:20px">
-            <div class="frow">
-              <div class="field"><label>Colaborador</label><input id="fr-col" list="dl-col" autocomplete="off" placeholder="Nome"></div>
-              <div class="field"><label>Descrição</label><input id="fr-desc" placeholder="Ex: Uber, Hotel..."></div>
-              <div class="field" style="max-width:110px"><label>Valor (R$)</label><input type="number" id="fr-val" min="0" step="0.01" placeholder="0,00"></div>
-              <div class="field" style="max-width:145px"><label>Mês</label><input type="month" id="fr-mes"></div>
-              <div style="align-self:flex-end"><button class="btn btn-or" onclick="lancarReemb()">+ Adicionar</button></div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:8px">
-            <div class="sec" style="margin-bottom:0">Reembolsos</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <select id="fil-rcol" onchange="renderReemb()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos colaboradores</option></select>
-              <select id="fil-rmes" onchange="renderReemb()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os meses</option></select>
-            </div>
-          </div>
-          <div id="tbl-reemb"></div>
-        </div>
-
-        <div id="pg-colaboradores" class="page">
-          <div class="ph"><h2>Colaboradores</h2><p>Diárias, entregas e reembolsos por pessoa.</p></div>
-          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-            <select id="fil-mc" onchange="renderColabs()" style="width:auto"><option value="">Todos os meses</option></select>
-            <input id="fil-nc" placeholder="Buscar por nome..." oninput="renderColabs()" style="max-width:190px">
-          </div>
-          <div id="colabs-cont"></div>
-        </div>
-
-        <div id="pg-projetos" class="page">
-          <div class="ph"><h2>Projetos</h2><p>Campanhas agrupadas por projeto e cidade.</p></div>
-          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-            <select id="fil-mp" onchange="renderProjs()" style="width:auto"><option value="">Todos os meses</option></select>
-            <select id="fil-cp" onchange="renderProjs()" style="width:auto"><option value="">Todos clientes</option></select>
-            <input id="fil-np" placeholder="Buscar campanha..." oninput="renderProjs()" style="max-width:190px">
-          </div>
-          <div id="projs-cont"></div>
-        </div>
-
-        <div id="pg-folha" class="page">
-          <div class="ph"><h2>Folha de Pagamento</h2><p>Consolidado mensal para fechamento.</p></div>
-          <div style="margin-bottom:16px"><select id="fil-mf" onchange="renderFolha()" style="width:auto;font-size:14px;padding:8px 13px"><option value="">Selecione um mês</option></select></div>
-          <div id="folha-cont"></div>
-        </div>
-
-        <div id="pg-logs" class="page">
-          <div class="ph"><h2>Logs de atividade</h2><p>Registro de tudo que foi feito e por quem.</p></div>
-          <div id="msg-logs"></div>
-          <div id="logs-filters" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-            <select id="lf-entidade" onchange="renderLogs()" style="font-size:12px;padding:5px 10px;border:1px solid var(--br2);border-radius:var(--r);background:#fff;font-family:'Raleway',inherit">
-              <option value="">Todas as entidades</option>
-              <option value="Pauta">Pautas</option>
-              <option value="Lançamento">Lançamentos</option>
-              <option value="Reembolso">Reembolsos</option>
-              <option value="Pagamento">Pagamentos</option>
-            </select>
-            <select id="lf-acao" onchange="renderLogs()" style="font-size:12px;padding:5px 10px;border:1px solid var(--br2);border-radius:var(--r);background:#fff;font-family:'Raleway',inherit">
-              <option value="">Todas as ações</option>
-              <option value="criou">Criou</option>
-              <option value="editou">Editou</option>
-              <option value="deletou">Deletou</option>
-              <option value="aprovou">Aprovou</option>
-              <option value="rejeitou">Rejeitou</option>
-              <option value="marcou pago">Marcou pago</option>
-              <option value="desmarcou pago">Desmarcou pago</option>
-            </select>
-            <button onclick="carregarLogs()" style="font-size:12px;padding:5px 12px;border:1px solid var(--br2);border-radius:var(--r);background:#fff;cursor:pointer;font-family:'Raleway',inherit">↺ Atualizar</button>
-          </div>
-          <div id="logs-cont"><div class="empty"><p>Carregando...</p></div></div>
-        </div>
-        <div id="pg-pautas" class="page">
-          <div id="msg-p"></div>
-          <div class="ph"><h2>Pautas</h2><p>Gerencie as pautas do mês.</p></div>
-          <div id="pautas-admin-cont"></div>
-          <div id="pauta-hist-cont" style="margin-top:20px"></div>
-        </div>
-        <div id="pg-meses" class="page">
-          <div id="msg-m"></div>
-          <div class="ph"><h2>Controle de Meses</h2><p>Feche um mês para proteger os dados.</p></div>
-          <div id="meses-cont"></div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- EMPLOYEE -->
-<div id="emp-panel" style="display:none">
-  <div class="emp-shell">
-    <div class="emp-header">
-      <div class="emp-header-logo">
-        <img src="data:image/jpeg;base64,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" alt="Funway">
-        <span>Funway Control</span>
-      </div>
-      <button class="logout-btn" onclick="fazerLogout()">Sair</button>
-    </div>
-    <div class="emp-content">
-      <div style="display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--br)">
-        <button class="btn btn-ghost" id="emp-tab-reimb" onclick="switchEmpTab('reimb')" style="border-radius:0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px">Reembolsos</button>
-        <button class="btn btn-ghost" id="emp-tab-pautas" onclick="switchEmpTab('pautas')" style="border-radius:0">Pautas</button>
-      </div>
-      <div id="emp-reimb-cont">
-      <div id="msg-emp"></div>
-      <div class="ph"><h2>Reembolsos</h2><p>Envie comprovantes de reembolso ou gastos no cartão Funway.</p></div>
-      <div class="card" style="padding:18px;margin-bottom:24px">
-        <div class="sec">Novo gasto</div>
-        <div class="frow">
-          <div class="field"><label>Nome do funcionário</label><input id="eg-nome" list="dl-eg-nome" autocomplete="off" placeholder="Nome que aparecerá na folha de pagamento"><datalist id="dl-eg-nome"></datalist></div>
-        </div>
-        <div class="frow">
-          <div class="field"><label>Tipo</label><select id="eg-tipo"><option value="reembolso">Reembolso</option><option value="cartao">Cartão Funway</option><option value="gastos_gerais">Gastos em Geral</option></select></div>
-          <div class="field"><label>Mês</label><input type="month" id="eg-mes"></div>
-          <div class="field"><label>Data do gasto</label><input type="date" id="eg-data"></div>
-        </div>
-        <div class="frow">
-          <div class="field"><label>Descrição</label><input id="eg-desc" placeholder="Ex: Almoço com cliente, passagem aérea..."></div>
-          <div class="field" style="max-width:130px"><label>Valor (R$)</label><input type="number" id="eg-val" min="0" step="0.01" placeholder="0,00"></div>
-        </div>
-        <div style="margin-bottom:13px">
-          <label style="margin-bottom:6px">Comprovante / Nota fiscal</label>
-          <div class="upload-area" id="upload-area" onclick="document.getElementById('eg-file').click()">
-            <input type="file" id="eg-file" accept=".pdf,.png,.jpg,.jpeg" onchange="onFileSelect(event)" style="display:none">
-            <div id="up-placeholder"><div style="font-size:13px;font-weight:500;color:var(--t2)">Clique para anexar</div><div style="font-size:12px;color:var(--t3);margin-top:3px">PDF, PNG ou JPEG</div></div>
-            <div id="up-selected" style="display:none"><div style="font-size:13px;font-weight:600;color:var(--gr)" id="up-filename"></div><div style="font-size:12px;color:var(--t2);margin-top:3px">Clique para trocar</div></div>
-          </div>
-        </div>
-        <button class="btn btn-or" onclick="enviarGasto()" style="width:100%;justify-content:center">Enviar gasto</button>
-      </div>
-      </div><!-- /emp-reimb-cont -->
-      <div id="emp-pautas-cont" style="display:none;margin:-20px -24px 0;overflow:hidden"></div>
-    </div>
-  </div>
-</div>
-
-<!-- EDIT GASTO -->
-<div id="edit-gasto-bg" class="modal-bg" onclick="fecharEditGasto(event)">
-  <div class="modal" style="max-width:440px">
-    <div class="modal-head" style="background:var(--or)"><span style="font-size:15px;font-weight:700">Editar gasto</span></div>
-    <div class="modal-body">
-      <div class="frow"><div class="field"><label>Tipo</label><select id="eg2-tipo"><option value="reembolso">Reembolso</option><option value="cartao">Cartão Funway</option><option value="gastos_gerais">Gastos em Geral</option></select></div><div class="field" style="max-width:155px"><label>Mês</label><input type="month" id="eg2-mes"></div></div>
-      <div class="frow"><div class="field"><label>Descrição</label><input id="eg2-desc"></div><div class="field" style="max-width:160px"><label>Data do gasto</label><input type="date" id="eg2-data"></div></div>
-      <div class="frow"><div class="field" style="max-width:135px"><label>Valor (R$)</label><input type="number" id="eg2-val" min="0" step="0.01"></div></div>
-      <div style="margin-bottom:8px"><label style="margin-bottom:6px">Trocar anexo (opcional)</label>
-        <div class="upload-area" onclick="document.getElementById('eg2-file').click()" style="padding:12px">
-          <input type="file" id="eg2-file" accept=".pdf,.png,.jpg,.jpeg" onchange="onFileSelect2(event)" style="display:none">
-          <div id="up2-placeholder" style="font-size:12px;color:var(--t2)">Clique para trocar o arquivo</div>
-          <div id="up2-selected" style="display:none"><span id="up2-filename" style="font-size:12px;color:var(--gr);font-weight:600"></span></div>
-        </div>
-      </div>
-    </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="fecharEditGastoDir()">Cancelar</button><button class="btn btn-or" onclick="salvarEditGasto()">Salvar</button></div>
-  </div>
-</div>
-
-<!-- REJEITAR -->
-<div id="rejeitar-bg" class="modal-bg" onclick="fecharRejeitar(event)">
-  <div class="modal" style="max-width:400px">
-    <div class="modal-head" style="background:var(--rd)"><span style="font-size:15px;font-weight:700">Rejeitar gasto</span></div>
-    <div class="modal-body"><div class="field"><label>Motivo (opcional)</label><textarea id="rejeitar-obs" placeholder="Ex: Comprovante ilegível, valor incorreto..."></textarea></div></div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="fecharRejeitarDir()">Cancelar</button><button class="btn btn-rd" onclick="confirmarRejeitar()">Rejeitar</button></div>
-  </div>
-</div>
-
-<!-- SHEETS PANEL -->
-<div id="overlay" class="overlay" onclick="fecharSP(event)">
-  <div class="sp">
-    <div class="sp-head"><span style="font-size:15px;font-weight:700">Importar do Sheets</span><button class="btn btn-ghost btn-sm" onclick="fecharSPdir()">x Fechar</button></div>
-    <div class="sp-body">
-      <div id="msg-s"></div>
-      <div style="margin-bottom:14px;padding:12px;background:var(--bg);border-radius:var(--r)">
-        <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px">URL do Apps Script</div>
-        <button class="btn btn-sm" onclick="abrirConfigSheets()">Configurar URL</button>
-      </div>
-      <div class="sec">Abas de projetos</div>
-      <div class="chips" id="abas-chips"><p style="font-size:13px;color:var(--t2)">Configure a URL e clique em Buscar histórico.</p></div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap">
-        <button class="btn btn-sm" onclick="buscarAbas()">Buscar histórico</button>
-        <button class="btn btn-or btn-sm" onclick="syncMes()">Importar mês atual</button>
-        <button class="btn btn-sm" onclick="syncHist()">Importar meses selecionados</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- SYNC MODAL -->
-<div id="sync-bg" class="modal-bg" onclick="fecharSync(event)">
-  <div class="modal" style="max-width:560px">
-    <div class="modal-head" style="background:var(--or)"><span id="sync-title" style="font-size:15px;font-weight:700">Confirmar importação</span></div>
-    <div class="modal-body" id="sync-body"></div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="fecharSyncDir()">Cancelar</button><button class="btn btn-gr" onclick="confirmarSync()">Confirmar</button></div>
-  </div>
-</div>
-
-<!-- EDIT LANCAMENTO -->
-<div id="edit-bg" class="modal-bg" onclick="fecharEdit(event)">
-  <div class="modal" style="max-width:440px">
-    <div class="modal-head" style="background:var(--or)"><span style="font-size:15px;font-weight:700">Editar lançamento</span></div>
-    <div class="modal-body">
-      <div class="frow"><div class="field"><label>Colaborador</label><input id="edit-col" list="dl-col"></div><div class="field" style="max-width:130px"><label>Tipo</label><select id="edit-tip"><option>Entrega</option><option>Diária</option><option>Edição</option><option>Motion</option><option>Reembolso</option></select></div></div>
-      <div class="frow"><div class="field"><label>Projeto / Descrição</label><input id="edit-proj" list="dl-proj"></div></div>
-      <div class="frow"><div class="field" style="max-width:135px"><label>Valor (R$)</label><input type="number" id="edit-val" min="0" step="0.01"></div><div class="field" style="max-width:155px"><label>Mês</label><input type="month" id="edit-mes"></div></div>
-    </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="fecharEditDir()">Cancelar</button><button class="btn btn-or" onclick="salvarEdit()">Salvar alterações</button></div>
-  </div>
-</div>
-
-
 
 <!-- PAUTA MODAL -->
 <div id="pauta-modal-bg" class="modal-bg" onclick="fecharPautaModal(event)">
