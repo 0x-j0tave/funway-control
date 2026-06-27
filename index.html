@@ -287,7 +287,6 @@ tbody tr:hover td{background:#FAFAF8}
         <button class="ni" id="nb-projetos" onclick="goPage('projetos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>Projetos</button>
         <button class="ni" id="nb-folha" onclick="goPage('folha')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>Folha</button>
         <button class="ni" id="nb-meses" onclick="goPage('meses')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Meses</button>
-        <button class="ni" id="nb-logs" onclick="goPage('logs')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Logs</button>
       </nav>
       <div class="sb-sync"><div class="sdot" id="sdot"></div><span id="stxt">Conectando...</span></div>
       <div class="sb-foot">
@@ -833,7 +832,7 @@ async function confirmarSync(){
 function populateFiltros(){
   var meses=getMeses(),colabs=getColabs(),clientes=getClientes();
   function fillSel(id,items,fn,label){var el=document.getElementById(id);if(!el)return;var cur=el.value;el.innerHTML='<option value="">'+label+'</option>';items.forEach(function(x){el.innerHTML+='<option value="'+x+'">'+fn(x)+'</option>';});if(cur)el.value=cur;}
-  fillSel('fil-ml',meses,fml,'Todos os meses');fillSel('fil-mc',meses,fml,'Todos os meses');fillSel('fil-mp',meses,fml,'Todos os meses');
+  fillSel('fil-ml',meses,fml,'Todos os meses');fillSel('fil-mp',meses,fml,'Todos os meses');
   fillSel('fil-rcol',colabs,function(x){return x;},'Todos colaboradores');fillSel('fil-rmes',meses,fml,'Todos os meses');
   fillSel('fil-col',colabs,function(x){return x;},'Todos colaboradores');fillSel('fil-cp',clientes,function(x){return x;},'Todos clientes');
   var ff=document.getElementById('fil-mf');if(ff){var curf=ff.value;ff.innerHTML='<option value="">Selecione um m\u00eas</option>';meses.forEach(function(m){ff.innerHTML+='<option value="'+m+'">'+fml(m)+'</option>';});if(curf)ff.value=curf;else if(meses.length)ff.value=meses[0];}
@@ -850,7 +849,7 @@ function goPage(id){
   var pg=document.getElementById('pg-'+id);var nb=document.getElementById('nb-'+id);
   if(pg)pg.classList.add('active');if(nb)nb.classList.add('active');
   PA=id;renderAtivePage();}
-function renderAtivePage(){if(PA==='home')renderHome();else if(PA==='logs'){carregarLogs();}else if(PA==='pautas'){renderPautasAdmin();}else if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='colaboradores')renderColabs();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
+function renderAtivePage(){if(PA==='home')renderHome();else if(PA==='logs'){carregarLogs();}else if(PA==='pautas'){renderPautasAdmin();}else if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
 function tipBadge(t){if(t==='Di\u00e1ria'||t==='Diaria')return'<span class="badge b-di">Di\u00e1ria</span>';if(t==='Reembolso')return'<span class="badge b-re">Reembolso</span>';return'<span class="badge b-en">Entrega</span>';}
 function actBtns(id,fechado){if(fechado)return'<span style="font-size:12px;color:var(--t3)">[fechado]</span>';return'<div style="display:flex;gap:3px"><button class="btn btn-ghost btn-sm" data-edit="'+id+'" style="padding:4px 9px;color:var(--t2)">Editar</button><button class="btn btn-ghost btn-sm" data-del="'+id+'" style="padding:4px 9px;color:var(--rd)">x</button></div>';}
 function bindActions(el){el.querySelectorAll('[data-edit]').forEach(function(b){b.addEventListener('click',function(){abrirEdit(b.getAttribute('data-edit'));});});el.querySelectorAll('[data-del]').forEach(function(b){b.addEventListener('click',function(){deletar(b.getAttribute('data-del'));});});}
@@ -978,35 +977,6 @@ function renderReemb(){
   el.querySelectorAll('[data-apv]').forEach(function(b){b.addEventListener('click',function(){aprovarGasto(b.getAttribute('data-apv'));});});
   el.querySelectorAll('[data-rej]').forEach(function(b){b.addEventListener('click',function(){abrirRejeitar(b.getAttribute('data-rej'));});});
   el.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){verAnexo(b.getAttribute('data-view'));});});}
-
-function renderColabs(){
-  var fm2=document.getElementById('fil-mc').value,fn=document.getElementById('fil-nc').value.trim().toLowerCase();
-  var f=D.filter(function(d){return!fm2||d.mes===fm2;});
-  var byC={};f.forEach(function(d){var key=normName(d.colaborador);if(!byC[key])byC[key]={nome:d.colaborador,items:[]};byC[key].items.push(d);});
-  var cols=Object.keys(byC).filter(function(k){return!fn||normName(byC[k].nome).indexOf(fn)>=0;}).sort();
-  var el=document.getElementById('colabs-cont');
-  if(!cols.length){el.innerHTML='<div class="empty"><p>Nenhum colaborador.</p></div>';return;}
-  var tg=f.reduce(function(s,r){return s+r.valor;},0);
-  var h='<div class="sumgrid"><div class="sc"><div class="lbl">Colaboradores</div><div class="val">'+cols.length+'</div><div class="sub">'+(fm2?fml(fm2):'todos')+'</div></div><div class="sc"><div class="lbl">Total</div><div class="val" style="color:var(--gr)">'+fv(tg)+'</div><div class="sub">soma geral</div></div></div>';
-  cols.forEach(function(c){
-    var nome=byC[c].nome;var regs=byC[c].items,total=regs.reduce(function(s,r){return s+r.valor;},0);
-    var mm={};regs.forEach(function(r){if(r.mes)mm[r.mes]=1;});var ml=Object.keys(mm).sort().reverse();
-    var det=[];var en=regs.filter(function(r){return r.tipo==='Entrega';});var di=regs.filter(function(r){return r.tipo==='Di\u00e1ria'||r.tipo==='Diaria';});var rb=regs.filter(function(r){return r.tipo==='Reembolso';});
-    if(en.length)det.push(en.length+' entrega'+(en.length>1?'s':''));if(di.length)det.push(di.length+' di\u00e1ria'+(di.length>1?'s':''));if(rb.length)det.push(rb.length+' reembolso'+(rb.length>1?'s':''));
-    var eid='col-'+c.replace(/[^a-z0-9]/gi,'_');var rows='';
-    ml.forEach(function(m){
-      var rm=regs.filter(function(r){return r.mes===m;});
-      var dim=rm.filter(function(r){return r.tipo==='Di\u00e1ria'||r.tipo==='Diaria';});var enm=rm.filter(function(r){return r.tipo==='Entrega';});var rbm=rm.filter(function(r){return r.tipo==='Reembolso';});
-      var totM=rm.reduce(function(s,r){return s+r.valor;},0);var fec=MS[m]==='fechado';
-      rows+='<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:8px 18px 3px;background:var(--bg)">'+fml(m)+(fec?' <span class="badge b-lock" style="font-size:10px">Fechado</span>':'')+'</div>';
-      if(dim.length){rows+='<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:5px 18px 2px">Di\u00e1rias</div>';dim.forEach(function(r){var fec2=MS[r.mes]==='fechado';rows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 18px 6px 28px;font-size:13px;border-bottom:1px solid var(--br)"><span style="color:var(--t2)">'+r.projeto+'</span><div style="display:flex;align-items:center;gap:10px"><span style="color:var(--gr);font-weight:600">'+fv(r.valor)+'</span>'+actBtns(r.id,fec2)+'</div></div>';});}
-      if(enm.length){rows+='<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:5px 18px 2px">Entregas</div>';enm.forEach(function(r){var fec2=MS[r.mes]==='fechado';rows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 18px 6px 28px;font-size:13px;border-bottom:1px solid var(--br)"><span style="color:var(--t2)">'+r.projeto+'</span><div style="display:flex;align-items:center;gap:10px"><span style="color:var(--gr);font-weight:600">'+fv(r.valor)+'</span>'+actBtns(r.id,fec2)+'</div></div>';});}
-      if(rbm.length){rows+='<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:5px 18px 2px">Reembolsos</div>';rbm.forEach(function(r){var fec2=MS[r.mes]==='fechado';rows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 18px 6px 28px;font-size:13px;border-bottom:1px solid var(--br)"><span style="color:var(--t2)">'+r.projeto+'</span><div style="display:flex;align-items:center;gap:10px"><span style="color:var(--pu);font-weight:600">'+fv(r.valor)+'</span>'+actBtns(r.id,fec2)+'</div></div>';});}
-      rows+='<div style="display:flex;justify-content:space-between;padding:8px 18px;background:var(--bg);font-weight:700;font-size:13px;border-bottom:1px solid var(--br)"><span>Total '+fm(m)+'</span><span style="color:var(--gr)">'+fv(totM)+'</span></div>';
-    });
-    h+='<div class="folha-wrap" style="margin-bottom:10px"><div class="folha-row" onclick="toggleFD(\''+eid+'\')" style="padding:13px 18px"><div><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin-bottom:2px"><div class="av">'+ini(nome)+'</div>'+nome+'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);transition:transform .2s;display:inline-block;margin-left:2px">v</span></div><div style="font-size:12px;color:var(--t2);padding-left:35px">'+det.join(' - ')+'</div></div><div style="font-size:16px;font-weight:700;color:var(--gr)">'+fv(total)+'</div></div><div id="'+eid+'" style="display:none;border-top:1px solid var(--br)">'+rows+'</div></div>';
-  });
-  el.innerHTML=h;bindActions(el);}
 
 function renderProjs() {
   var fm2 = document.getElementById('fil-mp').value;
