@@ -735,7 +735,7 @@ function buildCharts(meses){
 
   function avg(arr){if(!arr.length)return 0;return arr.reduce(function(s,v){return s+v;},0)/arr.length;}
   function svgBar(data,avgVal,color,labelFn,title){
-    var W=320,H=180,PL=10,PR=10,PT=38,PB=32;
+    var W=320,H=180,PL=10,PR=42,PT=38,PB=32;
     var n=data.length;
     if(!n)return '';
     var chartH=H-PT-PB;
@@ -749,9 +749,11 @@ function buildCharts(meses){
 
     // Chart area background
     svg+='<rect x="'+PL+'" y="'+PT+'" width="'+(W-PL-PR)+'" height="'+chartH+'" fill="#FAFAF8" rx="4"/>';
-    // Avg line inside chart area only
+    // Avg line with value label at end
     if(avgVal>0){
-      svg+='<line x1="'+PL+'" y1="'+avgY.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+avgY.toFixed(1)+'" stroke="#D1D5DB" stroke-width="1.5" stroke-dasharray="5 3"/>';
+      var lineEnd=W-PR-2;
+      svg+='<line x1="'+PL+'" y1="'+avgY.toFixed(1)+'" x2="'+lineEnd+'" y2="'+avgY.toFixed(1)+'" stroke="#D1D5DB" stroke-width="1.5" stroke-dasharray="5 3"/>';
+      svg+='<text x="'+(lineEnd+3)+'" y="'+(avgY+3.5).toFixed(1)+'" font-size="8.5" fill="#9CA3AF" font-family="Raleway,sans-serif" font-weight="600">'+labelFn(avgVal)+'</text>';
     }
     // Bars
     data.forEach(function(v,i){
