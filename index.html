@@ -578,24 +578,24 @@ function onFileSelect2(e){var f=e.target.files[0];if(!f)return;SEL_FILE2=f;docum
 
 async function enviarGasto(){
   var tipo=document.getElementById('eg-tipo').value;
-  var mes=dataGasto?('2026-'+dataGasto.split('-')[1]):(new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'));
   var desc=document.getElementById('eg-desc').value.trim();
   var dataGasto=document.getElementById('eg-data').value||'';
   var val=parseFloat(document.getElementById('eg-val').value)||0;
   var nomeColab=document.getElementById('eg-nome').value.trim();
-  if(!nomeColab){showMsg('msg-emp','Informe o nome do funcion\u00e1rio.','err');return;}
-  if(!desc){showMsg('msg-emp','Informe a descri\u00e7\u00e3o.','err');return;}
-  if(!mes){showMsg('msg-emp','Informe o m\u00eas.','err');return;}
+  var mes=dataGasto?('2026-'+dataGasto.split('-')[1]):(new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'));
+  if(!nomeColab){showMsg('msg-emp','Informe o nome do funcionário.','err');return;}
+  if(!desc){showMsg('msg-emp','Informe a descrição.','err');return;}
   if(!val||val<=0){showMsg('msg-emp','Informe o valor.','err');return;}
-  if(!SEL_FILE){showMsg('msg-emp','Anexe o comprovante (PDF, PNG ou JPEG).','err');return;}
-  var ext=SEL_FILE.name.split('.').pop().toLowerCase();
-  if(['pdf','png','jpg','jpeg'].indexOf(ext)<0){showMsg('msg-emp','Formato inv\u00e1lido. Use PDF, PNG ou JPEG.','err');return;}
+  if(SEL_FILE){
+    var ext=SEL_FILE.name.split('.').pop().toLowerCase();
+    if(['pdf','png','jpg','jpeg'].indexOf(ext)<0){showMsg('msg-emp','Formato inválido. Use PDF, PNG ou JPEG.','err');return;}
+  }
   showMsg('msg-emp','Enviando...','warn',true);
   var id=uid();
   var path='',arqNome='',arqTipo='';
   try{
     if(SEL_FILE){
-      path=CURRENT_USER.id+'/'+id+'.'+ext;
+      path=CURRENT_USER.id+'/'+id+'.'+SEL_FILE.name.split('.').pop().toLowerCase();
       var ur=await SB.storage.from('notas-fiscais').upload(path,SEL_FILE,{contentType:SEL_FILE.type});
       if(ur.error)throw new Error('Erro no upload: '+ur.error.message);
       arqNome=SEL_FILE.name;arqTipo=SEL_FILE.type;
@@ -609,7 +609,9 @@ async function enviarGasto(){
     document.getElementById('eg-file').value='';SEL_FILE=null;
     document.getElementById('up-placeholder').style.display='block';document.getElementById('up-selected').style.display='none';
     document.getElementById('upload-area').classList.remove('has-file');
+    await registrarLog('submeteu','Reembolso',id,'Submeteu reembolso: '+desc+' — '+fv(val));
   }catch(e){showMsg('msg-emp','Erro: '+e.message,'err');}}
+
 
 async function aprovarGasto(id){
   var g=null;for(var i=0;i<GASTOS_ADMIN.length;i++){if(GASTOS_ADMIN[i].id===id){g=GASTOS_ADMIN[i];break;}}
