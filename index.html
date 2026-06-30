@@ -680,13 +680,16 @@ function bindActions(el){el.querySelectorAll('[data-edit]').forEach(function(b){
 function renderHome(){
   var el=document.getElementById('home-cont');
   var meses=getMeses();
-  var mesAtual=meses[0]||new Date().toISOString().slice(0,7);
-  var mesPrev=meses[1]||null;
+  if(!meses.length){el.innerHTML='<div class="empty"><p>Sem dados ainda.</p></div>';return;}
+  // Use selected month or default to most recent
+  if(!HOME_MES_SEL||meses.indexOf(HOME_MES_SEL)<0)HOME_MES_SEL=meses[0];
+  var mesAtual=HOME_MES_SEL;
+  var mesPrev=meses[meses.indexOf(mesAtual)+1]||null;
   var fAtual=D.filter(function(d){return d.mes===mesAtual;});
   var fPrev=mesPrev?D.filter(function(d){return d.mes===mesPrev;}):[];
   var totalAtual=fAtual.reduce(function(s,r){return s+r.valor;},0);
   var totalPrev=fPrev.reduce(function(s,r){return s+r.valor;},0);
-  var diff=mesPrev?(((totalAtual-totalPrev)/totalPrev)*100).toFixed(1):null;
+  var diff=mesPrev&&totalPrev?(((totalAtual-totalPrev)/totalPrev)*100).toFixed(1):null;
   var diffStr=diff===null?'':(parseFloat(diff)>=0?'<span style="color:var(--gr)">+'+diff+'% vs '+fm(mesPrev)+'</span>':'<span style="color:var(--rd)">'+diff+'% vs '+fm(mesPrev)+'</span>');
   var projAtual={}; fAtual.filter(function(d){return d.tipo!=='Reembolso';}).forEach(function(d){projAtual[normName(d.projeto)]=1;});
   var nProj=Object.keys(projAtual).length;
@@ -694,15 +697,18 @@ function renderHome(){
   var nColab=Object.keys(colabAtual).length;
   var pendentes=GASTOS_ADMIN.filter(function(g){return g.status==='pendente';});
   var reembolsosAtual=fAtual.filter(function(d){return d.tipo==='Reembolso';}).reduce(function(s,r){return s+r.valor;},0);
-  // Pagamentos do mes atual
   var colabsAtual=Object.keys(colabAtual);
   var pagos=colabsAtual.filter(function(k){
-    var nome=colabAtual[k]; // k is normName
     for(var pk in PAGAMENTOS){if(pk.indexOf('__'+mesAtual)>0&&normName(pk.split('__')[0])===k)return PAGAMENTOS[pk]===true;}
     return false;
   }).length;
 
-  var h='<div class="ph"><h2>Visão Geral</h2><p>Resumo do mês de '+fml(mesAtual)+'.</p></div>';
+  // Month selector
+  var selOpts=meses.map(function(m){return '<option value="'+m+'"'+(m===mesAtual?' selected':'')+'>'+fml(m)+'</option>';}).join('');
+  var h='<div class="ph"><h2>Visão Geral</h2>'
+    +'<p style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">Resumo do mês: '
+    +'<select onchange="HOME_MES_SEL=this.value;renderHome()" style="font-size:13px;font-weight:600;color:var(--or);border:none;border-bottom:2px solid var(--or);background:transparent;cursor:pointer;padding:1px 4px;font-family:\'Raleway\',inherit">'+selOpts+'</select>'
+    +'</p></div>';
 
   // KPI cards
   h+='<div class="sumgrid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:24px">';
@@ -715,16 +721,6 @@ function renderHome(){
   h+='</div>';
 
   el.innerHTML=h;
-  // Render pautas below KPI cards (read-only)
-  var ep=document.getElementById('home-pautas-cont');
-  if(ep){
-    var origEl=document.getElementById('pauta-publica-cont');
-    if(origEl)origEl.id='_ppc_tmp';
-    ep.id='pauta-publica-cont';
-    renderPautasPublica();
-    ep.id='home-pautas-cont';
-    if(origEl)origEl.id='pauta-publica-cont';
-  }
 }
 
 async function togglePagamento(colaborador,mes){
@@ -1002,6 +998,7 @@ function renderMeses(){
 var PAUTAS = [];
 var PAUTA_FILTROS = {status:'',cidade:'',mes:''};
 var PAUTA_MES_SEL = null;
+var HOME_MES_SEL = null;
 var PAUTAS_INTERVAL = null;
 var EDIT_PAUTA_ID = null;
 var CIDADES = ['Salvador','São Paulo','Rio de Janeiro','Belo Horizonte','Curitiba','Floripa','Fortaleza','Recife','Porto Alegre','Brasília','Belém','Outras'];
