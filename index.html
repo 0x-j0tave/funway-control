@@ -289,9 +289,6 @@ tbody tr:hover td{background:#FAFAF8}
         <button class="ni" id="nb-meses" onclick="goPage('meses')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Meses</button>
       </nav>
       <div class="sb-sync"><div class="sdot" id="sdot"></div><span id="stxt">Conectando...</span></div>
-      <div class="sb-foot">
-        <button class="ni ni-cfg" onclick="abrirSP()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>Importar Sheets</button>
-      </div>
       <div class="sb-user">
         <div class="sb-user-info"><strong>Admin</strong>rafa@funway.com.br</div>
         <button class="logout-btn" onclick="fazerLogout()">Sair</button>
@@ -498,36 +495,6 @@ tbody tr:hover td{background:#FAFAF8}
   </div>
 </div>
 
-<!-- SHEETS PANEL -->
-<div id="overlay" class="overlay" onclick="fecharSP(event)">
-  <div class="sp">
-    <div class="sp-head"><span style="font-size:15px;font-weight:700">Importar do Sheets</span><button class="btn btn-ghost btn-sm" onclick="fecharSPdir()">x Fechar</button></div>
-    <div class="sp-body">
-      <div id="msg-s"></div>
-      <div style="margin-bottom:14px;padding:12px;background:var(--bg);border-radius:var(--r)">
-        <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px">URL do Apps Script</div>
-        <button class="btn btn-sm" onclick="abrirConfigSheets()">Configurar URL</button>
-      </div>
-      <div class="sec">Abas de projetos</div>
-      <div class="chips" id="abas-chips"><p style="font-size:13px;color:var(--t2)">Configure a URL e clique em Buscar histórico.</p></div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap">
-        <button class="btn btn-sm" onclick="buscarAbas()">Buscar histórico</button>
-        <button class="btn btn-or btn-sm" onclick="syncMes()">Importar mês atual</button>
-        <button class="btn btn-sm" onclick="syncHist()">Importar meses selecionados</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- SYNC MODAL -->
-<div id="sync-bg" class="modal-bg" onclick="fecharSync(event)">
-  <div class="modal" style="max-width:560px">
-    <div class="modal-head" style="background:var(--or)"><span id="sync-title" style="font-size:15px;font-weight:700">Confirmar importação</span></div>
-    <div class="modal-body" id="sync-body"></div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="fecharSyncDir()">Cancelar</button><button class="btn btn-gr" onclick="confirmarSync()">Confirmar</button></div>
-  </div>
-</div>
-
 <!-- EDIT LANCAMENTO -->
 <div id="edit-bg" class="modal-bg" onclick="fecharEdit(event)">
   <div class="modal" style="max-width:440px">
@@ -545,9 +512,8 @@ tbody tr:hover td{background:#FAFAF8}
 var SBURL='https://sdfqqnhyulzkjkmttlbp.supabase.co';
 var SBKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZnFxbmh5dWx6a2prbXR0bGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NjM0NDksImV4cCI6MjA5NjMzOTQ0OX0.4RTg0ktux61Hq1Ef_KFeIziImsm5am5uIrJTqgImWcw';
 var ADMIN_EMAIL='rafa@funway.com.br';
-var SHEETS_URL=localStorage.getItem('fw_sheets_url')||'';
 var SB=supabase.createClient(SBURL,SBKEY);
-var D=[],MS={},PAGAMENTOS={},PA='home',EID=null,PEND=[],ABAS=[],ASEL=[],GASTOS_ADMIN=[],GASTOS_EMP=[],CURRENT_USER=null,USER_ROLE=null,REJEITAR_ID=null,SEL_FILE=null,SEL_FILE2=null,EDIT_GASTO_ID=null;
+var D=[],MS={},PAGAMENTOS={},PA='home',EID=null,GASTOS_ADMIN=[],GASTOS_EMP=[],CURRENT_USER=null,USER_ROLE=null,REJEITAR_ID=null,SEL_FILE=null,SEL_FILE2=null,EDIT_GASTO_ID=null;
 
 var PLACEHOLDERS=['?','a definir','a combinar','a confirmar','a decidir','tbd','indefinido','pendente','em aberto','sem nome','sem definir'];
 function isPlaceholder(str){
@@ -570,55 +536,8 @@ function setSync(tipo,txt){var el=document.getElementById('sdot');if(el)el.class
 
 async function sincronizarTudo(){
   await carregarDados();
-  if(!SHEETS_URL){ showMsg('msg-l','Dados atualizados do banco.','ok'); return; }
-  setSync('spin','Sincronizando Sheets...');
-  var hoje=new Date();
-  var ma=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0');
-  if(MS[ma]==='fechado'){ setSync('ok','Sincronizado'); showMsg('msg-l','Dados atualizados.','ok'); return; }
-  // Busca aba do mes atual no Sheets
-  var abaAtual=null;
-  try{
-    var listaResp=await fetch(SHEETS_URL+'?action=listSheets',{redirect:'follow'});
-    if(!listaResp.ok)throw new Error();
-    var lista=await listaResp.json();
-    var abas=Array.isArray(lista)?lista:(lista.sheets||[]);
-    abaAtual=abas.find(function(a){return abaToMes(a)===ma;});
-  }catch(e){ setSync('ok','Sincronizado'); showMsg('msg-l','Banco atualizado. Sheets indisponível.','warn'); return; }
-  if(!abaAtual){ setSync('ok','Sincronizado'); showMsg('msg-l','Banco atualizado.','ok'); return; }
-  try{
-    var sheetResp=await fetch(SHEETS_URL+'?action=getSheet&sheet='+encodeURIComponent(abaAtual),{redirect:'follow'});
-    if(!sheetResp.ok)throw new Error();
-    var sheetData=await sheetResp.json();
-    var itens=parseSheetRows(sheetData.rows||[]).map(function(p){p.mes=ma;return p;});
-    if(!itens.length){ setSync('ok','Sincronizado'); showMsg('msg-l','Banco atualizado.','ok'); return; }
-    var novos=[],atualizados=[];
-    itens.forEach(function(item){
-      item.equipe.forEach(function(col){
-        var cidNorm=normName(item.cidade||'').replace(/[^a-z0-9]/g,'_');
-        var dataNorm=normName(item.data||'').replace(/[^a-z0-9]/g,'_');
-        var chave='sh_'+normName(item.campanha).replace(/[^a-z0-9]/g,'_')+'_'+cidNorm+'_'+dataNorm+'_'+normName(col).replace(/[^a-z0-9]/g,'_')+'_'+ma;
-        var existente=null;
-        for(var i=0;i<D.length;i++){if(D[i].sheetsKey===chave){existente=D[i];break;}}
-        if(existente){
-          if(existente.projeto!==item.campanha){
-            atualizados.push({id:existente.id,colaborador:col,tipo:existente.tipo,projeto:item.campanha,valor:existente.valor,mes:ma});
-            existente.projeto=item.campanha;
-          }
-        } else {
-          novos.push({id:uid(),colaborador:col,tipo:'Entrega',projeto:item.campanha,valor:0,mes:ma,cliente:item.cliente||'',cidade:item.cidade||'',origem:'sheets',sheetsKey:chave,criadoEm:new Date().toISOString()});
-        }
-      });
-    });
-    D=novos.concat(D);populateFiltros();renderAtivePage();
-    for(var i=0;i<novos.length;i++){try{await sbInsert(novos[i]);}catch(e){D=D.filter(function(d){return d.id!==novos[i].id;});}}
-    for(var j=0;j<atualizados.length;j++){try{await sbUpdate(atualizados[j].id,atualizados[j]);}catch(e){}}
-    populateFiltros();renderAtivePage();
-    var partes=['Banco atualizado'];
-    if(novos.length)partes.push(novos.length+' novo(s) do Sheets');
-    if(atualizados.length)partes.push(atualizados.length+' atualizado(s)');
-    setSync('ok','Sincronizado · '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
-    showMsg('msg-l',partes.join(' + ')+'!','ok');
-  }catch(e){ setSync('err','Erro'); showMsg('msg-l','Erro ao sincronizar Sheets: '+e.message,'err'); }
+  await carregarPautas();
+  showMsg('msg-l','Dados atualizados.','ok');
 }
 
 async function initAuth(){var res=await SB.auth.getSession();var session=res.data?res.data.session:null;if(session){CURRENT_USER=session.user;await routeUser();}else{showScreen('login');}
@@ -726,107 +645,6 @@ function abrirEditGasto(id){EDIT_GASTO_ID=id;var g=null;for(var i=0;i<GASTOS_ADM
 function fecharEditGastoDir(){document.getElementById('edit-gasto-bg').classList.remove('show');EDIT_GASTO_ID=null;SEL_FILE2=null;}
 function fecharEditGasto(e){if(!e||e.target===document.getElementById('edit-gasto-bg'))fecharEditGastoDir();}
 async function salvarEditGasto(){if(!EDIT_GASTO_ID)return;var u={tipo:document.getElementById('eg2-tipo').value,mes:document.getElementById('eg2-mes').value,descricao:document.getElementById('eg2-desc').value.trim(),data_gasto:document.getElementById('eg2-data').value||'',valor:parseFloat(document.getElementById('eg2-val').value)||0,atualizado_em:new Date().toISOString()};if(!u.descricao||!u.valor||!u.mes){alert('Preencha todos os campos.');return;}try{if(SEL_FILE2){var ext=SEL_FILE2.name.split('.').pop().toLowerCase();var path=CURRENT_USER.id+'/'+EDIT_GASTO_ID+'.'+ext;var ur=await SB.storage.from('notas-fiscais').upload(path,SEL_FILE2,{contentType:SEL_FILE2.type,upsert:true});if(ur.error)throw new Error(ur.error.message);u.arquivo_path=path;u.arquivo_nome=SEL_FILE2.name;u.arquivo_tipo=SEL_FILE2.type;}var r=await SB.from('gastos').update(u).eq('id',EDIT_GASTO_ID).eq('status','pendente');if(r.error)throw new Error(r.error.message);for(var i=0;i<GASTOS_ADMIN.length;i++){if(GASTOS_ADMIN[i].id===EDIT_GASTO_ID){Object.assign(GASTOS_ADMIN[i],u);break;}}fecharEditGastoDir();showMsg('msg-r','Atualizado!','ok');}catch(e){alert('Erro: '+e.message);}}
-
-// Sheets import
-var MMAP={jan:'01',fev:'02',feb:'02',mar:'03',abr:'04',apr:'04',mai:'05',may:'05',jun:'06',jul:'07',ago:'08',aug:'08',set:'09',sep:'09',out:'10',oct:'10',nov:'11',dez:'12',dec:'12',maio:'05',junho:'06',julho:'07',agosto:'08',setembro:'09',outubro:'10',novembro:'11',dezembro:'12',janeiro:'01',fevereiro:'02',marco:'03'};
-function abaToMes(n){var s=n.toLowerCase().replace(/[^a-z0-9]/g,'_');var m=s.match(/([a-z]+)[_]?(\d{2,4})/);if(!m)return null;var mo=null,w=m[1];for(var k in MMAP){if(w===k||w.slice(0,k.length)===k){mo=MMAP[k];break;}}if(!mo)return null;var y=m[2].length===2?'20'+m[2]:m[2];return y+'-'+mo;}
-function parseEquipe(s){if(!s)return[];return s.split(/[+&,]+/).map(function(x){return x.trim();}).filter(Boolean);}
-function parseSheetRows(rows){
-  if(!rows||!rows.length)return[];
-  var keys=Object.keys(rows[0]);
-  function find(){var t=Array.prototype.slice.call(arguments);return keys.find(function(k){return t.some(function(x){return k.toLowerCase().indexOf(x.toLowerCase())>=0;});});}
-  var cols={campanha:find('campanha','campaign','projeto'),equipe:find('equipe','team','colaborador'),cliente:find('cliente','client'),cidade:find('cidade','city'),data:find('data','date','dia','dia do job','data do job','dt')};
-  return rows.map(function(row){
-    var c=cols.campanha?row[cols.campanha]:'';var e=cols.equipe?row[cols.equipe]:'';
-    if(!c||!e)return null;
-    if(isPlaceholder(c))return null;
-    var equipe=parseEquipe(e).filter(function(m){return!isPlaceholder(m)&&m.length>1;});
-    if(!equipe.length)return null;
-    var dataVal=cols.data?(row[cols.data]||'').toString().trim():'';
-    return{campanha:c.trim(),equipe:equipe,cliente:cols.cliente?row[cols.cliente]:'',cidade:cols.cidade?row[cols.cidade]:'',data:dataVal};
-  }).filter(Boolean);}
-
-async function fetchSheets(action,params){if(!SHEETS_URL){showMsg('msg-s','Configure a URL do Apps Script.','warn');return null;}var url=SHEETS_URL+'?action='+action;if(params)Object.keys(params).forEach(function(k){url+='&'+k+'='+encodeURIComponent(params[k]);});try{var r=await fetch(url,{redirect:'follow'});if(!r.ok)throw new Error('HTTP '+r.status);return await r.json();}catch(e){showMsg('msg-s','Erro: '+e.message,'err');return null;}}
-function abrirConfigSheets(){var url=prompt('URL do Apps Script (termina em /exec):',SHEETS_URL);if(url!==null){SHEETS_URL=url.trim();localStorage.setItem('fw_sheets_url',SHEETS_URL);showMsg('msg-s','URL salva!','ok');}}
-async function buscarAbas(){showMsg('msg-s','Buscando abas...','warn',true);var data=await fetchSheets('listSheets');if(!data)return;ABAS=Array.isArray(data)?data:(data.sheets||[]);renderChips();document.getElementById('msg-s').innerHTML='';if(!ABAS.length)showMsg('msg-s','Nenhuma aba encontrada.','warn');}
-function renderChips(){var el=document.getElementById('abas-chips');if(!ABAS.length){el.innerHTML='<p style="font-size:13px;color:var(--t2)">Nenhuma aba.</p>';return;}el.innerHTML='';ABAS.forEach(function(a){var mes=abaToMes(a);var sel=ASEL.indexOf(a)>=0;var span=document.createElement('span');span.className='chip'+(sel?' sel':'');span.textContent=a+(mes?' - '+fm(mes):'');span.addEventListener('click',function(){toggleAba(a);});el.appendChild(span);});}
-function toggleAba(n){var i=ASEL.indexOf(n);if(i>=0)ASEL.splice(i,1);else ASEL.push(n);renderChips();}
-async function syncMes(){var hoje=new Date();var ma=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0');if(MS[ma]==='fechado'){showMsg('msg-s','M\u00eas atual fechado.','err');return;}if(!ABAS.length){showMsg('msg-s','Clique em Buscar hist\u00f3rico primeiro.','err');return;}var abaMes=ABAS.find(function(a){return abaToMes(a)===ma;});if(!abaMes){showMsg('msg-s','Nenhuma aba para '+fml(ma)+'.','err');return;}showMsg('msg-s','Carregando '+abaMes+'...','warn',true);var data=await fetchSheets('getSheet',{sheet:abaMes});if(!data)return;var prjs=parseSheetRows(data.rows||[]).map(function(p){p.mes=ma;return p;});if(!prjs.length){showMsg('msg-s','Nenhum projeto com equipe v\u00e1lida.','warn');return;}PEND=prjs;abrirSync('Sincronizar - '+fml(ma),prjs);document.getElementById('msg-s').innerHTML='';}
-async function syncHist(){var abas=ASEL.length>0?ASEL:ABAS;if(!abas.length){showMsg('msg-s','Busque hist\u00f3rico e selecione abas.','err');return;}showMsg('msg-s','Importando '+abas.length+' aba(s)...','warn',true);var todos=[];for(var i=0;i<abas.length;i++){var data=await fetchSheets('getSheet',{sheet:abas[i]});if(data&&data.rows){var mes=abaToMes(abas[i]);parseSheetRows(data.rows).forEach(function(p){p.mes=mes;todos.push(p);});}}if(!todos.length){showMsg('msg-s','Nenhum dado v\u00e1lido.','warn');return;}PEND=todos;abrirSync('Hist\u00f3rico - '+todos.length+' projetos',todos);document.getElementById('msg-s').innerHTML='';}
-
-function abrirSync(titulo,itens){document.getElementById('sync-title').textContent=titulo;
-PEND=itens.map(function(p){return{campanha:p.campanha,equipe:p.equipe,mes:p.mes,cliente:p.cliente,cidade:p.cidade,data:p.data||'',_vals:{},_tipo:'Entrega'};});
-var el=document.getElementById('sync-body');el.innerHTML='';
-var intro=document.createElement('p');intro.style.cssText='font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.5';intro.textContent='Valores s\u00e3o opcion\u00e1is \u2014 preencha depois via edi\u00e7\u00e3o.';el.appendChild(intro);
-PEND.forEach(function(item,idx){
-  var div=document.createElement('div');div.className='si';
-  var top=document.createElement('div');top.className='si-top';
-  var info=document.createElement('div');
-  var h1=document.createElement('div');h1.style.cssText='font-weight:700;font-size:14px';h1.textContent=item.campanha;
-  var metaParts=[];if(item.mes)metaParts.push(fml(item.mes));if(item.data)metaParts.push(item.data);if(item.cliente)metaParts.push(item.cliente);if(item.cidade)metaParts.push(item.cidade);
-  var h2=document.createElement('div');h2.style.cssText='font-size:12px;color:var(--t2);margin-top:2px';h2.textContent=metaParts.join(' \u00b7 ');
-  info.appendChild(h1);info.appendChild(h2);
-  var sel=document.createElement('select');sel.style.cssText='font-size:12px;padding:5px 8px;border:1px solid var(--br2);border-radius:var(--r);background:var(--sf);font-family:inherit';
-  ['Entrega','Di\u00e1ria'].forEach(function(o){var op=document.createElement('option');op.textContent=o;sel.appendChild(op);});
-  (function(ii){sel.addEventListener('change',function(){PEND[ii]._tipo=sel.value;});})(idx);
-  top.appendChild(info);top.appendChild(sel);
-  var rows=document.createElement('div');rows.style.cssText='display:grid;gap:6px;margin-top:8px';
-  var hr=document.createElement('div');hr.className='si-cr';hr.style.cssText='font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px';hr.innerHTML='<span>Colaborador</span><span>Valor (R$)</span>';rows.appendChild(hr);
-  item.equipe.forEach(function(col){
-    var row=document.createElement('div');row.className='si-cr';
-    var lbl=document.createElement('div');lbl.style.cssText='display:flex;align-items:center;gap:7px';
-    var av=document.createElement('div');av.className='av';av.textContent=ini(col);
-    var nm=document.createElement('span');nm.textContent=col;
-    lbl.appendChild(av);lbl.appendChild(nm);
-    var inp=document.createElement('input');inp.type='number';inp.min='0';inp.step='0.01';inp.placeholder='0,00';inp.style.cssText='padding:6px 9px;font-size:13px';
-    (function(ii,c){inp.addEventListener('input',function(){PEND[ii]._vals[c]=parseFloat(inp.value)||0;});})(idx,col);
-    row.appendChild(lbl);row.appendChild(inp);rows.appendChild(row);
-  });
-  div.appendChild(top);div.appendChild(rows);el.appendChild(div);
-});
-document.getElementById('sync-bg').classList.add('show');}
-
-function fecharSyncDir(){document.getElementById('sync-bg').classList.remove('show');PEND=[];}
-function fecharSync(e){if(!e||e.target===document.getElementById('sync-bg'))fecharSyncDir();}
-
-async function confirmarSync(){
-  var hoje=new Date();var ma=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0');
-  var novos=[],atualizados=[];
-  PEND.forEach(function(item){
-    var mes=item.mes||ma;if(MS[mes]==='fechado')return;
-    item.equipe.forEach(function(col){
-      var val=item._vals[col]||0;
-      var cidNorm=normName(item.cidade||'').replace(/[^a-z0-9]/g,'_');
-      var dataNorm=normName(item.data||'').replace(/[^a-z0-9]/g,'_');
-      var chave='sh_'+normName(item.campanha).replace(/[^a-z0-9]/g,'_')+'_'+cidNorm+'_'+dataNorm+'_'+normName(col).replace(/[^a-z0-9]/g,'_')+'_'+mes;
-      var existente=null;
-      for(var i=0;i<D.length;i++){if(D[i].sheetsKey===chave){existente=D[i];break;}}
-      if(existente){
-        // Mesmo sheetsKey: atualiza nome do projeto, tipo e valor (se preenchido no modal)
-        var novoValor=(val>0)?val:existente.valor;
-        var mudou=existente.projeto!==item.campanha||existente.tipo!==item._tipo||existente.valor!==novoValor;
-        if(mudou){
-          atualizados.push({id:existente.id,colaborador:col,tipo:item._tipo,projeto:item.campanha,valor:novoValor,mes:mes});
-          existente.projeto=item.campanha;existente.tipo=item._tipo;existente.valor=novoValor;
-        }
-      } else {
-        novos.push({id:uid(),colaborador:col,tipo:item._tipo,projeto:item.campanha,valor:val,mes:mes,cliente:item.cliente||'',cidade:item.cidade||'',origem:'sheets',sheetsKey:chave,criadoEm:new Date().toISOString()});
-      }
-    });
-  });
-  fecharSyncDir();
-  if(!novos.length&&!atualizados.length){showMsg('msg-s','Nenhuma alteração detectada.','warn');return;}
-  D=novos.concat(D);populateFiltros();renderAtivePage();
-  setSync('spin','Salvando...');
-  var erros=0;
-  for(var i=0;i<novos.length;i++){try{await sbInsert(novos[i]);}catch(e){erros++;D=D.filter(function(d){return d.id!==novos[i].id;});}}
-  for(var j=0;j<atualizados.length;j++){try{await sbUpdate(atualizados[j].id,atualizados[j]);}catch(e){erros++;}}
-  populateFiltros();renderAtivePage();
-  setSync(erros?'err':'ok',erros?erros+' erro(s)':'Sincronizado');
-  var partes=[];
-  if(novos.length)partes.push(novos.length+' novo(s)');
-  if(atualizados.length)partes.push(atualizados.length+' atualizado(s)');
-  showMsg('msg-s',partes.join(' e ')+'!','ok');}
 
 // Populate filters
 function populateFiltros(){
@@ -1812,9 +1630,6 @@ function switchEmpTab(tab){
     renderPautasEmp();
   }
 }
-function abrirSP(){document.getElementById('overlay').classList.add('show');}
-function fecharSP(e){if(!e||e.target===document.getElementById('overlay'))fecharSPdir();}
-function fecharSPdir(){document.getElementById('overlay').classList.remove('show');}
 function toggleSidebar(){document.querySelector('.sb-side').classList.toggle('open');document.getElementById('sb-backdrop').classList.toggle('show');}
 
 document.addEventListener('DOMContentLoaded',function(){
