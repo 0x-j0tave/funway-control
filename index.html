@@ -1071,7 +1071,7 @@ function renderPautasPublica(){
 
   var thBase='padding:11px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;border:none;font-family:\'Raleway\',sans-serif';
   var tdBase='font-family:\'Raleway\',sans-serif';
-  var h='<div style="height:100%;display:flex;flex-direction:column">'
+  var h='<div style="max-height:70vh;overflow-y:auto;border-radius:10px">'
     +'<table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">'
     +'<colgroup><col style="width:72px"><col style="width:28%"><col style="width:17%"><col style="width:20%"><col style="width:14%"><col style="width:90px"></colgroup>'
     +'<thead><tr style="position:sticky;top:0;z-index:2">'
@@ -1146,9 +1146,9 @@ function renderPautasAdmin(){
   }
 
   var thB='padding:11px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;border:none;font-family:\'Raleway\',sans-serif';
-  var h='<div style="border-radius:10px;overflow:hidden;border:1px solid #E5E5E2;margin-bottom:12px">'
+  var h='<div style="border-radius:10px;border:1px solid #E5E5E2;margin-bottom:12px;max-height:70vh;overflow-y:auto">'
     +'<table style="width:100%;border-collapse:collapse;font-size:13px">'
-    +'<thead><tr>'
+    +'<thead><tr style="position:sticky;top:0;z-index:5">'
     +'<th style="'+thB+';background:#2D5A34;width:68px">Data</th>'
     +'<th style="'+thB+';background:#6AAB72">Campanha</th>'
     +thFilter('Cidade','cidade',allCidades,null,'#8B4F1A')
@@ -1214,8 +1214,9 @@ function renderPautasEmp(){
     return;
   }
 
-  var h='<table style="width:100%;border-collapse:collapse;font-size:13px">'
-    +'<thead><tr style="position:sticky;top:0;z-index:2">'
+  var h='<div style="border:1px solid #E5E5E2;border-radius:10px;max-height:70vh;overflow-y:auto">'
+    +'<table style="width:100%;border-collapse:collapse;font-size:13px">'
+    +'<thead><tr style="position:sticky;top:0;z-index:5">'
     +'<th style="'+thB+';background:#2D5A34;width:68px;white-space:nowrap">Data</th>'
     +'<th style="'+thB+';background:#6AAB72">Campanha</th>'
     +'<th style="'+thB+';background:#8B4F1A;width:130px">Cidade</th>'
@@ -1243,7 +1244,7 @@ function renderPautasEmp(){
       +'</tr>';
   });
 
-  h+='</tbody></table>'
+  h+='</tbody></table></div>'
    +'<div style="padding:16px 20px;border-top:1px solid #EFEFED">'
    +'<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>'
    +'</div>';
