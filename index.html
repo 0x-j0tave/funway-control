@@ -443,7 +443,6 @@ tbody tr:hover td{background:#FAFAF8}
         </div>
         <div class="frow">
           <div class="field"><label>Tipo</label><select id="eg-tipo"><option value="reembolso">Reembolso</option><option value="cartao">Cartão Funway</option><option value="gastos_gerais">Gastos em Geral</option></select></div>
-          <div class="field"><label>Mês</label><input type="month" id="eg-mes"></div>
           <div class="field"><label>Data do gasto</label><input type="date" id="eg-data"></div>
         </div>
         <div class="frow">
@@ -451,7 +450,7 @@ tbody tr:hover td{background:#FAFAF8}
           <div class="field" style="max-width:130px"><label>Valor (R$)</label><input type="number" id="eg-val" min="0" step="0.01" placeholder="0,00"></div>
         </div>
         <div style="margin-bottom:13px">
-          <label style="margin-bottom:6px">Comprovante / Nota fiscal</label>
+          <label style="margin-bottom:6px">Comprovante / Nota fiscal <span style="font-weight:400;color:var(--t3)">(opcional)</span></label>
           <div class="upload-area" id="upload-area" onclick="document.getElementById('eg-file').click()">
             <input type="file" id="eg-file" accept=".pdf,.png,.jpg,.jpeg" onchange="onFileSelect(event)" style="display:none">
             <div id="up-placeholder"><div style="font-size:13px;font-weight:500;color:var(--t2)">Clique para anexar</div><div style="font-size:12px;color:var(--t3);margin-top:3px">PDF, PNG ou JPEG</div></div>
@@ -579,7 +578,7 @@ function onFileSelect2(e){var f=e.target.files[0];if(!f)return;SEL_FILE2=f;docum
 
 async function enviarGasto(){
   var tipo=document.getElementById('eg-tipo').value;
-  var mes=document.getElementById('eg-mes').value;
+  var mes=dataGasto?('2026-'+dataGasto.split('-')[1]):(new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'));
   var desc=document.getElementById('eg-desc').value.trim();
   var dataGasto=document.getElementById('eg-data').value||'';
   var val=parseFloat(document.getElementById('eg-val').value)||0;
@@ -593,11 +592,15 @@ async function enviarGasto(){
   if(['pdf','png','jpg','jpeg'].indexOf(ext)<0){showMsg('msg-emp','Formato inv\u00e1lido. Use PDF, PNG ou JPEG.','err');return;}
   showMsg('msg-emp','Enviando...','warn',true);
   var id=uid();
-  var path=CURRENT_USER.id+'/'+id+'.'+ext;
+  var path='',arqNome='',arqTipo='';
   try{
-    var ur=await SB.storage.from('notas-fiscais').upload(path,SEL_FILE,{contentType:SEL_FILE.type});
-    if(ur.error)throw new Error('Erro no upload: '+ur.error.message);
-    var row={id:id,user_id:CURRENT_USER.id,colaborador:nomeColab,tipo:tipo,descricao:desc,data_gasto:dataGasto,valor:val,mes:mes,status:'pendente',arquivo_path:path,arquivo_nome:SEL_FILE.name,arquivo_tipo:SEL_FILE.type,observacao:'',criado_em:new Date().toISOString(),atualizado_em:new Date().toISOString()};
+    if(SEL_FILE){
+      path=CURRENT_USER.id+'/'+id+'.'+ext;
+      var ur=await SB.storage.from('notas-fiscais').upload(path,SEL_FILE,{contentType:SEL_FILE.type});
+      if(ur.error)throw new Error('Erro no upload: '+ur.error.message);
+      arqNome=SEL_FILE.name;arqTipo=SEL_FILE.type;
+    }
+    var row={id:id,user_id:CURRENT_USER.id,colaborador:nomeColab,tipo:tipo,descricao:desc,data_gasto:dataGasto,valor:val,mes:mes,status:'pendente',arquivo_path:path,arquivo_nome:arqNome,arquivo_tipo:arqTipo,observacao:'',criado_em:new Date().toISOString(),atualizado_em:new Date().toISOString()};
     var r=await SB.from('gastos').insert(row);
     if(r.error)throw new Error(r.error.message);
     GASTOS_ADMIN.unshift(row);
@@ -1637,7 +1640,6 @@ document.addEventListener('DOMContentLoaded',function(){
   var ma=new Date().toISOString().slice(0,7);
   document.getElementById('fl-mes').value=ma;
   document.getElementById('fr-mes').value=ma;
-  var eg=document.getElementById('eg-mes');if(eg)eg.value=ma;
   var egdata=document.getElementById('eg-data');if(egdata)egdata.value=new Date().toISOString().slice(0,10);
   // Carrega pautas antes do login (visão pública)
   SB.from('pautas').select('*').order('ordem',{ascending:true}).order('data_rec',{ascending:true}).then(function(r){if(!r.error){PAUTAS=r.data||[];renderPautasPublica();}});
