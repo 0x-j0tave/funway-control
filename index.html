@@ -311,8 +311,6 @@ tbody tr:hover td{background:#FAFAF8}
 
         <div id="pg-home" class="page active">
           <div id="home-cont"></div>
-          <div id="home-pautas-cont" style="margin-top:12px;height:calc(100vh - 320px);min-height:400px"></div>
-          <div id="home-pautas-cont" style="margin-top:8px"></div>
         </div>
         <div id="pg-lancar" class="page">
           <div id="msg-l"></div>
@@ -681,7 +679,6 @@ function renderHome(){
   var el=document.getElementById('home-cont');
   var meses=getMeses();
   if(!meses.length){el.innerHTML='<div class="empty"><p>Sem dados ainda.</p></div>';return;}
-  // Use selected month or default to most recent
   if(!HOME_MES_SEL||meses.indexOf(HOME_MES_SEL)<0)HOME_MES_SEL=meses[0];
   var mesAtual=HOME_MES_SEL;
   var mesPrev=meses[meses.indexOf(mesAtual)+1]||null;
@@ -703,14 +700,12 @@ function renderHome(){
     return false;
   }).length;
 
-  // Month selector
   var selOpts=meses.map(function(m){return '<option value="'+m+'"'+(m===mesAtual?' selected':'')+'>'+fml(m)+'</option>';}).join('');
   var h='<div class="ph"><h2>Visão Geral</h2>'
     +'<p style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">Resumo do mês: '
     +'<select onchange="HOME_MES_SEL=this.value;renderHome()" style="font-size:13px;font-weight:600;color:var(--or);border:none;border-bottom:2px solid var(--or);background:transparent;cursor:pointer;padding:1px 4px;font-family:\'Raleway\',inherit">'+selOpts+'</select>'
     +'</p></div>';
 
-  // KPI cards
   h+='<div class="sumgrid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:24px">';
   h+='<div class="sc"><div class="lbl">Folha '+fm(mesAtual)+'</div><div class="val" style="color:var(--or)">'+fv(totalAtual)+'</div><div class="sub">'+diffStr+'</div></div>';
   h+='<div class="sc"><div class="lbl">Reembolsos</div><div class="val" style="color:var(--pu)">'+fv(reembolsosAtual)+'</div><div class="sub">no mês</div></div>';
@@ -720,7 +715,70 @@ function renderHome(){
   h+='<div class="sc"><div class="lbl">Pagamentos</div><div class="val" style="color:var(--gr)">'+pagos+'/'+nColab+'</div><div class="sub">colaboradores pagos</div></div>';
   h+='</div>';
 
+  // Charts section
+  h+=buildCharts(meses);
+
   el.innerHTML=h;
+}
+
+function buildCharts(meses){
+  // Gather data per month (sorted oldest→newest for charts)
+  var ordered=meses.slice().reverse();
+  var dataFolha=[], dataReemb=[], dataProj=[];
+  ordered.forEach(function(m){
+    var f=D.filter(function(d){return d.mes===m;});
+    dataFolha.push(f.filter(function(d){return d.tipo!=='Reembolso';}).reduce(function(s,r){return s+r.valor;},0));
+    dataReemb.push(f.filter(function(d){return d.tipo==='Reembolso';}).reduce(function(s,r){return s+r.valor;},0));
+    var p={};f.filter(function(d){return d.tipo!=='Reembolso';}).forEach(function(d){if(d.projeto)p[normName(d.projeto)]=1;});
+    dataProj.push(Object.keys(p).length);
+  });
+
+  function avg(arr){if(!arr.length)return 0;return arr.reduce(function(s,v){return s+v;},0)/arr.length;}
+  function svgBar(data,avgVal,color,labelFn,title){
+    var W=320,H=160,PL=8,PR=8,PT=16,PB=36;
+    var n=data.length;
+    if(!n)return '';
+    var maxVal=Math.max.apply(null,data)||1;
+    var barW=Math.max(8,Math.floor((W-PL-PR)/n*0.6));
+    var gap=(W-PL-PR)/n;
+    var avgY=PT+(H-PT-PB)*(1-avgVal/maxVal);
+    var svg='<svg width="100%" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">';
+    // Title
+    svg+='<text x="'+PL+'" y="11" font-size="11" font-weight="700" fill="#374151" font-family="Raleway,sans-serif">'+title+'</text>';
+    // Avg line
+    svg+='<line x1="'+PL+'" y1="'+avgY+'" x2="'+(W-PR)+'" y2="'+avgY+'" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3"/>';
+    svg+='<text x="'+(W-PR-2)+'" y="'+(avgY-3)+'" font-size="9" fill="#9CA3AF" text-anchor="end" font-family="Raleway,sans-serif">média '+labelFn(avgVal)+'</text>';
+    // Bars
+    data.forEach(function(v,i){
+      var x=PL+i*gap+(gap-barW)/2;
+      var barH=Math.max(2,(H-PT-PB)*(v/maxVal));
+      var y=PT+(H-PT-PB)-barH;
+      var isActive=ordered[i]===HOME_MES_SEL;
+      svg+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+barW+'" height="'+barH.toFixed(1)+'" rx="3" fill="'+(isActive?color:color+'99')+'"/>';
+      // Value on hover via title
+      svg+='<title>'+fml(ordered[i])+': '+labelFn(v)+'</title>';
+      // Month label
+      svg+='<text x="'+(x+barW/2).toFixed(1)+'" y="'+(H-PB+14)+'" font-size="9" text-anchor="middle" fill="#6B7280" font-family="Raleway,sans-serif">'+fm(ordered[i])+'</text>';
+      // Value above bar
+      if(v>0)svg+='<text x="'+(x+barW/2).toFixed(1)+'" y="'+(y-3).toFixed(1)+'" font-size="9" text-anchor="middle" fill="'+(isActive?color:'#9CA3AF')+'" font-family="Raleway,sans-serif" font-weight="600">'+labelFn(v)+'</text>';
+    });
+    svg+='</svg>';
+    return svg;
+  }
+
+  function fvShort(v){
+    if(v>=1000)return 'R$'+(v/1000).toFixed(0)+'k';
+    return 'R$'+v.toFixed(0);
+  }
+
+  var avgFolha=avg(dataFolha), avgReemb=avg(dataReemb), avgProj=avg(dataProj);
+  var cardStyle='background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);padding:16px 18px;box-shadow:var(--sh)';
+
+  return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:4px">'
+    +'<div style="'+cardStyle+'">'+svgBar(dataFolha,avgFolha,'#F05C23',fvShort,'Folha mês a mês')+'</div>'
+    +'<div style="'+cardStyle+'">'+svgBar(dataReemb,avgReemb,'#7E22CE',fvShort,'Reembolsos mês a mês')+'</div>'
+    +'<div style="'+cardStyle+'">'+svgBar(dataProj,avgProj,'#2563EB',function(v){return Math.round(v)+''},'Projetos mês a mês')+'</div>'
+    +'</div>';
 }
 
 async function togglePagamento(colaborador,mes){
