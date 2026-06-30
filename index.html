@@ -727,7 +727,7 @@ function buildCharts(meses){
   var dataFolha=[], dataReemb=[], dataProj=[];
   ordered.forEach(function(m){
     var f=D.filter(function(d){return d.mes===m;});
-    dataFolha.push(f.filter(function(d){return d.tipo!=='Reembolso';}).reduce(function(s,r){return s+r.valor;},0));
+    dataFolha.push(f.reduce(function(s,r){return s+r.valor;},0));
     dataReemb.push(f.filter(function(d){return d.tipo==='Reembolso';}).reduce(function(s,r){return s+r.valor;},0));
     var p={};f.filter(function(d){return d.tipo!=='Reembolso';}).forEach(function(d){if(d.projeto)p[normName(d.projeto)]=1;});
     dataProj.push(Object.keys(p).length);
@@ -735,7 +735,7 @@ function buildCharts(meses){
 
   function avg(arr){if(!arr.length)return 0;return arr.reduce(function(s,v){return s+v;},0)/arr.length;}
   function svgBar(data,avgVal,color,labelFn,title){
-    var W=320,H=190,PL=10,PR=10,PT=52,PB=32;
+    var W=320,H=180,PL=10,PR=10,PT=38,PB=32;
     var n=data.length;
     if(!n)return '';
     var chartH=H-PT-PB;
@@ -746,8 +746,7 @@ function buildCharts(meses){
     var svg='<svg width="100%" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">';
     // Title
     svg+='<text x="'+PL+'" y="16" font-size="11" font-weight="700" fill="#374151" font-family="Raleway,sans-serif">'+title+'</text>';
-    // Avg label below title
-    svg+='<text x="'+PL+'" y="30" font-size="9" fill="#9CA3AF" font-family="Raleway,sans-serif">média: '+labelFn(avgVal)+'</text>';
+
     // Chart area background
     svg+='<rect x="'+PL+'" y="'+PT+'" width="'+(W-PL-PR)+'" height="'+chartH+'" fill="#FAFAF8" rx="4"/>';
     // Avg line inside chart area only
@@ -785,9 +784,9 @@ function buildCharts(meses){
   var cardStyle='background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);padding:16px 18px;box-shadow:var(--sh)';
 
   return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:4px">'
-    +'<div style="'+cardStyle+'">'+svgBar(dataFolha,avgFolha,'#F05C23',fvShort,'Folha mês a mês')+'</div>'
-    +'<div style="'+cardStyle+'">'+svgBar(dataReemb,avgReemb,'#7E22CE',fvShort,'Reembolsos mês a mês')+'</div>'
-    +'<div style="'+cardStyle+'">'+svgBar(dataProj,avgProj,'#2563EB',function(v){return Math.round(v)+''},'Projetos mês a mês')+'</div>'
+    +'<div style="'+cardStyle+'">'+svgBar(dataFolha,avgFolha,'#F05C23',fvShort,'Tracking Folha')+'</div>'
+    +'<div style="'+cardStyle+'">'+svgBar(dataReemb,avgReemb,'#7E22CE',fvShort,'Tracking Reembolsos')+'</div>'
+    +'<div style="'+cardStyle+'">'+svgBar(dataProj,avgProj,'#2563EB',function(v){return Math.round(v)+''},'Tracking Projetos')+'</div>'
     +'</div>';
 }
 
