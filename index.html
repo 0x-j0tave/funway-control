@@ -1001,6 +1001,7 @@ function renderMeses(){
 // ── PAUTAS ───────────────────────────────────────────────────────────────────
 var PAUTAS = [];
 var PAUTA_FILTROS = {status:'',cidade:'',mes:''};
+var PAUTA_MES_SEL = null;
 var PAUTAS_INTERVAL = null;
 var EDIT_PAUTA_ID = null;
 var CIDADES = ['Salvador','São Paulo','Rio de Janeiro','Belo Horizonte','Curitiba','Floripa','Fortaleza','Recife','Porto Alegre','Brasília','Belém','Outras'];
@@ -1046,11 +1047,14 @@ function strFromChips(arr){return arr.join(' + ');}
 function renderPautasPublica(){
   var el=document.getElementById('pauta-publica-cont');
   if(!el)return;
-  var f=PAUTAS.filter(function(p){return p.cliente||p.campanha;});
+  var mesVigente=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+  var f=PAUTAS.filter(function(p){return (p.cliente||p.campanha)&&p.mes===mesVigente;});
   f.sort(function(a,b){
-    var da=(a.data_rec||'').split('/').join('-');
-    var db=(b.data_rec||'').split('/').join('-');
-    return da.localeCompare(db);
+    var ma=(a.mes||'9999-99'),mb=(b.mes||'9999-99');
+    if(ma!==mb)return ma.localeCompare(mb);
+    var da=parseInt((a.data_rec||'0').split('/')[0])||0;
+    var db=parseInt((b.data_rec||'0').split('/')[0])||0;
+    return da-db;
   });
   if(!f.length){
     el.innerHTML='';
@@ -1116,16 +1120,26 @@ function renderPautasAdmin(){
   PAUTAS.forEach(function(p){if(p.cidade&&allCidades.indexOf(p.cidade)<0)allCidades.push(p.cidade);});
   allCidades.sort();
 
+  // Collect available months
+  var mesesDisp={};
+  PAUTAS.filter(function(p){return p.cliente||p.campanha;}).forEach(function(p){if(p.mes)mesesDisp[p.mes]=1;});
+  var mesesList=Object.keys(mesesDisp).sort();
+  // Default to latest month if none selected
+  if(!PAUTA_MES_SEL||mesesDisp[PAUTA_MES_SEL]===undefined){PAUTA_MES_SEL=mesesList[mesesList.length-1]||null;}
+
   var f=PAUTAS.filter(function(p){
     if(!p.cliente&&!p.campanha)return false;
+    if(PAUTA_MES_SEL&&p.mes!==PAUTA_MES_SEL)return false;
     if(PAUTA_FILTROS.status&&p.status!==PAUTA_FILTROS.status)return false;
     if(PAUTA_FILTROS.cidade&&p.cidade!==PAUTA_FILTROS.cidade)return false;
     return true;
   });
   f.sort(function(a,b){
-    var da=(a.data_rec||'').split('/').join('-');
-    var db=(b.data_rec||'').split('/').join('-');
-    return da.localeCompare(db);
+    var ma=(a.mes||'9999-99'),mb=(b.mes||'9999-99');
+    if(ma!==mb)return ma.localeCompare(mb);
+    var da=parseInt((a.data_rec||'0').split('/')[0])||0;
+    var db=parseInt((b.data_rec||'0').split('/')[0])||0;
+    return da-db;
   });
 
   function statusBorderA(s){if(s==='ENTREGUE')return '3px solid #16A34A';if(s==='EDIT')return '3px solid #D97706';return '3px solid #DC2626';}
@@ -1151,6 +1165,14 @@ function renderPautasAdmin(){
     var clearBtn=active?'<div class="pf-dropdown-clear" onclick="setPautaFiltro(\''+field+'\',\'\');event.stopPropagation()">Limpar filtro</div>':'';
     return '<th class="pf-th '+cls+'" onclick="togglePfDropdown(this)" style="padding:11px 16px;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;border:none;position:relative;background:'+bg+'"><span>'+label+'</span><span class="pf-icon">'+icon+'</span><div class="pf-dropdown" onclick="event.stopPropagation()">'+items+clearBtn+'</div></th>';
   }
+
+  // Month tabs HTML
+  var tabsHtml='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">';
+  mesesList.forEach(function(m){
+    var active=m===PAUTA_MES_SEL;
+    tabsHtml+='<button onclick="PAUTA_MES_SEL=\''+m+'\';renderPautasAdmin()" style="padding:6px 16px;font-size:13px;font-weight:600;border-radius:20px;cursor:pointer;border:2px solid '+(active?'var(--or)':'var(--br2)')+';background:'+(active?'var(--or)':'transparent')+';color:'+(active?'#fff':'var(--t2)')+';font-family:\'Raleway\',inherit;transition:all .15s">'+fml(m)+'</button>';
+  });
+  tabsHtml+='</div>';
 
   var thB='padding:11px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;border:none;font-family:\'Raleway\',sans-serif';
   var h='<div style="border-radius:10px;border:1px solid #E5E5E2;margin-bottom:12px;max-height:70vh;overflow-y:auto">'
@@ -1186,7 +1208,7 @@ function renderPautasAdmin(){
   });
   h+='</tbody></table></div>';
   h+='<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
-  el.innerHTML=h;
+  el.innerHTML=tabsHtml+h;
   el.querySelectorAll('[data-dp]').forEach(function(b){b.addEventListener('click',function(){deletarPauta(b.getAttribute('data-dp'));});});
 
   document.addEventListener('click',function(){
@@ -1200,9 +1222,11 @@ function renderPautasEmp(){
   if(!el)return;
   var f=PAUTAS.filter(function(p){return p.cliente||p.campanha;});
   f.sort(function(a,b){
-    var da=(a.data_rec||'').split('/').join('-');
-    var db=(b.data_rec||'').split('/').join('-');
-    return da.localeCompare(db);
+    var ma=(a.mes||'9999-99'),mb=(b.mes||'9999-99');
+    if(ma!==mb)return ma.localeCompare(mb);
+    var da=parseInt((a.data_rec||'0').split('/')[0])||0;
+    var db=parseInt((b.data_rec||'0').split('/')[0])||0;
+    return da-db;
   });
 
   function stBorderE(s){if(s==='ENTREGUE')return '3px solid #16A34A';if(s==='EDIT')return '3px solid #D97706';return '3px solid #DC2626';}
