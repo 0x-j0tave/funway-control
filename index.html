@@ -1028,41 +1028,110 @@ function renderLanc(){
 
 function renderReemb(){
   var fc=document.getElementById('fil-rcol').value,fm2=document.getElementById('fil-rmes').value;
-  var el=document.getElementById('tbl-reemb');var h='';
-  if(GASTOS_ADMIN.length){
-    var pendentes=GASTOS_ADMIN.filter(function(g){return g.status==='pendente';});
-    var finalizados=GASTOS_ADMIN.filter(function(g){return g.status!=='pendente';});
-    if(pendentes.length){
-      h+='<div style="background:var(--aml);border:1px solid #FDE68A;border-radius:var(--rl);overflow:hidden;margin-bottom:10px">';
-      h+='<div style="padding:10px 16px;font-weight:700;font-size:13px;color:var(--am);border-bottom:1px solid #FDE68A">Pendentes de aprova\u00e7\u00e3o ('+pendentes.length+')</div>';
-      h+='<table><thead><tr><th>Funcion\u00e1rio</th><th>Tipo</th><th>Descri\u00e7\u00e3o</th><th>Data</th><th>Valor</th><th>Comprovante</th><th></th></tr></thead><tbody>';
-      pendentes.forEach(function(g){
-        var tipLabel=g.tipo==='cartao'?'Cart\u00e3o Funway':(g.tipo==='gastos_gerais'?'Gastos em Geral':'Reembolso');
-        var tipStyle=g.tipo==='cartao'?'background:#EDE9FE;color:#6D28D9':(g.tipo==='gastos_gerais'?'background:#DCFCE7;color:#15803D':'');
-        h+='<tr style="background:#FFFBEB"><td><div style="display:flex;align-items:center;gap:7px"><div class="av">'+ini(g.colaborador)+'</div>'+g.colaborador+'</div></td>';
-        h+='<td><span class="badge" style="'+tipStyle+'">'+tipLabel+'</span></td><td>'+g.descricao+'</td>';
-        h+='<td>'+(g.data_gasto?'<span style="font-size:13px;color:var(--t2)">'+g.data_gasto.split('-').reverse().join('/')+'</span>':'<span class="badge b-mes">'+fm(g.mes)+'</span>')+'</td><td style="font-weight:700;color:var(--gr)">'+fv(g.valor)+'</td>';
-        h+='<td>'+(g.arquivo_path?'<button class="btn btn-ghost btn-sm" data-view="'+g.arquivo_path+'" style="font-size:12px;color:var(--bl);font-weight:600">Ver</button>':'-')+'</td>';
-        h+='<td><div style="display:flex;gap:4px"><button class="btn btn-gr btn-sm" data-apv="'+g.id+'">Aprovar</button><button class="btn btn-rd btn-sm" data-rej="'+g.id+'">Rejeitar</button></div></td></tr>';
-      });
-      h+='</tbody></table></div>';}
-    }
+  var el=document.getElementById('tbl-reemb');
+
+  var pendentes=GASTOS_ADMIN.filter(function(g){return g.status==='pendente';});
   var f=D.filter(function(d){return d.tipo==='Reembolso'&&(!fc||normName(d.colaborador)===normName(fc))&&(!fm2||d.mes===fm2);});
-  if(f.length){
-    h+='<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Descri\u00e7\u00e3o</th><th>Data</th><th>Valor</th><th>Comprovante</th><th></th></tr></thead><tbody>';
-    f.forEach(function(d){
-      var fec=MS[d.mes]==='fechado';
-      var arquivoBtn='<span style="color:var(--t3);font-size:12px">-</span>';
-      if(d.origem==='gasto'&&d.sheetsKey){var gastoId=d.sheetsKey.replace('gasto_','');for(var gi=0;gi<GASTOS_ADMIN.length;gi++){if(GASTOS_ADMIN[gi].id===gastoId&&GASTOS_ADMIN[gi].arquivo_path){arquivoBtn='<button class="btn btn-ghost btn-sm" data-view="'+GASTOS_ADMIN[gi].arquivo_path+'" style="font-size:12px;color:var(--bl);font-weight:600">Ver</button>';break;}}}
-      h+='<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="av">'+ini(d.colaborador)+'</div>'+d.colaborador+'</div></td><td>'+d.projeto+'</td><td><span class="badge b-mes">'+fm(d.mes)+'</span></td><td style="font-weight:700;color:var(--gr)">'+fv(d.valor)+'</td><td>'+arquivoBtn+'</td><td>'+actBtns(d.id,fec)+'</td></tr>';
+
+  if(!pendentes.length&&!f.length){el.innerHTML='<div class="empty"><p>Nenhum reembolso ainda.</p></div>';return;}
+
+  var totalPend=pendentes.reduce(function(s,g){return s+(parseFloat(g.valor)||0);},0);
+  var totalAprov=f.reduce(function(s,d){return s+d.valor;},0);
+
+  var h='<div class="sumgrid" style="margin-bottom:20px">'
+    +'<div class="sc"><div class="lbl">Pendentes de aprovação</div><div class="val" style="color:var(--am)">'+pendentes.length+'</div><div class="sub">'+fv(totalPend)+'</div></div>'
+    +'<div class="sc"><div class="lbl">Aprovados'+(fm2?(' · '+fml(fm2)):'')+'</div><div class="val" style="color:var(--gr)">'+fv(totalAprov)+'</div><div class="sub">'+f.length+' lançamento'+(f.length!==1?'s':'')+'</div></div>'
+    +'</div>';
+
+  function tipInfo(t){
+    if(t==='cartao')return{label:'Cartão Funway',bg:'#EDE9FE',fg:'#6D28D9'};
+    if(t==='gastos_gerais')return{label:'Gastos em Geral',bg:'#DCFCE7',fg:'#15803D'};
+    return{label:'Reembolso',bg:'#F3E8FF',fg:'#7E22CE'};
+  }
+
+  if(pendentes.length){
+    h+='<div class="sec" style="margin-top:4px">Pendentes de aprovação</div>';
+    h+='<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">';
+    pendentes.forEach(function(g){
+      var ti=tipInfo(g.tipo);
+      var dataStr=g.data_gasto?g.data_gasto.split('-').reverse().join('/'):fm(g.mes);
+      h+='<div style="background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden;position:relative">'
+        +'<div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:#D97706"></div>'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 18px 14px 22px;flex-wrap:wrap">'
+        +'<div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">'
+        +'<span style="width:9px;height:9px;border-radius:50%;background:#D97706;box-shadow:0 0 0 4px rgba(217,119,6,.28);flex-shrink:0;animation:pulse 1.6s infinite"></span>'
+        +'<div class="av">'+ini(g.colaborador)+'</div>'
+        +'<div style="min-width:0">'
+        +'<div style="font-weight:700;font-size:14px">'+g.colaborador+'</div>'
+        +'<div style="font-size:12px;color:var(--t2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:340px">'+g.descricao+'</div>'
+        +'<div style="display:flex;gap:6px;align-items:center;margin-top:5px">'
+        +'<span class="badge" style="background:'+ti.bg+';color:'+ti.fg+'">'+ti.label+'</span>'
+        +'<span style="font-size:11px;color:var(--t3)">'+dataStr+'</span>'
+        +(g.arquivo_path?'<button class="btn btn-ghost btn-sm" data-view="'+g.arquivo_path+'" style="font-size:11px;color:var(--bl);font-weight:600;padding:2px 8px">Ver comprovante</button>':'<span style="font-size:11px;color:var(--t3)">Sem comprovante</span>')
+        +'</div></div></div>'
+        +'<div style="display:flex;align-items:center;gap:12px;flex-shrink:0">'
+        +'<div style="font-size:18px;font-weight:800;color:var(--am);min-width:90px;text-align:right">'+fv(g.valor)+'</div>'
+        +'<div style="display:flex;gap:6px">'
+        +'<button class="btn btn-gr btn-sm" data-apv="'+g.id+'">Aprovar</button>'
+        +'<button class="btn btn-rd btn-sm" data-rej="'+g.id+'">Rejeitar</button>'
+        +'</div></div>'
+        +'</div></div>';
     });
-    h+='</tbody></table></div>';}
-  if(!h){el.innerHTML='<div class="empty"><p>Nenhum reembolso ainda.</p></div>';return;}
+    h+='</div>';
+  }
+
+  if(f.length){
+    var byC={};
+    f.forEach(function(d){
+      var key=normName(d.colaborador);
+      if(!byC[key])byC[key]={nome:d.colaborador,items:[],total:0};
+      byC[key].items.push(d);byC[key].total+=d.valor;
+    });
+    var cols=Object.keys(byC).sort(function(a,b){return normName(byC[a].nome).localeCompare(normName(byC[b].nome));});
+
+    h+='<div class="sec">Aprovados</div>';
+    h+='<div style="display:flex;flex-direction:column;gap:10px">';
+    cols.forEach(function(k){
+      var nome=byC[k].nome,total=byC[k].total,items=byC[k].items;
+      var eid='rc_'+k;
+      var rows='';
+      items.forEach(function(d){
+        var fec=MS[d.mes]==='fechado';
+        var arquivoBtn='<span style="color:var(--t3);font-size:11px">Sem comprovante</span>';
+        if(d.origem==='gasto'&&d.sheetsKey){var gastoId=d.sheetsKey.replace('gasto_','');for(var gi=0;gi<GASTOS_ADMIN.length;gi++){if(GASTOS_ADMIN[gi].id===gastoId&&GASTOS_ADMIN[gi].arquivo_path){arquivoBtn='<button class="btn btn-ghost btn-sm" data-view="'+GASTOS_ADMIN[gi].arquivo_path+'" style="font-size:11px;color:var(--bl);font-weight:600;padding:2px 6px">Ver</button>';break;}}}
+        rows+='<tr>'
+          +'<td style="padding:8px 16px 8px 44px;font-size:12px;color:var(--t)">'+d.projeto+'</td>'
+          +'<td style="padding:8px 16px"><span class="badge b-mes">'+fm(d.mes)+'</span></td>'
+          +'<td style="padding:8px 16px">'+arquivoBtn+'</td>'
+          +'<td style="padding:8px 16px;text-align:right"><span style="font-weight:600;color:var(--gr)">'+fv(d.valor)+'</span></td>'
+          +'<td style="padding:8px 16px;text-align:right">'+actBtns(d.id,fec)+'</td>'
+          +'</tr>';
+      });
+      h+='<div style="background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden;position:relative">'
+        +'<div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:#16A34A"></div>'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 14px 22px;cursor:pointer" onclick="toggleFD(\''+eid+'\')">'
+        +'<div style="display:flex;align-items:center;gap:12px">'
+        +'<span style="width:9px;height:9px;border-radius:50%;background:#16A34A;box-shadow:0 0 0 4px rgba(22,163,74,.25);flex-shrink:0"></span>'
+        +'<div class="av">'+ini(nome)+'</div>'
+        +'<div><div style="font-weight:700;font-size:15px">'+nome+'</div><div style="font-size:11px;color:var(--t2)">'+items.length+' reembolso'+(items.length!==1?'s':'')+'</div></div>'
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:12px">'
+        +'<div style="font-size:17px;font-weight:700;color:var(--gr)">'+fv(total)+'</div>'
+        +'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);display:inline-block;transition:transform .2s">▾</span>'
+        +'</div></div>'
+        +'<div id="'+eid+'" style="display:none;border-top:1px solid var(--br)"><table style="width:100%;table-layout:fixed"><colgroup><col><col style="width:100px"><col style="width:120px"><col style="width:110px"><col style="width:90px"></colgroup><tbody>'+rows+'</tbody></table></div>'
+        +'</div>';
+    });
+    h+='</div>';
+  }
+
   el.innerHTML=h;
   bindActions(el);
   el.querySelectorAll('[data-apv]').forEach(function(b){b.addEventListener('click',function(){aprovarGasto(b.getAttribute('data-apv'));});});
   el.querySelectorAll('[data-rej]').forEach(function(b){b.addEventListener('click',function(){abrirRejeitar(b.getAttribute('data-rej'));});});
-  el.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){verAnexo(b.getAttribute('data-view'));});});}
+  el.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){verAnexo(b.getAttribute('data-view'));});});
+}
+
 
 function renderProjs() {
   var fm2 = document.getElementById('fil-mp').value;
