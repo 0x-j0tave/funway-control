@@ -350,7 +350,7 @@ tbody tr:hover td{background:#FEF0EA}
               <select id="fil-tl" onchange="renderLanc()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os tipos</option><option value="Entrega">Entrega</option><option value="Diária">Diária</option><option value="Edição">Edição</option><option value="Motion">Motion</option></select>
             </div>
           </div>
-          <div class="tbl-wrap" id="tbl-lanc"></div>
+          <div id="tbl-lanc"></div>
         </div>
 
         <div id="pg-reembolsos" class="page">
@@ -777,7 +777,7 @@ function goPage(id){
   PA=id;renderAtivePage();}
 function renderAtivePage(){if(USER_ROLE==='operacional'){if(PA==='pautas')renderOperPautas();else if(PA==='lancar')renderOperLanc();else if(PA==='reembolsos')renderOperReemb();return;}if(PA==='home')renderHome();else if(PA==='logs'){carregarLogs();}else if(PA==='pautas'){renderPautasAdmin();}else if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
 function tipBadge(t){if(t==='Di\u00e1ria'||t==='Diaria')return'<span class="badge b-di">Di\u00e1ria</span>';if(t==='Reembolso')return'<span class="badge b-re">Reembolso</span>';return'<span class="badge b-en">Entrega</span>';}
-function actBtns(id,fechado){if(fechado)return'<span style="font-size:12px;color:var(--t3)">[fechado]</span>';return'<div style="display:flex;gap:3px"><button class="btn btn-ghost btn-sm" data-edit="'+id+'" style="padding:4px 9px;color:var(--t2)">Editar</button><button class="btn btn-ghost btn-sm" data-del="'+id+'" style="padding:4px 9px;color:var(--rd)">x</button></div>';}
+function actBtns(id,fechado){if(fechado)return'<span style="font-size:12px;color:var(--t3)">[fechado]</span>';return'<div style="display:flex;gap:6px;justify-content:flex-end;padding-right:6px"><button class="btn btn-ghost btn-sm" data-edit="'+id+'" style="padding:5px 11px;color:var(--t2)">Editar</button><button class="btn btn-ghost btn-sm" data-del="'+id+'" style="padding:5px 10px;color:var(--rd);min-width:28px;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';}
 function bindActions(el){el.querySelectorAll('[data-edit]').forEach(function(b){b.addEventListener('click',function(){abrirEdit(b.getAttribute('data-edit'));});});el.querySelectorAll('[data-del]').forEach(function(b){b.addEventListener('click',function(){deletar(b.getAttribute('data-del'));});});}
 
 function renderHome(){
@@ -1021,10 +1021,44 @@ function renderLanc(){
   var f=D.filter(function(d){return d.tipo!=='Reembolso'&&(!fc||normName(d.colaborador)===normName(fc))&&(!fm2||d.mes===fm2)&&(!ft||d.tipo===ft);});
   f.sort(function(a,b){return(b.mes||'').localeCompare(a.mes||'')||(b.criadoEm||'').localeCompare(a.criadoEm||'');});
   var el=document.getElementById('tbl-lanc');
-  if(!f.length){el.innerHTML='<div class="empty"><p>Nenhum lan\u00e7amento ainda.</p></div>';return;}
-  var h='<table><thead><tr><th>Colaborador</th><th>Tipo</th><th>Projeto</th><th>M\u00eas</th><th>Valor</th><th>Origem</th><th></th></tr></thead><tbody>';
-  f.forEach(function(d){var fec=MS[d.mes]==='fechado';h+='<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="av">'+ini(d.colaborador)+'</div>'+d.colaborador+'</div></td><td>'+tipBadge(d.tipo)+'</td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+d.projeto+'</td><td><span class="badge b-mes">'+fm(d.mes)+'</span></td><td style="font-weight:700;color:var(--gr)">'+fv(d.valor)+'</td><td><span class="badge b-src">'+(d.origem==='sheets'?'Sheets':'Manual')+'</span></td><td>'+actBtns(d.id,fec)+'</td></tr>';});
-  el.innerHTML=h+'</tbody></table>';bindActions(el);}
+  if(!f.length){el.innerHTML='<div class="empty"><p>Nenhum lançamento ainda.</p></div>';return;}
+
+  var totalGeral=f.reduce(function(s,d){return s+d.valor;},0);
+  var tipoColor={'Entrega':'#16A34A','Diária':'#D97706','Edição':'#2563EB','Motion':'#7E22CE'};
+
+  var h='<div class="sumgrid" style="margin-bottom:20px">'
+    +'<div class="sc"><div class="lbl">Total exibido</div><div class="val" style="color:var(--or)">'+fv(totalGeral)+'</div><div class="sub">'+f.length+' lançamento'+(f.length!==1?'s':'')+'</div></div>'
+    +'</div>';
+
+  h+='<div style="display:flex;flex-direction:column;gap:8px">';
+  f.forEach(function(d){
+    var fec=MS[d.mes]==='fechado';
+    var accent=tipoColor[d.tipo]||'#6B7280';
+    h+='<div class="lanc-card" style="background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden;position:relative;transition:box-shadow .15s">'
+      +'<div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:'+accent+'"></div>'
+      +'<div style="display:flex;align-items:center;gap:14px;padding:12px 16px 12px 22px">'
+      +'<div class="av" style="background:'+accent+'1a;color:'+accent+';flex-shrink:0">'+ini(d.colaborador)+'</div>'
+      +'<div style="min-width:0;flex:1">'
+      +'<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">'
+      +'<span style="font-weight:700;font-size:14px">'+d.colaborador+'</span>'
+      +'<span style="font-size:10px;font-weight:700;color:'+accent+';background:'+accent+'14;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px">'+d.tipo+'</span>'
+      +'</div>'
+      +'<div style="font-size:12px;color:var(--t2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px">'+d.projeto+'</div>'
+      +'</div>'
+      +'<div style="text-align:right;flex-shrink:0;min-width:70px">'
+      +'<div style="font-size:11px;color:var(--t3)">'+fm(d.mes)+'</div>'
+      +'<div style="font-size:16px;font-weight:800;color:'+accent+'">'+fv(d.valor)+'</div>'
+      +'</div>'
+      +'<div style="flex-shrink:0">'+actBtns(d.id,fec)+'</div>'
+      +'</div></div>';
+  });
+  h+='</div>';
+
+  el.innerHTML=h;
+  bindActions(el);
+}
+
+
 
 function renderReemb(){
   var fc=document.getElementById('fil-rcol').value,fm2=document.getElementById('fil-rmes').value;
@@ -1119,7 +1153,7 @@ function renderReemb(){
         +'<div style="font-size:17px;font-weight:700;color:var(--gr)">'+fv(total)+'</div>'
         +'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);display:inline-block;transition:transform .2s">▾</span>'
         +'</div></div>'
-        +'<div id="'+eid+'" style="display:none;border-top:1px solid var(--br)"><table style="width:100%;table-layout:fixed"><colgroup><col><col style="width:100px"><col style="width:120px"><col style="width:110px"><col style="width:90px"></colgroup><tbody>'+rows+'</tbody></table></div>'
+        +'<div id="'+eid+'" style="display:none;border-top:1px solid var(--br)"><table style="width:100%;table-layout:fixed"><colgroup><col><col style="width:100px"><col style="width:120px"><col style="width:110px"><col style="width:145px"></colgroup><tbody>'+rows+'</tbody></table></div>'
         +'</div>';
     });
     h+='</div>';
@@ -1202,7 +1236,7 @@ function renderProjs() {
       var cidRegs  = porCidade[cid];
       var cidTotal = cidRegs.reduce(function(s,r){ return s+r.valor; }, 0);
       inner += '<div style="padding:7px 18px 4px;background:var(--bg);font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--br)">' + cid + '</div>';
-      inner += '<table style="width:100%;table-layout:fixed"><colgroup><col style="width:180px"><col><col style="width:80px"><col style="width:90px"><col style="width:110px"><col style="width:70px"></colgroup><tbody>';
+      inner += '<table style="width:100%;table-layout:fixed"><colgroup><col style="width:170px"><col><col style="width:80px"><col style="width:90px"><col style="width:110px"><col style="width:140px"></colgroup><tbody>';
       cidRegs.forEach(function(r) {
         var fec = MS[r.mes] === 'fechado';
         inner += '<tr>'
@@ -1314,7 +1348,7 @@ function renderFolha(){
       +'<button class="btn btn-sm '+(pago?'':'btn-or')+'" onclick="event.stopPropagation();togglePagamento('+JSON.stringify(nome)+','+JSON.stringify(mes)+')" style="font-size:11px;padding:5px 12px">'+(pago?'Desmarcar':'Marcar pago')+'</button>'
       +'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);display:inline-block;transition:transform .2s">▾</span>'
       +'</div></div>'
-      +'<div id="'+eid+'" style="display:none;border-top:1px solid var(--br)"><table style="width:100%;table-layout:fixed"><colgroup><col style="width:120px"><col><col style="width:120px"><col style="width:90px"></colgroup><tbody>'+rows+'</tbody></table></div>'
+      +'<div id="'+eid+'" style="display:none;border-top:1px solid var(--br)"><table style="width:100%;table-layout:fixed"><colgroup><col style="width:120px"><col><col style="width:120px"><col style="width:145px"></colgroup><tbody>'+rows+'</tbody></table></div>'
       +'</div>';
   });
 
