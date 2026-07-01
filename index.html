@@ -610,13 +610,13 @@ async function sincronizarTudo(){
 async function initAuth(){
   showScreen('login');var res=await SB.auth.getSession();var session=res.data?res.data.session:null;if(session){CURRENT_USER=session.user;await routeUser();}else{showScreen('login');}
 SB.auth.onAuthStateChange(async function(event,sess){if(event==='SIGNED_IN'&&sess){CURRENT_USER=sess.user;await routeUser();}if(event==='SIGNED_OUT'){CURRENT_USER=null;USER_ROLE=null;showScreen('login');}});}
-async function routeUser(){var res=await SB.from('user_roles').select('role').eq('id',CURRENT_USER.id).single();if(res.data){USER_ROLE=res.data.role;}else{USER_ROLE=(CURRENT_USER.email===ADMIN_EMAIL)?'admin':'funcionario';}if(USER_ROLE==='admin'){showScreen('admin');await carregarDados();iniciarPollingPautas();}else if(USER_ROLE==='operacional'){showScreen('oper');await carregarDados();iniciarPollingPautas();
+async function routeUser(){var res=await SB.from('user_roles').select('role').eq('id',CURRENT_USER.id).single();if(res.data){USER_ROLE=res.data.role;}else{USER_ROLE=(CURRENT_USER.email===ADMIN_EMAIL)?'admin':'funcionario';}if(USER_ROLE==='admin'){showScreen('admin');await carregarDados();iniciarPollingPautas();}else if(USER_ROLE==='operacional'){showScreen('oper');PA='pautas';await carregarDados();
     var nm=document.getElementById('op-user-name');if(nm)nm.textContent=CURRENT_USER.email.split('@')[0];
     var em=document.getElementById('op-user-email');if(em)em.textContent=CURRENT_USER.email;
     var ma=new Date().toISOString().slice(0,7);
     var ofl=document.getElementById('op-fl-mes');if(ofl)ofl.value=ma;
     var ofr=document.getElementById('op-fr-mes');if(ofr)ofr.value=ma;
-    PA='pautas';}else{showScreen('emp');iniciarPollingPautas();}}
+    iniciarPollingPautas();}else{showScreen('emp');iniciarPollingPautas();}}
 function showScreen(s){document.getElementById('login-screen').style.display=s==='login'?'flex':'none';document.getElementById('admin-panel').style.display=s==='admin'?'block':'none';document.getElementById('oper-panel').style.display=s==='oper'?'block':'none';document.getElementById('emp-panel').style.display=s==='emp'?'block':'none';}
 async function fazerLogin(){var email=document.getElementById('login-email').value.trim();var pass=document.getElementById('login-pass').value;var err=document.getElementById('login-err');err.style.display='none';var btn=document.getElementById('login-btn');if(!email||!pass){err.textContent='Preencha email e senha.';err.style.display='block';return;}btn.disabled=true;btn.textContent='Entrando...';var res=await SB.auth.signInWithPassword({email:email,password:pass});btn.disabled=false;btn.textContent='Entrar';if(res.error){err.textContent='Email ou senha incorretos.';err.style.display='block';}}
 async function fazerLogout(){await SB.auth.signOut();}
@@ -1188,7 +1188,10 @@ async function carregarPautas(){
   if(r.error){console.error('Erro pautas:',r.error.message);return;}
   PAUTAS = r.data||[];
   renderPautasPublica();
-  if(PA==='pautas')renderPautasAdmin();
+  if(PA==='pautas'){
+    if(USER_ROLE==='operacional')renderOperPautas();
+    else renderPautasAdmin();
+  }
 }
 
 function iniciarPollingPautas(){
