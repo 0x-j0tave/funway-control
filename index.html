@@ -1075,8 +1075,6 @@ function renderProjs() {
   });
   f.sort(function(a,b){ return (b.mes||'').localeCompare(a.mes||''); });
 
-  // Divide projeto por '+' — cada parte é um projeto independente
-  // "Copa do Mundo + JBL" → entra em "Copa do Mundo" E em "JBL"
   var byP = {};
   f.forEach(function(d) {
     var partes = d.projeto.split(/\s*\+\s*/).map(function(p){ return p.trim(); }).filter(Boolean);
@@ -1088,21 +1086,31 @@ function renderProjs() {
     });
   });
 
-  var projs = Object.keys(byP).sort(function(a,b){
-    return normName(byP[a].nome).localeCompare(normName(byP[b].nome));
+  var projList = Object.keys(byP).map(function(k){
+    return { key:k, nome:byP[k].nome, items:byP[k].items, total:byP[k].items.reduce(function(s,r){return s+r.valor;},0) };
   });
+  projList.sort(function(a,b){ return b.total - a.total; });
 
   var el = document.getElementById('projs-cont');
-  if (!projs.length) { el.innerHTML = '<div class="empty"><p>Nenhum projeto.</p></div>'; return; }
+  if (!projList.length) { el.innerHTML = '<div class="empty"><p>Nenhum projeto.</p></div>'; return; }
 
-  var h = '';
-  projs.forEach(function(pk) {
-    var nome  = byP[pk].nome;
-    var regs  = byP[pk].items;
-    var total = regs.reduce(function(s,r){ return s + r.valor; }, 0);
-    var eid   = 'proj-' + pk.replace(/[^a-z0-9]/gi, '_');
+  var totalGeral = projList.reduce(function(s,p){return s+p.total;},0);
+  var maxTotal = Math.max.apply(null, projList.map(function(p){return p.total;})) || 1;
 
-    // Sub-agrupa por cidade dentro do projeto
+  var palette = ['#F05C23','#2563EB','#7E22CE','#16A34A','#D97706','#0891B2','#DB2777','#4F46E5'];
+
+  var h = '<div class="sumgrid" style="margin-bottom:18px">'
+    + '<div class="sc"><div class="lbl">Total projetos</div><div class="val" style="color:var(--or)">' + fv(totalGeral) + '</div><div class="sub">' + projList.length + ' projeto' + (projList.length!==1?'s':'') + '</div></div>'
+    + '</div>';
+
+  h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px">';
+
+  projList.forEach(function(p, idx0) {
+    var nome = p.nome, regs = p.items, total = p.total;
+    var eid = 'proj-' + p.key.replace(/[^a-z0-9]/gi, '_');
+    var accent = palette[idx0 % palette.length];
+    var pct = Math.round((total/maxTotal)*100);
+
     var porCidade = {};
     regs.forEach(function(r) {
       var cid = r.cidade || 'Sem cidade';
@@ -1120,7 +1128,6 @@ function renderProjs() {
     var mesStr = Object.keys(meses).sort().reverse().map(fm).join(', ');
     var cliente = regs[0] && regs[0].cliente ? regs[0].cliente : '';
 
-    // Detalhe agrupado por cidade
     var inner = '';
     cidades.forEach(function(cid) {
       var cidRegs  = porCidade[cid];
@@ -1146,37 +1153,43 @@ function renderProjs() {
     var meta = [];
     if (mesStr)  meta.push(mesStr);
     if (cliente) meta.push(cliente);
-    meta.push(nColabs + ' colaborador' + (nColabs !== 1 ? 'es' : ''));
-    meta.push(cidades.length + ' cidade' + (cidades.length !== 1 ? 's' : ''));
 
-    h += '<div class="folha-wrap" style="margin-bottom:8px">'
-       + '<div class="folha-row" onclick="toggleFD(\'' + eid + '\')" style="padding:13px 18px">'
-       + '<div>'
-       + '<div style="font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px">'
-       + nome + '<span id="arr-' + eid + '" style="font-size:10px;color:var(--t3);transition:transform .2s;display:inline-block">v</span>'
+    h += '<div class="proj-card" style="background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden;transition:box-shadow .15s">'
+       + '<div style="padding:16px 18px 14px;cursor:pointer" onclick="toggleFD(\'' + eid + '\')">'
+       + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">'
+       + '<div style="min-width:0"><div style="font-weight:700;font-size:15px;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + nome + '</div>'
+       + '<div style="font-size:11px;color:var(--t2);margin-top:2px">' + (meta.join(' · ')||'&nbsp;') + '</div></div>'
+       + '<span id="arr-' + eid + '" style="font-size:10px;color:var(--t3);transition:transform .2s;flex-shrink:0;margin-top:3px">▾</span>'
        + '</div>'
-       + '<div style="font-size:12px;color:var(--t2);margin-top:2px">' + meta.join(' \u00b7 ') + '</div>'
+       + '<div style="height:6px;background:var(--bg);border-radius:4px;overflow:hidden;margin-bottom:10px">'
+       + '<div style="height:100%;width:' + pct + '%;background:' + accent + ';border-radius:4px"></div>'
        + '</div>'
-       + '<div style="font-size:15px;font-weight:700;color:var(--gr)">' + fv(total) + '</div>'
+       + '<div style="display:flex;align-items:center;justify-content:space-between">'
+       + '<div style="font-size:19px;font-weight:800;color:' + accent + '">' + fv(total) + '</div>'
+       + '<div style="display:flex;gap:10px;font-size:11px;color:var(--t2)">'
+       + '<span style="display:flex;align-items:center;gap:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' + nColabs + '</span>'
+       + '<span style="display:flex;align-items:center;gap:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' + cidades.length + '</span>'
+       + '</div></div>'
        + '</div>'
        + '<div id="' + eid + '" style="display:none;border-top:1px solid var(--br)">' + inner + '</div>'
        + '</div>';
   });
 
+  h += '</div>';
   el.innerHTML = h;
   bindActions(el);
 }
 
 
+
 function renderFolha(){
   var mes=document.getElementById('fil-mf').value;
   var el=document.getElementById('folha-cont');
-  if(!mes){el.innerHTML='<div class="empty"><p>Selecione um m\u00eas.</p></div>';return;}
+  if(!mes){el.innerHTML='<div class="empty"><p>Selecione um mês.</p></div>';return;}
   var f=D.filter(function(d){return d.mes===mes;});
-  if(!f.length){el.innerHTML='<div class="empty"><p>Sem lan\u00e7amentos para '+fm(mes)+'.</p></div>';return;}
+  if(!f.length){el.innerHTML='<div class="empty"><p>Sem lançamentos para '+fm(mes)+'.</p></div>';return;}
   var fec=MS[mes]==='fechado';
 
-  // Group by normalized collaborator name
   var byC={};
   f.forEach(function(d){
     var key=normName(d.colaborador);
@@ -1186,69 +1199,64 @@ function renderFolha(){
   });
 
   var totalGeral=f.reduce(function(s,d){return s+d.valor;},0);
+  var cols=Object.keys(byC).sort(function(a,b){return normName(byC[a].nome).localeCompare(normName(byC[b].nome));});
   var pagoCount=0;
-  var cols=Object.keys(byC).sort();
-  cols.forEach(function(k){
-    for(var pk in PAGAMENTOS){
-      if(normName(pk.split('__')[0])===k&&pk.split('__')[1]===mes&&PAGAMENTOS[pk]===true){pagoCount++;break;}
-    }
-  });
 
-  var h='<div class="tbl-wrap"><table><thead><tr>'
-    +'<th>Colaborador</th><th>Tipo</th><th>Projeto</th>'
-    +'<th style="text-align:right">Valor</th>'
-    +'<th style="text-align:center">Pago</th>'
-    +'<th></th>'
-    +'</tr></thead><tbody>';
+  var h='<div class="sumgrid" style="margin-bottom:18px">'
+    +'<div class="sc"><div class="lbl">Total '+fml(mes)+'</div><div class="val" style="color:var(--or)">'+fv(totalGeral)+'</div><div class="sub">'+cols.length+' colaborador'+(cols.length!==1?'es':'')+'</div></div>'
+    +'</div>';
+
+  h+='<div style="display:flex;flex-direction:column;gap:10px">';
 
   cols.forEach(function(k){
     var nome=byC[k].nome;
     var total=byC[k].total;
     var pago=false;
     for(var pk in PAGAMENTOS){if(normName(pk.split('__')[0])===k&&pk.split('__')[1]===mes){pago=PAGAMENTOS[pk]===true;break;}}
-    var rowBg=pago?'background:var(--grl)':'';
-
-    // Collaborator header row (collapsible)
+    if(pago)pagoCount++;
     var eid='fc_'+k;
-    h+='<tr style="'+rowBg+';border-top:2px solid var(--br);cursor:pointer" onclick="toggleFolhaColab(\''+eid+'\')">'
-      +'<td colspan="2" style="padding:10px 13px"><div style="display:flex;align-items:center;gap:8px">'
-      +'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);display:inline-block;transition:transform .2s">v</span>'
-      +'<div class="av">'+ini(nome)+'</div><span style="font-weight:700">'+nome+'</span></div></td>'
-      +'<td></td>'
-      +'<td style="padding:10px 13px;font-weight:700;font-size:15px;color:var(--or);text-align:right">'+fv(total)+'</td>'
-      +'<td style="padding:10px 13px;text-align:center">'
-      +(pago?'<span class="badge b-aprov" style="font-size:10px">PAGO</span>':'<span class="badge b-pend" style="font-size:10px">PENDENTE</span>')
-      +'</td>'
-      +'<td style="padding:10px 13px;text-align:center">'
-      +'<button class="btn btn-sm '+(pago?'':'btn-or')+'" onclick="togglePagamento('+JSON.stringify(nome)+','+JSON.stringify(mes)+')" style="font-size:11px;padding:3px 10px">'
-      +(pago?'Desmarcar':'Marcar pago')+'</button>'
-      +'</td>'
-      +'</tr>';
+    var ledColor=pago?'#16A34A':'#DC2626';
+    var ledGlow=pago?'rgba(22,163,74,.35)':'rgba(220,38,38,.3)';
 
-    // Individual entries
+    var rows='';
     byC[k].items.forEach(function(d){
-      h+='<tr class="fc-detail-'+eid+'" style="'+rowBg+';display:none">'
-        +'<td style="padding:6px 13px 6px 40px;font-size:12px;color:var(--t2)"></td>'
-        +'<td style="padding:6px 13px">'+tipBadge(d.tipo)+'</td>'
-        +'<td style="padding:6px 13px;font-size:12px;color:var(--t)">'+d.projeto+'</td>'
-        +'<td style="padding:6px 13px;text-align:right">'
-        +'<span style="font-weight:600;color:var(--or)">'+fv(d.valor)+'</span></td>'
-        +'<td></td>'
-        +'<td style="padding:6px 13px">'+actBtns(d.id,fec)+'</td>'
+      rows+='<tr>'
+        +'<td style="padding:8px 16px 8px 44px;font-size:12px">'+tipBadge(d.tipo)+'</td>'
+        +'<td style="padding:8px 16px;font-size:12px;color:var(--t)">'+d.projeto+'</td>'
+        +'<td style="padding:8px 16px;text-align:right"><span style="font-weight:600;color:var(--or)">'+fv(d.valor)+'</span></td>'
+        +'<td style="padding:8px 16px;text-align:right">'+actBtns(d.id,fec)+'</td>'
         +'</tr>';
     });
+
+    h+='<div class="folha-card" style="background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden;position:relative">'
+      +'<div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:'+ledColor+'"></div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 14px 22px;cursor:pointer" onclick="toggleFolhaColab(\''+eid+'\')">'
+      +'<div style="display:flex;align-items:center;gap:12px">'
+      +'<span style="width:9px;height:9px;border-radius:50%;background:'+ledColor+';box-shadow:0 0 0 4px '+ledGlow+';flex-shrink:0"></span>'
+      +'<div class="av">'+ini(nome)+'</div>'
+      +'<div><div style="font-weight:700;font-size:15px">'+nome+'</div><div style="font-size:11px;color:var(--t2)">'+byC[k].items.length+' lançamento'+(byC[k].items.length!==1?'s':'')+'</div></div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:14px">'
+      +'<div style="text-align:right"><div style="font-weight:700;font-size:17px;color:var(--or)">'+fv(total)+'</div>'
+      +(pago?'<span class="badge b-aprov" style="font-size:10px">PAGO</span>':'<span class="badge b-pend" style="font-size:10px">PENDENTE</span>')+'</div>'
+      +'<button class="btn btn-sm '+(pago?'':'btn-or')+'" onclick="event.stopPropagation();togglePagamento('+JSON.stringify(nome)+','+JSON.stringify(mes)+')" style="font-size:11px;padding:5px 12px">'+(pago?'Desmarcar':'Marcar pago')+'</button>'
+      +'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);display:inline-block;transition:transform .2s">▾</span>'
+      +'</div></div>'
+      +'<div id="'+eid+'" style="display:none;border-top:1px solid var(--br)"><table style="width:100%"><tbody>'+rows+'</tbody></table></div>'
+      +'</div>';
   });
 
-  h+='<tr style="background:var(--bg);border-top:2px solid var(--br)">'
-    +'<td colspan="3" style="padding:12px 13px;font-weight:700">Total geral — '+fml(mes)+'</td>'
-    +'<td style="padding:12px 13px;font-weight:700;font-size:16px;color:var(--or);text-align:right">'+fv(totalGeral)+'</td>'
-    +'<td style="padding:12px 13px;text-align:center;font-size:12px;color:var(--t2)">'+pagoCount+'/'+cols.length+' pagos</td>'
-    +'<td></td>'
-    +'</tr>';
+  h+='</div>';
 
-  el.innerHTML=h+'</tbody></table></div>';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding:12px 18px;background:var(--bg);border-radius:var(--rl);border:1px solid var(--br)">'
+    +'<span style="font-weight:700;font-size:13px">Total geral — '+fml(mes)+'</span>'
+    +'<span style="font-size:12px;color:var(--t2)">'+pagoCount+'/'+cols.length+' pagos</span>'
+    +'</div>';
+
+  el.innerHTML=h;
   bindActions(el);
 }
+
 
 async function atualizarValorFolha(id,val){
   var valor=parseFloat(val)||0;
@@ -1591,12 +1599,12 @@ function toggleFD(id){
   if(arr)arr.style.transform=open?'':'rotate(-90deg)';
 }
 function toggleFolhaColab(eid){
-  var rows=document.querySelectorAll('.fc-detail-'+eid);
+  var el=document.getElementById(eid);
   var arr=document.getElementById('arr-'+eid);
-  if(!rows.length)return;
-  var hidden=rows[0].style.display==='none';
-  rows.forEach(function(r){r.style.display=hidden?'':'none';});
-  if(arr)arr.style.transform=hidden?'rotate(-90deg)':'';
+  if(!el)return;
+  var hidden=el.style.display==='none';
+  el.style.display=hidden?'block':'none';
+  if(arr)arr.style.transform=hidden?'rotate(180deg)':'';
 }
 function fecharPautaModal(e){
   if(!e||e.target===document.getElementById('pauta-modal-bg'))fecharPautaModalDir();
