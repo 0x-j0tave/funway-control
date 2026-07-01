@@ -483,7 +483,7 @@ tbody tr:hover td{background:#FEF0EA}
               <div style="align-self:flex-end"><button class="btn btn-or" onclick="lancarOper()">+ Adicionar</button></div>
             </div>
           </div>
-          <div class="tbl-wrap" id="op-tbl-lanc"></div>
+          <div id="op-tbl-lanc"></div>
         </div>
         <div id="op-pg-reembolsos" class="page">
           <div id="op-msg-r"></div>
@@ -2120,9 +2120,40 @@ function renderOperLanc(){
   var el=document.getElementById('op-tbl-lanc');
   if(!el)return;
   if(!f.length){el.innerHTML='<div class="empty"><p>Nenhum lançamento.</p></div>';return;}
-  var h='<table><thead><tr><th>Colaborador</th><th>Tipo</th><th>Projeto</th><th>Mês</th><th>Valor</th><th></th></tr></thead><tbody>';
-  f.forEach(function(d){var fec=MS[d.mes]==='fechado';h+='<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="av">'+ini(d.colaborador)+'</div>'+d.colaborador+'</div></td><td>'+tipBadge(d.tipo)+'</td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+d.projeto+'</td><td><span class="badge b-mes">'+fm(d.mes)+'</span></td><td style="font-weight:700;color:var(--gr)">'+fv(d.valor)+'</td><td>'+actBtns(d.id,fec)+'</td></tr>';});
-  el.innerHTML=h+'</tbody></table>';bindActions(el);
+
+  var totalGeral=f.reduce(function(s,d){return s+d.valor;},0);
+  var tipoColor={'Entrega':'#16A34A','Diária':'#D97706','Edição':'#2563EB','Motion':'#7E22CE'};
+
+  var h='<div class="sumgrid" style="margin-bottom:20px">'
+    +'<div class="sc"><div class="lbl">Total exibido</div><div class="val" style="color:var(--or)">'+fv(totalGeral)+'</div><div class="sub">'+f.length+' lançamento'+(f.length!==1?'s':'')+'</div></div>'
+    +'</div>';
+
+  h+='<div style="display:flex;flex-direction:column;gap:8px">';
+  f.forEach(function(d){
+    var fec=MS[d.mes]==='fechado';
+    var accent=tipoColor[d.tipo]||'#6B7280';
+    h+='<div style="background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden;position:relative">'
+      +'<div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:'+accent+'"></div>'
+      +'<div style="display:flex;align-items:center;gap:14px;padding:12px 16px 12px 22px">'
+      +'<div class="av" style="background:'+accent+'1a;color:'+accent+';flex-shrink:0">'+ini(d.colaborador)+'</div>'
+      +'<div style="min-width:0;flex:1">'
+      +'<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">'
+      +'<span style="font-weight:700;font-size:14px">'+d.colaborador+'</span>'
+      +'<span style="font-size:10px;font-weight:700;color:'+accent+';background:'+accent+'14;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px">'+d.tipo+'</span>'
+      +'</div>'
+      +'<div style="font-size:12px;color:var(--t2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px">'+d.projeto+'</div>'
+      +'</div>'
+      +'<div style="text-align:right;flex-shrink:0;min-width:70px">'
+      +'<div style="font-size:11px;color:var(--t3)">'+fm(d.mes)+'</div>'
+      +'<div style="font-size:16px;font-weight:800;color:'+accent+'">'+fv(d.valor)+'</div>'
+      +'</div>'
+      +'<div style="flex-shrink:0">'+actBtns(d.id,fec)+'</div>'
+      +'</div></div>';
+  });
+  h+='</div>';
+
+  el.innerHTML=h;
+  bindActions(el);
 }
 
 function renderOperReemb(){
@@ -2130,10 +2161,54 @@ function renderOperReemb(){
   if(!el)return;
   var f=D.filter(function(d){return d.tipo==='Reembolso';});
   if(!f.length){el.innerHTML='<div class="empty"><p>Nenhum reembolso.</p></div>';return;}
-  var h='<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Descrição</th><th>Mês</th><th>Valor</th><th></th></tr></thead><tbody>';
-  f.forEach(function(d){var fec=MS[d.mes]==='fechado';h+='<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="av">'+ini(d.colaborador)+'</div>'+d.colaborador+'</div></td><td>'+d.projeto+'</td><td><span class="badge b-mes">'+fm(d.mes)+'</span></td><td style="font-weight:700;color:var(--gr)">'+fv(d.valor)+'</td><td>'+actBtns(d.id,fec)+'</td></tr>';});
-  el.innerHTML=h+'</tbody></table></div>';bindActions(el);
+
+  var totalGeral=f.reduce(function(s,d){return s+d.valor;},0);
+  var byC={};
+  f.forEach(function(d){
+    var key=normName(d.colaborador);
+    if(!byC[key])byC[key]={nome:d.colaborador,items:[],total:0};
+    byC[key].items.push(d);byC[key].total+=d.valor;
+  });
+  var cols=Object.keys(byC).sort(function(a,b){return normName(byC[a].nome).localeCompare(normName(byC[b].nome));});
+
+  var h='<div class="sumgrid" style="margin-bottom:20px">'
+    +'<div class="sc"><div class="lbl">Total reembolsos</div><div class="val" style="color:var(--pu)">'+fv(totalGeral)+'</div><div class="sub">'+f.length+' lançamento'+(f.length!==1?'s':'')+'</div></div>'
+    +'</div>';
+
+  h+='<div style="display:flex;flex-direction:column;gap:10px">';
+  cols.forEach(function(k){
+    var nome=byC[k].nome,total=byC[k].total,items=byC[k].items;
+    var eid='opr_'+k;
+    var rows='';
+    items.forEach(function(d){
+      var fec=MS[d.mes]==='fechado';
+      rows+='<tr>'
+        +'<td style="padding:8px 16px 8px 44px;font-size:12px;color:var(--t)">'+d.projeto+'</td>'
+        +'<td style="padding:8px 16px"><span class="badge b-mes">'+fm(d.mes)+'</span></td>'
+        +'<td style="padding:8px 16px;text-align:right"><span style="font-weight:600;color:var(--pu)">'+fv(d.valor)+'</span></td>'
+        +'<td style="padding:8px 16px;text-align:right">'+actBtns(d.id,fec)+'</td>'
+        +'</tr>';
+    });
+    h+='<div style="background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden;position:relative">'
+      +'<div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:#7E22CE"></div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 14px 22px;cursor:pointer" onclick="toggleFD(\''+eid+'\')">'
+      +'<div style="display:flex;align-items:center;gap:12px">'
+      +'<div class="av">'+ini(nome)+'</div>'
+      +'<div><div style="font-weight:700;font-size:15px">'+nome+'</div><div style="font-size:11px;color:var(--t2)">'+items.length+' reembolso'+(items.length!==1?'s':'')+'</div></div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:12px">'
+      +'<div style="font-size:17px;font-weight:700;color:var(--pu)">'+fv(total)+'</div>'
+      +'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);display:inline-block;transition:transform .2s">▾</span>'
+      +'</div></div>'
+      +'<div id="'+eid+'" style="display:none;border-top:1px solid var(--br)"><table style="width:100%;table-layout:fixed"><colgroup><col><col style="width:100px"><col style="width:120px"><col style="width:145px"></colgroup><tbody>'+rows+'</tbody></table></div>'
+      +'</div>';
+  });
+  h+='</div>';
+
+  el.innerHTML=h;
+  bindActions(el);
 }
+
 
 async function lancarOper(){
   var col=document.getElementById('op-fl-col').value.trim();
