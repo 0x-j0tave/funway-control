@@ -6,7 +6,143 @@
 <title>Funway Control</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// ── OPER PANEL FUNCTIONS ──────────────────────────────────────────────────────
+function renderOperPautas(){
+  var el=document.getElementById('op-pautas-cont');
+  if(!el)return;
+  // Reuse admin pautas logic but render into op-pautas-cont
+  var allStatus=['PRODUÇÃO','EDIT','ENTREGUE'];
+  var allCidades=[];
+  PAUTAS.forEach(function(p){if(p.cidade&&allCidades.indexOf(p.cidade)<0)allCidades.push(p.cidade);});
+  allCidades.sort();
+  var mesesDisp={};
+  PAUTAS.filter(function(p){return p.cliente||p.campanha;}).forEach(function(p){if(p.mes)mesesDisp[p.mes]=1;});
+  var mesesList=Object.keys(mesesDisp).sort();
+  if(!PAUTA_MES_SEL||!mesesDisp[PAUTA_MES_SEL])PAUTA_MES_SEL=mesesList[mesesList.length-1]||null;
+  var f=PAUTAS.filter(function(p){
+    if(!p.cliente&&!p.campanha)return false;
+    if(PAUTA_MES_SEL&&p.mes!==PAUTA_MES_SEL)return false;
+    if(PAUTA_FILTROS.status&&p.status!==PAUTA_FILTROS.status)return false;
+    if(PAUTA_FILTROS.cidade&&p.cidade!==PAUTA_FILTROS.cidade)return false;
+    return true;
+  });
+  f.sort(function(a,b){
+    var ma=(a.mes||'9999'),mb=(b.mes||'9999');
+    if(ma!==mb)return ma.localeCompare(mb);
+    return (parseInt((a.data_rec||'0').split('/')[0])||0)-(parseInt((b.data_rec||'0').split('/')[0])||0);
+  });
+
+  var tabsHtml='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">';
+  mesesList.forEach(function(m){
+    var active=m===PAUTA_MES_SEL;
+    tabsHtml+='<button onclick="PAUTA_MES_SEL=''+m+'';renderOperPautas()" style="padding:6px 16px;font-size:13px;font-weight:600;border-radius:20px;cursor:pointer;border:2px solid '+(active?'var(--or)':'var(--br2)')+';background:'+(active?'var(--or)':'transparent')+';color:'+(active?'#fff':'var(--t2)')+';font-family:'Raleway',inherit">'+fml(m)+'</button>';
+  });
+  tabsHtml+='</div>';
+
+  function thFilter(label,field,opts,bg){
+    var active=PAUTA_FILTROS[field];
+    var items=opts.map(function(o){return'<div class="pf-dropdown-item'+(active===o?' selected':'')+'" onclick="setPautaFiltro(''+field+'',''+o+'');renderOperPautas();event.stopPropagation()">'+o+'</div>';}).join('');
+    var clr=active?'<div class="pf-dropdown-clear" onclick="setPautaFiltro(''+field+'','');renderOperPautas();event.stopPropagation()">Limpar</div>':'';
+    return'<th class="pf-th'+(active?' pf-active':'')+'" onclick="togglePfDropdown(this)" style="padding:11px 16px;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;border:none;position:relative;background:'+bg+'"><span>'+label+'</span><span class="pf-icon">'+(active?'▼':'⌄')+'</span><div class="pf-dropdown" onclick="event.stopPropagation()">'+items+clr+'</div></th>';
+  }
+
+  var thB='padding:11px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;border:none';
+  var h='<div style="border-radius:10px;border:1px solid #E5E5E2;margin-bottom:12px;max-height:70vh;overflow-y:auto">'
+    +'<table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">'
+    +'<colgroup><col style="width:9%"><col style="width:6%"><col style="width:28%"><col style="width:13%"><col style="width:23%"><col style="width:8%"><col style="width:7%"><col style="width:6%"></colgroup>'
+    +'<thead><tr style="position:sticky;top:0;z-index:5">'
+    +'<th style="'+thB+';background:#1A3A20">Cliente</th>'
+    +'<th style="'+thB+';background:#2D5A34">Data</th>'
+    +'<th style="'+thB+';background:#6AAB72">Campanha</th>'
+    +thFilter('Cidade','cidade',allCidades,'#8B4F1A')
+    +'<th style="'+thB+';background:#D4934A">Equipe</th>'
+    +thFilter('Status','status',allStatus,'#6B7280')
+    +'<th style="'+thB+';background:#374151">Roteiro</th>'
+    +'<th style="'+thB+';background:#374151"></th>'
+    +'</tr></thead><tbody>';
+
+  f.forEach(function(p,i){
+    var camps=chipsFromStr(p.campanha).join(' + ')||'—';
+    var eq=chipsFromStr(p.equipe).join(' + ')||'—';
+    var bg=i%2===0?'#fff':'#FAFAF8';
+    var stBorder=p.status==='ENTREGUE'?'3px solid #16A34A':p.status==='EDIT'?'3px solid #D97706':'3px solid #DC2626';
+    var cidPill=p.cidade?(normName(p.cidade)==='salvador'?'<span style="font-size:12px;font-weight:700;background:#FEE2E2;color:#991B1B;padding:3px 10px;border-radius:20px">'+p.cidade+'</span>':'<span style="font-size:13px;color:#374151">'+p.cidade+'</span>'):'<span style="color:#9CA3AF">—</span>';
+    var stBadge=p.status==='ENTREGUE'?'<span style="font-size:11px;font-weight:700;background:#DCFCE7;color:#15803D;padding:3px 10px;border-radius:20px">ENTREGUE</span>':p.status==='EDIT'?'<span style="font-size:11px;font-weight:700;background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:20px">EDIT</span>':'<span style="font-size:11px;font-weight:700;background:#FEE2E2;color:#B91C1C;padding:3px 10px;border-radius:20px">PRODUÇÃO</span>';
+    h+='<tr style="background:'+bg+';border-bottom:1px solid #EFEFED;border-left:'+stBorder+'">'
+      +'<td style="padding:12px 16px;font-size:11px;color:#6B7280;white-space:nowrap">'+(p.cliente||'—')+'</td>'
+      +'<td style="padding:12px 16px;font-size:13px;font-weight:700;color:#374151;white-space:nowrap">'+(p.data_rec||'—')+'</td>'
+      +'<td style="padding:12px 16px;font-size:14px;font-weight:600;color:#111827">'+camps+'</td>'
+      +'<td style="padding:12px 16px">'+cidPill+'</td>'
+      +'<td style="padding:12px 16px;font-size:12px;color:#4B5563">'+eq+'</td>'
+      +'<td style="padding:12px 16px">'+stBadge+'</td>'
+      +'<td style="padding:12px 16px">'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
+      +'<td style="padding:8px 10px"><div style="display:flex;gap:3px">'
+      +'<button class="btn btn-ghost btn-sm" onclick="abrirEditPautaById(this)" data-pid="'+p.id+'" style="padding:3px 7px;color:var(--t2)">✎</button>'
+      +'<button class="btn btn-ghost btn-sm" data-dp="'+p.id+'" style="padding:3px 7px;color:var(--rd)">×</button>'
+      +'</div></td></tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
+  el.innerHTML=tabsHtml+h;
+  el.querySelectorAll('[data-dp]').forEach(function(b){b.addEventListener('click',function(){deletarPauta(b.getAttribute('data-dp'));});});
+}
+
+function renderOperLanc(){
+  var f=D.filter(function(d){return d.tipo!=='Reembolso';});
+  f.sort(function(a,b){return(b.mes||'').localeCompare(a.mes||'')||(b.criadoEm||'').localeCompare(a.criadoEm||'');});
+  var el=document.getElementById('op-tbl-lanc');
+  if(!el)return;
+  if(!f.length){el.innerHTML='<div class="empty"><p>Nenhum lançamento.</p></div>';return;}
+  var h='<table><thead><tr><th>Colaborador</th><th>Tipo</th><th>Projeto</th><th>Mês</th><th>Valor</th><th></th></tr></thead><tbody>';
+  f.forEach(function(d){var fec=MS[d.mes]==='fechado';h+='<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="av">'+ini(d.colaborador)+'</div>'+d.colaborador+'</div></td><td>'+tipBadge(d.tipo)+'</td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+d.projeto+'</td><td><span class="badge b-mes">'+fm(d.mes)+'</span></td><td style="font-weight:700;color:var(--gr)">'+fv(d.valor)+'</td><td>'+actBtns(d.id,fec)+'</td></tr>';});
+  el.innerHTML=h+'</tbody></table>';bindActions(el);
+}
+
+function renderOperReemb(){
+  var el=document.getElementById('op-tbl-reemb');
+  if(!el)return;
+  var f=D.filter(function(d){return d.tipo==='Reembolso';});
+  if(!f.length){el.innerHTML='<div class="empty"><p>Nenhum reembolso.</p></div>';return;}
+  var h='<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Descrição</th><th>Mês</th><th>Valor</th><th></th></tr></thead><tbody>';
+  f.forEach(function(d){var fec=MS[d.mes]==='fechado';h+='<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="av">'+ini(d.colaborador)+'</div>'+d.colaborador+'</div></td><td>'+d.projeto+'</td><td><span class="badge b-mes">'+fm(d.mes)+'</span></td><td style="font-weight:700;color:var(--gr)">'+fv(d.valor)+'</td><td>'+actBtns(d.id,fec)+'</td></tr>';});
+  el.innerHTML=h+'</tbody></table></div>';bindActions(el);
+}
+
+async function lancarOper(){
+  var col=document.getElementById('op-fl-col').value.trim();
+  var tip=document.getElementById('op-fl-tip').value;
+  var proj=document.getElementById('op-fl-proj').value.trim();
+  var val=parseFloat(document.getElementById('op-fl-val').value);
+  var mes=document.getElementById('op-fl-mes').value;
+  if(!col){showMsg('op-msg-l','Informe o colaborador.','err');return;}
+  if(!proj){showMsg('op-msg-l','Informe o projeto.','err');return;}
+  if(!val||val<=0){showMsg('op-msg-l','Valor inválido.','err');return;}
+  if(!mes){showMsg('op-msg-l','Informe o mês.','err');return;}
+  if(MS[mes]==='fechado'){showMsg('op-msg-l','Mês fechado.','err');return;}
+  var item={id:uid(),colaborador:col,tipo:tip,projeto:proj,valor:val,mes:mes,cliente:'',cidade:'',origem:'manual',sheetsKey:'',criadoEm:new Date().toISOString()};
+  D.unshift(item);renderOperLanc();
+  document.getElementById('op-fl-proj').value='';document.getElementById('op-fl-val').value='';
+  try{await sbInsert(item);showMsg('op-msg-l','Lançamento adicionado!','ok');}catch(e){D=D.filter(function(d){return d.id!==item.id;});renderOperLanc();showMsg('op-msg-l','Erro: '+e.message,'err');}
+}
+
+async function lancarReembOper(){
+  var col=document.getElementById('op-fr-col').value.trim();
+  var desc=document.getElementById('op-fr-desc').value.trim();
+  var val=parseFloat(document.getElementById('op-fr-val').value);
+  var mes=document.getElementById('op-fr-mes').value;
+  if(!col){showMsg('op-msg-r','Informe o colaborador.','err');return;}
+  if(!desc){showMsg('op-msg-r','Informe a descrição.','err');return;}
+  if(!val||val<=0){showMsg('op-msg-r','Valor inválido.','err');return;}
+  if(!mes){showMsg('op-msg-r','Informe o mês.','err');return;}
+  if(MS[mes]==='fechado'){showMsg('op-msg-r','Mês fechado.','err');return;}
+  var item={id:uid(),colaborador:col,tipo:'Reembolso',projeto:desc,valor:val,mes:mes,cliente:'',cidade:'',origem:'manual',sheetsKey:'',criadoEm:new Date().toISOString()};
+  D.unshift(item);renderOperReemb();
+  document.getElementById('op-fr-desc').value='';document.getElementById('op-fr-val').value='';
+  try{await sbInsert(item);showMsg('op-msg-r','Reembolso adicionado!','ok');}catch(e){D=D.filter(function(d){return d.id!==item.id;});renderOperReemb();showMsg('op-msg-r','Erro: '+e.message,'err');}
+}
+
+</script>
 <style>*{box-sizing:border-box;margin:0;padding:0}
 :root{--sb:#111;--sbh:#1c1c1c;--or:#F05C23;--or2:#d94e1a;--orl:#FEF0EA;--gr:#16A34A;--grl:#DCFCE7;--rd:#DC2626;--rdl:#FEE2E2;--am:#D97706;--aml:#FEF3C7;--pu:#7E22CE;--pul:#F3E8FF;--bl:#2563EB;--bll:#DBEAFE;--bg:#F7F7F5;--sf:#fff;--t:#111;--t2:#6B7280;--t3:#9CA3AF;--br:#E5E5E2;--br2:#D1D1CE;--sh:0 1px 3px rgba(0,0,0,.06);--r:10px;--rl:14px}
 html,body{height:100%;font-family:'Raleway',system-ui,sans-serif;background:var(--bg);color:var(--t);font-size:14px}
@@ -416,6 +552,77 @@ tbody tr:hover td{background:#FAFAF8}
   </div>
 </div>
 
+
+<!-- OPER PANEL -->
+<div id="oper-panel" style="display:none;position:fixed;inset:0;z-index:10">
+  <div class="shell" style="height:100%">
+    <aside class="sb-side">
+      <div class="sb-logo">
+        <img src="data:image/jpeg;base64,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" alt="Funway">
+        <div class="logo-t"><div>Funway</div><div>Control</div></div>
+      </div>
+      <nav class="sb-nav">
+        <button class="ni active" id="op-nb-pautas" onclick="goPageOper('pautas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>Pautas</button>
+        <button class="ni" id="op-nb-lancar" onclick="goPageOper('lancar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>Lançamentos</button>
+        <button class="ni" id="op-nb-reembolsos" onclick="goPageOper('reembolsos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Reembolsos</button>
+      </nav>
+      <div class="sb-sync"><div class="sdot" id="op-sdot"></div><span id="op-stxt">Conectando...</span></div>
+      <div class="sb-user">
+        <div class="sb-user-info"><strong id="op-user-name">Produção</strong><span id="op-user-email"></span></div>
+        <button class="logout-btn" onclick="fazerLogout()">Sair</button>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+            <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="topbar-actions">
+          <button class="tbtn" onclick="sincronizarTudo()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Sincronizar</button>
+        </div>
+      </header>
+      <div class="content">
+        <div id="op-pg-pautas" class="page active">
+          <div id="op-msg-p"></div>
+          <div class="ph"><h2>Pautas</h2><p>Gerencie as pautas do mês.</p></div>
+          <div id="op-pautas-cont"></div>
+        </div>
+        <div id="op-pg-lancar" class="page">
+          <div id="op-msg-l"></div>
+          <div class="ph"><h2>Lançamentos</h2><p>Registre entregas e diárias.</p></div>
+          <div class="card" style="padding:16px;margin-bottom:20px">
+            <div class="frow">
+              <div class="field"><label>Colaborador</label><input id="op-fl-col" list="dl-col" autocomplete="off" placeholder="Nome"></div>
+              <div class="field" style="max-width:110px"><label>Tipo</label><select id="op-fl-tip"><option value="Entrega">Entrega</option><option value="Diária">Diária</option><option value="Edição">Edição</option><option value="Motion">Motion</option></select></div>
+              <div class="field"><label>Projeto / Campanha</label><input id="op-fl-proj" list="dl-proj" autocomplete="off" placeholder="Nome do projeto"></div>
+              <div class="field" style="max-width:110px"><label>Valor (R$)</label><input type="number" id="op-fl-val" min="0" step="0.01" placeholder="0,00"></div>
+              <div class="field" style="max-width:145px"><label>Mês</label><input type="month" id="op-fl-mes"></div>
+              <div style="align-self:flex-end"><button class="btn btn-or" onclick="lancarOper()">+ Adicionar</button></div>
+            </div>
+          </div>
+          <div class="tbl-wrap" id="op-tbl-lanc"></div>
+        </div>
+        <div id="op-pg-reembolsos" class="page">
+          <div id="op-msg-r"></div>
+          <div class="ph"><h2>Reembolsos</h2><p>Valores a reembolsar.</p></div>
+          <div class="card" style="padding:16px;margin-bottom:20px">
+            <div class="frow">
+              <div class="field"><label>Colaborador</label><input id="op-fr-col" list="dl-col" autocomplete="off" placeholder="Nome"></div>
+              <div class="field"><label>Descrição</label><input id="op-fr-desc" placeholder="Ex: Uber, Hotel..."></div>
+              <div class="field" style="max-width:110px"><label>Valor (R$)</label><input type="number" id="op-fr-val" min="0" step="0.01" placeholder="0,00"></div>
+              <div class="field" style="max-width:145px"><label>Mês</label><input type="month" id="op-fr-mes"></div>
+              <div style="align-self:flex-end"><button class="btn btn-or" onclick="lancarReembOper()">+ Adicionar</button></div>
+            </div>
+          </div>
+          <div id="op-tbl-reemb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- EMPLOYEE -->
 <div id="emp-panel" style="display:none">
   <div class="emp-shell">
@@ -538,8 +745,14 @@ async function sincronizarTudo(){
 
 async function initAuth(){var res=await SB.auth.getSession();var session=res.data?res.data.session:null;if(session){CURRENT_USER=session.user;await routeUser();}else{showScreen('login');}
 SB.auth.onAuthStateChange(async function(event,sess){if(event==='SIGNED_IN'&&sess){CURRENT_USER=sess.user;await routeUser();}if(event==='SIGNED_OUT'){CURRENT_USER=null;USER_ROLE=null;showScreen('login');}});}
-async function routeUser(){var res=await SB.from('user_roles').select('role').eq('id',CURRENT_USER.id).single();if(res.data){USER_ROLE=res.data.role;}else{USER_ROLE=(CURRENT_USER.email===ADMIN_EMAIL)?'admin':'funcionario';}if(USER_ROLE==='admin'){showScreen('admin');await carregarDados();iniciarPollingPautas();}else{showScreen('emp');iniciarPollingPautas();}}
-function showScreen(s){document.getElementById('login-screen').style.display=s==='login'?'flex':'none';document.getElementById('admin-panel').style.display=s==='admin'?'block':'none';document.getElementById('emp-panel').style.display=s==='emp'?'block':'none';}
+async function routeUser(){var res=await SB.from('user_roles').select('role').eq('id',CURRENT_USER.id).single();if(res.data){USER_ROLE=res.data.role;}else{USER_ROLE=(CURRENT_USER.email===ADMIN_EMAIL)?'admin':'funcionario';}if(USER_ROLE==='admin'){showScreen('admin');await carregarDados();iniciarPollingPautas();}else if(USER_ROLE==='operacional'){showScreen('oper');await carregarDados();iniciarPollingPautas();
+    var nm=document.getElementById('op-user-name');if(nm)nm.textContent=CURRENT_USER.email.split('@')[0];
+    var em=document.getElementById('op-user-email');if(em)em.textContent=CURRENT_USER.email;
+    var ma=new Date().toISOString().slice(0,7);
+    var ofl=document.getElementById('op-fl-mes');if(ofl)ofl.value=ma;
+    var ofr=document.getElementById('op-fr-mes');if(ofr)ofr.value=ma;
+    PA='pautas';}else{showScreen('emp');iniciarPollingPautas();}}
+function showScreen(s){document.getElementById('login-screen').style.display=s==='login'?'flex':'none';document.getElementById('admin-panel').style.display=s==='admin'?'block':'none';document.getElementById('oper-panel').style.display=s==='oper'?'block':'none';document.getElementById('emp-panel').style.display=s==='emp'?'block':'none';}
 async function fazerLogin(){var email=document.getElementById('login-email').value.trim();var pass=document.getElementById('login-pass').value;var err=document.getElementById('login-err');err.style.display='none';var btn=document.getElementById('login-btn');if(!email||!pass){err.textContent='Preencha email e senha.';err.style.display='block';return;}btn.disabled=true;btn.textContent='Entrando...';var res=await SB.auth.signInWithPassword({email:email,password:pass});btn.disabled=false;btn.textContent='Entrar';if(res.error){err.textContent='Email ou senha incorretos.';err.style.display='block';}}
 async function fazerLogout(){await SB.auth.signOut();}
 
@@ -663,6 +876,15 @@ function populateFiltros(){
   var den=document.getElementById('dl-eg-nome');if(den)den.innerHTML=colabs.map(function(c){return'<option value="'+c+'">';}).join('');}
 
 var PAGE_TITLES={lancar:'Lan\u00e7amentos',reembolsos:'Reembolsos',colaboradores:'Colaboradores',projetos:'Projetos',folha:'Folha de Pagamento',meses:'Meses'};
+function goPageOper(id){
+  document.querySelectorAll('#oper-panel .page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('#oper-panel .ni').forEach(function(b){b.classList.remove('active');});
+  var pg=document.getElementById('op-pg-'+id);
+  var nb=document.getElementById('op-nb-'+id);
+  if(pg)pg.classList.add('active');
+  if(nb)nb.classList.add('active');
+  PA=id;renderAtivePage();
+}
 function goPage(id){
   var sb=document.querySelector('.sb-side');var bd=document.getElementById('sb-backdrop');
   if(sb&&sb.classList.contains('open')){sb.classList.remove('open');if(bd)bd.classList.remove('show');}
@@ -671,7 +893,7 @@ function goPage(id){
   var pg=document.getElementById('pg-'+id);var nb=document.getElementById('nb-'+id);
   if(pg)pg.classList.add('active');if(nb)nb.classList.add('active');
   PA=id;renderAtivePage();}
-function renderAtivePage(){if(PA==='home')renderHome();else if(PA==='logs'){carregarLogs();}else if(PA==='pautas'){renderPautasAdmin();}else if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
+function renderAtivePage(){if(USER_ROLE==='operacional'){if(PA==='pautas')renderOperPautas();else if(PA==='lancar')renderOperLanc();else if(PA==='reembolsos')renderOperReemb();return;}if(PA==='home')renderHome();else if(PA==='logs'){carregarLogs();}else if(PA==='pautas'){renderPautasAdmin();}else if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
 function tipBadge(t){if(t==='Di\u00e1ria'||t==='Diaria')return'<span class="badge b-di">Di\u00e1ria</span>';if(t==='Reembolso')return'<span class="badge b-re">Reembolso</span>';return'<span class="badge b-en">Entrega</span>';}
 function actBtns(id,fechado){if(fechado)return'<span style="font-size:12px;color:var(--t3)">[fechado]</span>';return'<div style="display:flex;gap:3px"><button class="btn btn-ghost btn-sm" data-edit="'+id+'" style="padding:4px 9px;color:var(--t2)">Editar</button><button class="btn btn-ghost btn-sm" data-del="'+id+'" style="padding:4px 9px;color:var(--rd)">x</button></div>';}
 function bindActions(el){el.querySelectorAll('[data-edit]').forEach(function(b){b.addEventListener('click',function(){abrirEdit(b.getAttribute('data-edit'));});});el.querySelectorAll('[data-del]').forEach(function(b){b.addEventListener('click',function(){deletar(b.getAttribute('data-del'));});});}
