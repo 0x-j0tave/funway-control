@@ -479,6 +479,7 @@ tbody tr:hover td{background:#FEF0EA}
 
 <!-- OPER PANEL -->
 <div id="oper-panel" style="display:none;position:fixed;inset:0;z-index:10">
+  <div class="sb-backdrop" id="op-sb-backdrop" onclick="toggleSidebar()"></div>
   <div class="shell" style="height:100%">
     <aside class="sb-side">
       <div class="sb-logo">
@@ -2019,7 +2020,14 @@ async function sincronizarLancamentosPauta(pautaId,novosDados,dadosAntigos){
 }
 
 
-function toggleSidebar(){document.querySelector('.sb-side').classList.toggle('open');document.getElementById('sb-backdrop').classList.toggle('show');}
+function toggleSidebar(){
+  var adminVisible=document.getElementById('admin-panel').style.display!=='none';
+  var panel=adminVisible?document.getElementById('admin-panel'):document.getElementById('oper-panel');
+  var side=panel.querySelector('.sb-side');
+  var backdrop=adminVisible?document.getElementById('sb-backdrop'):document.getElementById('op-sb-backdrop');
+  if(side)side.classList.toggle('open');
+  if(backdrop)backdrop.classList.toggle('show');
+}
 
 function updateEyeIcon(){
   var closedPath='M2 2l20 20M9.88 9.88a3 3 0 1 0 4.24 4.24M6.5 6.5C4 8 2 12 2 12s4 8 11 8c2.02 0 3.78-.68 5.24-1.64M17.5 17.5C20 16 22 12 22 12s-1.14-2.28-3.2-4.36';
