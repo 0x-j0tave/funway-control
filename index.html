@@ -64,7 +64,8 @@ html,body{height:100%;font-family:'Raleway',system-ui,sans-serif;background:var(
 .tbtn:hover{background:var(--bg);color:var(--t)}
 .content{flex:1;overflow-y:auto;overflow-x:hidden;padding:22px}
 .pauta-tbl-wrap,.detail-tbl-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
-#pauta-publica-cont{overflow-x:hidden}
+#pauta-publica-cont{overflow-x:hidden;min-width:0}
+.login-split-right{min-width:0}
 .page{display:none;animation:pageIn .18s ease}.page.active{display:block}
 @keyframes pageIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 label{font-size:12px;font-weight:500;color:var(--t2);display:block;margin-bottom:4px}
@@ -195,7 +196,7 @@ tbody tr:hover td{background:#FEF0EA}
   /* Detail tables inside cards (Folha/Projetos/Reembolsos) need horizontal scroll instead of squishing */
   .detail-tbl-wrap table{min-width:520px}
   /* Pauta tables need horizontal scroll on mobile too */
-  .pauta-tbl-wrap table{min-width:680px}
+  .pauta-tbl-wrap table{min-width:900px}
   /* Chart cards: keep single column, avoid text overflow */
   .chart-card svg text{font-size:9px}
   /* Avatar + name truncation safety */
@@ -1522,7 +1523,7 @@ function renderPautasPublica(){
   var tdBase='font-family:\'Raleway\',sans-serif';
   var h='<div style="height:100%;overflow-y:auto;border-radius:10px" class="pauta-tbl-wrap">'
     +'<table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">'
-    +'<colgroup><col style="width:9%"><col style="width:6%"><col style="width:27%"><col style="width:13%"><col style="width:22%"><col style="width:8%"><col style="width:9%"></colgroup>'
+    +'<colgroup><col style="width:90px"><col style="width:60px"><col><col style="width:110px"><col style="width:170px"><col style="width:90px"><col style="width:90px"></colgroup>'
     +'<thead><tr style="position:sticky;top:0;z-index:2">'
     +'<th style="'+thBase+';background:#1A3A20;width:90px">Cliente</th>'
     +'<th style="'+thBase+';background:#2D5A34">Data</th>'
@@ -1617,7 +1618,7 @@ function renderPautasAdmin(){
   var thB='padding:11px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;border:none;font-family:\'Raleway\',sans-serif';
   var h='<div style="border-radius:10px;border:1px solid #E5E5E2;margin-bottom:12px;max-height:70vh;overflow-y:auto" class="pauta-tbl-wrap">'
     +'<table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">'
-    +'<colgroup><col style="width:9%"><col style="width:6%"><col style="width:28%"><col style="width:13%"><col style="width:23%"><col style="width:8%"><col style="width:7%"><col style="width:6%"></colgroup>'
+    +'<colgroup><col style="width:90px"><col style="width:60px"><col><col style="width:110px"><col style="width:170px"><col style="width:90px"><col style="width:80px"><col style="width:130px"></colgroup>'
     +'<thead><tr style="position:sticky;top:0;z-index:5">'
     +'<th style="'+thB+';background:#1A3A20">Cliente</th>'
     +'<th style="'+thB+';background:#2D5A34">Data</th>'
@@ -2124,7 +2125,7 @@ function renderOperPautas(){
   var thB='padding:11px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;border:none';
   var h='<div style="border-radius:10px;border:1px solid #E5E5E2;margin-bottom:12px;max-height:70vh;overflow-y:auto" class="pauta-tbl-wrap">'
     +'<table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">'
-    +'<colgroup><col style="width:9%"><col style="width:6%"><col style="width:28%"><col style="width:13%"><col style="width:23%"><col style="width:8%"><col style="width:7%"><col style="width:6%"></colgroup>'
+    +'<colgroup><col style="width:90px"><col style="width:60px"><col><col style="width:110px"><col style="width:170px"><col style="width:90px"><col style="width:80px"><col style="width:130px"></colgroup>'
     +'<thead><tr style="position:sticky;top:0;z-index:5">'
     +'<th style="'+thB+';background:#1A3A20">Cliente</th>'
     +'<th style="'+thB+';background:#2D5A34">Data</th>'
