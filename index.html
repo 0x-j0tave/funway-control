@@ -62,7 +62,9 @@ html,body{height:100%;font-family:'Raleway',system-ui,sans-serif;background:var(
 .topbar-actions{display:flex;gap:7px}
 .tbtn{background:transparent;border:1px solid var(--br2);color:var(--t2);padding:6px 11px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:'Raleway',inherit;transition:all .15s}
 .tbtn:hover{background:var(--bg);color:var(--t)}
-.content{flex:1;overflow-y:auto;padding:22px}
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:22px}
+.pauta-tbl-wrap,.detail-tbl-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#pauta-publica-cont{overflow-x:hidden}
 .page{display:none;animation:pageIn .18s ease}.page.active{display:block}
 @keyframes pageIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 label{font-size:12px;font-weight:500;color:var(--t2);display:block;margin-bottom:4px}
@@ -191,15 +193,22 @@ tbody tr:hover td{background:#FEF0EA}
   .sc .val{font-size:20px}
   .sc .lbl{padding-right:26px}
   /* Detail tables inside cards (Folha/Projetos/Reembolsos) need horizontal scroll instead of squishing */
-  .detail-tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .detail-tbl-wrap table{min-width:520px}
   /* Pauta tables need horizontal scroll on mobile too */
-  .pauta-tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .pauta-tbl-wrap table{min-width:680px}
   /* Chart cards: keep single column, avoid text overflow */
   .chart-card svg text{font-size:9px}
   /* Avatar + name truncation safety */
   .av{flex-shrink:0}
+  /* card-hd fine-tuning: ensure text truncates instead of overlapping, values shrink to fit */
+  .card-hd-l{min-width:0!important}
+  .card-hd-l>div{min-width:0!important}
+  .card-hd-r{gap:10px!important}
+  .card-hd-r>div{flex-shrink:0!important}
+  .card-hd-r [style*="font-size:18px"]{font-size:15px!important}
+  .card-hd-r [style*="font-size:17px"]{font-size:15px!important}
+  .card-hd-r [style*="font-size:16px"]{font-size:14px!important}
+  .card-hd-r [style*="max-width:220px"]{max-width:100%!important}
   /* Pauta modal: single column on mobile */
   .pauta-modal .modal-body{grid-template-columns:1fr!important}
   .pauta-modal{max-width:100%!important}
@@ -351,6 +360,7 @@ tbody tr:hover td{background:#FEF0EA}
           </button>
         </div>
         <div class="topbar-actions">
+          <button class="tbtn" id="btn-eye-admin" onclick="toggleValores()" title="Mostrar/ocultar valores"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path id="eye-path-admin" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle id="eye-circle-admin" cx="12" cy="12" r="3"/></svg></button>
           <button class="tbtn" onclick="goPage('logs')" style="background:var(--bg2,#f5f4f0);border:1px solid var(--br)">Logs</button>
           <button class="tbtn" onclick="sincronizarTudo()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Sincronizar</button>
           <button class="tbtn" onclick="exportCSV()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar CSV</button>
@@ -493,6 +503,7 @@ tbody tr:hover td{background:#FEF0EA}
           </button>
         </div>
         <div class="topbar-actions">
+          <button class="tbtn" id="btn-eye-oper" onclick="toggleValores()" title="Mostrar/ocultar valores"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path id="eye-path-oper" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle id="eye-circle-oper" cx="12" cy="12" r="3"/></svg></button>
           <button class="tbtn" onclick="sincronizarTudo()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Sincronizar</button>
         </div>
       </header>
@@ -629,7 +640,7 @@ var SBURL='https://sdfqqnhyulzkjkmttlbp.supabase.co';
 var SBKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZnFxbmh5dWx6a2prbXR0bGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NjM0NDksImV4cCI6MjA5NjMzOTQ0OX0.4RTg0ktux61Hq1Ef_KFeIziImsm5am5uIrJTqgImWcw';
 var ADMIN_EMAIL='rafa@funway.com.br';
 var SB=supabase.createClient(SBURL,SBKEY);
-var D=[],MS={},PAGAMENTOS={},PA='home',EID=null,GASTOS_ADMIN=[],GASTOS_EMP=[],CURRENT_USER=null,USER_ROLE=null,REJEITAR_ID=null,SEL_FILE=null,SEL_FILE2=null,EDIT_GASTO_ID=null;
+var D=[],MS={},PAGAMENTOS={},PA='home',EID=null,GASTOS_ADMIN=[],VALORES_OCULTOS=(localStorage.getItem('fw_vals_hidden')==='1'),GASTOS_EMP=[],CURRENT_USER=null,USER_ROLE=null,REJEITAR_ID=null,SEL_FILE=null,SEL_FILE2=null,EDIT_GASTO_ID=null;
 
 var PLACEHOLDERS=['?','a definir','a combinar','a confirmar','a decidir','tbd','indefinido','pendente','em aberto','sem nome','sem definir'];
 function isPlaceholder(str){
@@ -639,7 +650,7 @@ function isPlaceholder(str){
 }
 function normName(n){return(n||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
-function fv(v){return 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fv(v){if(VALORES_OCULTOS)return 'R$ \u2022\u2022\u2022\u2022';return 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fm(m){if(!m)return'?';var p=m.split('-');var mn=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return mn[parseInt(p[1])-1]+'/'+p[0].slice(2);}
 function fml(m){if(!m)return'?';var p=m.split('-');var mn=['Janeiro','Fevereiro','Mar\u00e7o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];return mn[parseInt(p[1])-1]+'/'+p[0];}
 function ini(n){return(n||'?').trim().split(/\s+/).slice(0,2).map(function(p){return p[0]||'';}).join('').toUpperCase();}
@@ -878,7 +889,7 @@ function buildCharts(meses){
   });
 
   function avg(arr){if(!arr.length)return 0;return arr.reduce(function(s,v){return s+v;},0)/arr.length;}
-  function fvFull(v){return'R$ '+Math.round(v).toLocaleString('pt-BR');}
+  function fvFull(v){if(VALORES_OCULTOS)return'R$ \u2022\u2022\u2022\u2022';return'R$ '+Math.round(v).toLocaleString('pt-BR');}
   function niceStep(maxVal,ticks){var raw=maxVal/ticks;var mag=Math.pow(10,Math.floor(Math.log10(raw||1)));var steps=[1,2,2.5,5,10];for(var i=0;i<steps.length;i++){if(steps[i]*mag>=raw)return steps[i]*mag;}return mag*10;}
 
   function svgBar(data,avgVal,colorTop,colorBot,title,chartId,labelFn,fullFn){
@@ -1002,7 +1013,7 @@ function buildCharts(meses){
     return svg;
   }
 
-  function fvShort(v){if(v>=1000)return'R$'+(v/1000).toFixed(0)+'k';return'R$'+Math.round(v);}
+  function fvShort(v){if(VALORES_OCULTOS)return'R$\u2022\u2022';if(v>=1000)return'R$'+(v/1000).toFixed(0)+'k';return'R$'+Math.round(v);}
 
   var avgFolha=avg(dataFolha), avgReemb=avg(dataReemb), avgProj=avg(dataProj);
   var cardStyle='background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);padding:16px 18px;box-shadow:var(--sh);position:relative;transition:box-shadow .2s';
@@ -2009,6 +2020,34 @@ async function sincronizarLancamentosPauta(pautaId,novosDados,dadosAntigos){
 
 function toggleSidebar(){document.querySelector('.sb-side').classList.toggle('open');document.getElementById('sb-backdrop').classList.toggle('show');}
 
+function updateEyeIcon(){
+  var closedPath='M2 2l20 20M9.88 9.88a3 3 0 1 0 4.24 4.24M6.5 6.5C4 8 2 12 2 12s4 8 11 8c2.02 0 3.78-.68 5.24-1.64M17.5 17.5C20 16 22 12 22 12s-1.14-2.28-3.2-4.36';
+  var openPath='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z';
+  ['admin','oper'].forEach(function(suffix){
+    var p=document.getElementById('eye-path-'+suffix);
+    var c=document.getElementById('eye-circle-'+suffix);
+    var btn=document.getElementById('btn-eye-'+suffix);
+    if(!p)return;
+    if(VALORES_OCULTOS){
+      p.setAttribute('d',closedPath);
+      if(c)c.style.display='none';
+      if(btn){btn.style.background='var(--orl)';btn.style.color='var(--or)';btn.style.borderColor='var(--or)';}
+    } else {
+      p.setAttribute('d',openPath);
+      if(c)c.style.display='';
+      if(btn){btn.style.background='';btn.style.color='';btn.style.borderColor='';}
+    }
+  });
+}
+
+function toggleValores(){
+  VALORES_OCULTOS=!VALORES_OCULTOS;
+  localStorage.setItem('fw_vals_hidden',VALORES_OCULTOS?'1':'0');
+  updateEyeIcon();
+  renderAtivePage();
+}
+
+
 // Auto-collapse sidebar on desktop: collapses by default, expands on hover near left edge
 function initSidebarAutoCollapse(){
   if(window.innerWidth<769)return;
@@ -2038,6 +2077,7 @@ document.addEventListener('DOMContentLoaded',function(){
   SB.from('pautas').select('*').order('ordem',{ascending:true}).order('data_rec',{ascending:true}).then(function(r){if(!r.error){PAUTAS=r.data||[];renderPautasPublica();}});
   initAuth();
   initSidebarAutoCollapse();
+  updateEyeIcon();
 });
 
 
