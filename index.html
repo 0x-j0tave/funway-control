@@ -1472,10 +1472,10 @@ function statusBadge(s){
 }
 
 function roteiroCell(url,pendente){
-  var link=url&&url!=='PENDENTE'?'<a href="'+url+'" target="_blank" style="font-size:11px;font-weight:600;color:#2563EB;text-decoration:none">ROTEIRO ↗</a>':'';
-  var pend=pendente?'<span style="font-size:10px;font-weight:600;background:#FEF3C7;color:#92400E;padding:2px 7px;border-radius:20px;margin-left:4px">PENDENTE</span>':'';
-  if(!link&&!pend)return '<span style="color:#9CA3AF;font-size:11px">—</span>';
-  return link+pend;
+  var link=url&&url!=='PENDENTE'?'<a href="'+url+'" target="_blank" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:#2563EB;text-decoration:none;white-space:nowrap">ROTEIRO<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>':'';
+  var pend=pendente?'<span style="display:inline-block;font-size:10px;font-weight:600;background:#FEF3C7;color:#92400E;padding:2px 7px;border-radius:20px;white-space:nowrap">PENDENTE</span>':'';
+  if(!link&&!pend)return '<div style="display:flex;align-items:center;min-height:20px"><span style="color:#9CA3AF;font-size:11px">—</span></div>';
+  return '<div style="display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-height:20px;justify-content:center">'+link+pend+'</div>';
 }
 
 function chipsFromStr(str){
