@@ -688,7 +688,7 @@ var r1=await SB.from('lancamentos').select('*').order('criado_em',{ascending:fal
 var r2=await SB.from('meses_status').select('*');
 if(r1.error)throw new Error(r1.error.message);
 if(r2.error)throw new Error(r2.error.message);
-D=(r1.data||[]).map(function(d){return{id:d.id,colaborador:d.colaborador,tipo:d.tipo,projeto:d.projeto,valor:parseFloat(d.valor)||0,mes:d.mes,cliente:d.cliente||'',cidade:d.cidade||'',origem:d.origem||'manual',sheetsKey:d.sheets_key||'',criadoEm:d.criado_em||''};});
+D=(r1.data||[]).map(function(d){return{id:d.id,colaborador:d.colaborador,tipo:d.tipo,projeto:d.projeto,valor:parseFloat(d.valor)||0,mes:d.mes,cliente:d.cliente||'',cidade:d.cidade||'',origem:d.origem||'manual',sheetsKey:d.sheets_key||'',criadoEm:d.criado_em||'',pautaId:d.pauta_id||''};});
 MS={};(r2.data||[]).forEach(function(m){MS[m.mes]=m.status;});
 var r3=await SB.from('gastos').select('*').order('criado_em',{ascending:false});
 if(!r3.error)GASTOS_ADMIN=r3.data||[];
@@ -1055,16 +1055,22 @@ async function togglePagamento(colaborador,mes){
   var atual=PAGAMENTOS[key]===true;
   var novo=!atual;
   PAGAMENTOS[key]=novo;
-  renderHome();
-  var r=await SB.from('pagamentos').upsert({id:normName(colaborador).replace(/[^a-z0-9]/g,'_')+'_'+mes,colaborador:colaborador,mes:mes,pago:novo,pago_em:novo?new Date().toISOString():''});
-  if(r.error){PAGAMENTOS[key]=atual;renderHome();alert('Erro: '+r.error.message);}
-  else await registrarLog(novo?'marcou pago':'desmarcou pago','Pagamento',key,colaborador+' — '+fm(mes));
+  renderAtivePage();
+  try{
+    var r=await SB.from('pagamentos').upsert({id:normName(colaborador).replace(/[^a-z0-9]/g,'_')+'_'+mes,colaborador:colaborador,mes:mes,pago:novo,pago_em:novo?new Date().toISOString():''},{onConflict:'id'});
+    if(r.error)throw new Error(r.error.message);
+    await registrarLog(novo?'marcou pago':'desmarcou pago','Pagamento',key,colaborador+' — '+fm(mes));
+  }catch(e){
+    PAGAMENTOS[key]=atual;
+    renderAtivePage();
+    alert('Erro ao salvar pagamento: '+e.message+'\n\nVerifique se a tabela \'pagamentos\' permite INSERT/UPDATE (RLS) para o usuário admin no Supabase.');
+  }
 }
 
 function renderLanc(){
   var fc=document.getElementById('fil-col').value,fm2=document.getElementById('fil-ml').value,ft=document.getElementById('fil-tl').value;
   var f=D.filter(function(d){return d.tipo!=='Reembolso'&&(!fc||normName(d.colaborador)===normName(fc))&&(!fm2||d.mes===fm2)&&(!ft||d.tipo===ft);});
-  f.sort(function(a,b){return(b.mes||'').localeCompare(a.mes||'')||(b.criadoEm||'').localeCompare(a.criadoEm||'');});
+  f.sort(function(a,b){var ka=pautaOrdemKey(a.pautaId),kb=pautaOrdemKey(b.pautaId);if(ka!==kb)return ka.localeCompare(kb);return(b.criadoEm||'').localeCompare(a.criadoEm||'');});
   var el=document.getElementById('tbl-lanc');
   if(!f.length){el.innerHTML='<div class="empty"><p>Nenhum lançamento ainda.</p></div>';return;}
 
@@ -1237,9 +1243,12 @@ function renderProjs() {
   });
 
   var projList = Object.keys(byP).map(function(k){
-    return { key:k, nome:byP[k].nome, items:byP[k].items, total:byP[k].items.reduce(function(s,r){return s+r.valor;},0) };
+    var its=byP[k].items;
+    var minKey='9999-99-99';
+    its.forEach(function(it){var ok=pautaOrdemKey(it.pautaId);if(ok<minKey)minKey=ok;});
+    return { key:k, nome:byP[k].nome, items:its, total:its.reduce(function(s,r){return s+r.valor;},0), ordemKey:minKey };
   });
-  projList.sort(function(a,b){ return b.total - a.total; });
+  projList.sort(function(a,b){ return a.ordemKey.localeCompare(b.ordemKey) || (b.total-a.total); });
 
   var el = document.getElementById('projs-cont');
   if (!projList.length) { el.innerHTML = '<div class="empty"><p>Nenhum projeto.</p></div>'; return; }
@@ -1335,6 +1344,25 @@ function renderProjs() {
 
 
 
+function folhaSubtitulo(items){
+  var nPautas=items.filter(function(x){return x.tipo!=='Reembolso';}).length;
+  var nReemb=items.filter(function(x){return x.tipo==='Reembolso';}).length;
+  var parts=[];
+  if(nPautas)parts.push(nPautas+' pauta'+(nPautas!==1?'s':''));
+  if(nReemb)parts.push(nReemb+' reembolso'+(nReemb!==1?'s':''));
+  return parts.join(' · ')||'0 pautas';
+}
+
+function pautaOrdemKey(pautaId){
+  if(!pautaId)return '9999-99-99';
+  var p=null;
+  for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===pautaId){p=PAUTAS[i];break;}}
+  if(!p)return '9999-99-99';
+  var mes=p.mes||'9999-99';
+  var dia=parseInt((p.data_rec||'0').split('/')[0])||0;
+  return mes+'-'+String(dia).padStart(2,'0');
+}
+
 function renderFolha(){
   var mes=document.getElementById('fil-mf').value;
   var el=document.getElementById('folha-cont');
@@ -1387,7 +1415,7 @@ function renderFolha(){
       +'<div class="card-hd-l" style="display:flex;align-items:center;gap:12px">'
       +'<span style="width:9px;height:9px;border-radius:50%;background:'+ledColor+';box-shadow:0 0 0 4px '+ledGlow+';flex-shrink:0"></span>'
       +'<div class="av">'+ini(nome)+'</div>'
-      +'<div><div style="font-weight:700;font-size:15px">'+nome+'</div><div style="font-size:11px;color:var(--t2)">'+byC[k].items.length+' lançamento'+(byC[k].items.length!==1?'s':'')+'</div></div>'
+      +'<div><div style="font-weight:700;font-size:15px">'+nome+'</div><div style="font-size:11px;color:var(--t2)">'+folhaSubtitulo(byC[k].items)+'</div></div>'
       +'</div>'
       +'<div class="card-hd-r" style="display:flex;align-items:center;gap:14px">'
       +'<div style="text-align:right"><div style="font-weight:700;font-size:17px;color:var(--or)">'+fv(total)+'</div>'
@@ -1905,7 +1933,7 @@ async function deletarPauta(id){
   if(!confirm('Remover esta pauta? Os lançamentos vinculados também serão removidos.'))return;
   // Remove lancamentos vinculados
   await SB.from('lancamentos').delete().eq('pauta_id',id);
-  D=D.filter(function(d){return d.pauta_id!==id;});
+  D=D.filter(function(d){return d.pautaId!==id;});
   var r=await SB.from('pautas').delete().eq('id',id);
   if(r.error){alert('Erro: '+r.error.message);return;}
   PAUTAS=PAUTAS.filter(function(p){return p.id!==id;});
@@ -2029,7 +2057,7 @@ async function criarLancamentosDePauta(pautaId,pauta){
   });
   for(var i=0;i<novos.length;i++){
     var r=await SB.from('lancamentos').insert(novos[i]);
-    if(!r.error)D.unshift(novos[i]);
+    if(!r.error){novos[i].pautaId=pautaId;D.unshift(novos[i]);}
   }
   populateFiltros();
 }
@@ -2040,13 +2068,13 @@ async function sincronizarLancamentosPauta(pautaId,novosDados,dadosAntigos){
   var mes=mesAtualStr();
   // Atualiza projeto/cidade nos lancamentos existentes
   var r=await SB.from('lancamentos').update({projeto:novosDados.campanha,cidade:novosDados.cidade,cliente:novosDados.cliente}).eq('pauta_id',pautaId);
-  D.forEach(function(d){if(d.pauta_id===pautaId){d.projeto=novosDados.campanha;d.cidade=novosDados.cidade;d.cliente=novosDados.cliente;}});
+  D.forEach(function(d){if(d.pautaId===pautaId){d.projeto=novosDados.campanha;d.cidade=novosDados.cidade;d.cliente=novosDados.cliente;}});
   // Adiciona novos membros
   var novos=membrosNovos.filter(function(m){return membrosAntigos.indexOf(m)<0;});
   for(var i=0;i<novos.length;i++){
     var item={id:uid(),colaborador:novos[i],tipo:'Entrega',projeto:novosDados.campanha,valor:0,mes:mes,cliente:novosDados.cliente||'',cidade:novosDados.cidade||'',origem:'pauta',sheets_key:'pauta_'+pautaId+'_'+normName(novos[i]).replace(/[^a-z0-9]/g,'_'),pauta_id:pautaId,criado_em:new Date().toISOString()};
     var r2=await SB.from('lancamentos').insert(item);
-    if(!r2.error)D.unshift(item);
+    if(!r2.error){item.pautaId=pautaId;D.unshift(item);}
   }
   // Remove membros removidos (só os com valor=0 e não editados)
   var removidos=membrosAntigos.filter(function(m){return membrosNovos.indexOf(m)<0;});
@@ -2261,7 +2289,7 @@ function renderOperPautas(){
 
 function renderOperLanc(){
   var f=D.filter(function(d){return d.tipo!=='Reembolso';});
-  f.sort(function(a,b){return(b.mes||'').localeCompare(a.mes||'')||(b.criadoEm||'').localeCompare(a.criadoEm||'');});
+  f.sort(function(a,b){var ka=pautaOrdemKey(a.pautaId),kb=pautaOrdemKey(b.pautaId);if(ka!==kb)return ka.localeCompare(kb);return(b.criadoEm||'').localeCompare(a.criadoEm||'');});
   var el=document.getElementById('op-tbl-lanc');
   if(!el)return;
   if(!f.length){el.innerHTML='<div class="empty"><p>Nenhum lançamento.</p></div>';return;}
