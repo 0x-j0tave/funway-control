@@ -642,7 +642,7 @@ var SBURL='https://sdfqqnhyulzkjkmttlbp.supabase.co';
 var SBKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZnFxbmh5dWx6a2prbXR0bGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NjM0NDksImV4cCI6MjA5NjMzOTQ0OX0.4RTg0ktux61Hq1Ef_KFeIziImsm5am5uIrJTqgImWcw';
 var ADMIN_EMAIL='rafa@funway.com.br';
 var SB=supabase.createClient(SBURL,SBKEY);
-var D=[],MS={},PAGAMENTOS={},PA='home',EID=null,GASTOS_ADMIN=[],VALORES_OCULTOS=(localStorage.getItem('fw_vals_hidden')==='1'),GASTOS_EMP=[],CURRENT_USER=null,USER_ROLE=null,REJEITAR_ID=null,SEL_FILE=null,SEL_FILE2=null,EDIT_GASTO_ID=null;
+var D=[],MS={},PAGAMENTOS={},PA='home',EID=null,GASTOS_ADMIN=[],VALORES_OCULTOS=(localStorage.getItem('fw_vals_hidden')==='1'),LANC_MODO_RECENTE=true,GASTOS_EMP=[],CURRENT_USER=null,USER_ROLE=null,REJEITAR_ID=null,SEL_FILE=null,SEL_FILE2=null,EDIT_GASTO_ID=null;
 
 var PLACEHOLDERS=['?','a definir','a combinar','a confirmar','a decidir','tbd','indefinido','pendente','em aberto','sem nome','sem definir'];
 function isPlaceholder(str){
@@ -1087,17 +1087,53 @@ async function togglePagamento(colaborador,mes){
   }
 }
 
+function getUltimasPautasIds(n){
+  var comItens={};
+  D.forEach(function(d){if(d.tipo!=='Reembolso'&&d.pautaId)comItens[d.pautaId]=1;});
+  var ids=Object.keys(comItens);
+  ids.sort(function(a,b){return pautaOrdemKey(b).localeCompare(pautaOrdemKey(a));});
+  return ids.slice(0,n);
+}
+
+function toggleLancModo(){
+  LANC_MODO_RECENTE=!LANC_MODO_RECENTE;
+  renderLanc();
+}
+
 function renderLanc(){
   var fc=document.getElementById('fil-col').value,fm2=document.getElementById('fil-ml').value,ft=document.getElementById('fil-tl').value;
-  var f=D.filter(function(d){return d.tipo!=='Reembolso'&&(!fc||normName(d.colaborador)===normName(fc))&&(!fm2||d.mes===fm2)&&(!ft||d.tipo===ft);});
+  var filtrosAtivos=!!(fc||fm2||ft);
+  var base=D.filter(function(d){return d.tipo!=='Reembolso'&&(!fc||normName(d.colaborador)===normName(fc))&&(!fm2||d.mes===fm2)&&(!ft||d.tipo===ft);});
+
+  var f,mostrandoRecente=false;
+  if(LANC_MODO_RECENTE&&!filtrosAtivos){
+    var topIds=getUltimasPautasIds(5);
+    var topSet={};topIds.forEach(function(id){topSet[id]=1;});
+    var mesAtualStr2=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+    f=base.filter(function(d){return(d.pautaId&&topSet[d.pautaId])||(!d.pautaId&&d.mes===mesAtualStr2);});
+    mostrandoRecente=true;
+  } else {
+    f=base;
+  }
+
   f.sort(function(a,b){var ka=pautaOrdemKey(a.pautaId),kb=pautaOrdemKey(b.pautaId);if(ka!==kb)return ka.localeCompare(kb);return(b.criadoEm||'').localeCompare(a.criadoEm||'');});
   var el=document.getElementById('tbl-lanc');
-  if(!f.length){el.innerHTML='<div class="empty"><p>Nenhum lançamento ainda.</p></div>';return;}
+
+  var toggleBtn='<button class="btn btn-ghost btn-sm" onclick="toggleLancModo()" style="font-size:11px">'+(LANC_MODO_RECENTE?'Ver histórico completo':'Ver só recentes (últimas 5 pautas)')+'</button>';
+  var banner='';
+  if(mostrandoRecente){
+    banner='<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>Mostrando lançamentos das últimas 5 pautas + manuais do mês atual. Histórico completo continua em Projetos e Folha.</span>'+toggleBtn+'</div>';
+  } else if(!filtrosAtivos){
+    banner='<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;justify-content:flex-end">'+toggleBtn+'</div>';
+  }
+
+  if(!f.length){el.innerHTML=banner+'<div class="empty"><p>Nenhum lançamento ainda.</p></div>';return;}
 
   var totalGeral=f.reduce(function(s,d){return s+d.valor;},0);
   var tipoColor={'Entrega':'#16A34A','Diária':'#D97706','Edição':'#2563EB','Motion':'#7E22CE'};
 
-  var h='<div class="sumgrid" style="margin-bottom:20px">'
+  var h=banner;
+  h+='<div class="sumgrid" style="margin-bottom:20px">'
     +'<div class="sc"><div class="lbl">Total exibido</div><div class="val" style="color:var(--or)">'+fv(totalGeral)+'</div><div class="sub">'+f.length+' lançamento'+(f.length!==1?'s':'')+'</div></div>'
     +'</div>';
 
@@ -1105,7 +1141,7 @@ function renderLanc(){
   f.forEach(function(d){
     var fec=MS[d.mes]==='fechado';
     var accent=tipoColor[d.tipo]||'#6B7280';
-    h+='<div class="lanc-card" style="background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden;position:relative;transition:box-shadow .15s">'
+    h+='<div style="background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden;position:relative">'
       +'<div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:'+accent+'"></div>'
       +'<div class="card-hd" style="display:flex;align-items:center;gap:14px;padding:12px 16px 12px 22px">'
       +'<div class="card-hd-l" style="display:flex;align-items:center;gap:14px;min-width:0;flex:1">'
@@ -1129,12 +1165,6 @@ function renderLanc(){
 
   el.innerHTML=h;
   bindActions(el);
-  el.querySelectorAll('[data-toggle-pag]').forEach(function(b){
-    b.addEventListener('click',function(ev){
-      ev.stopPropagation();
-      togglePagamento(b.getAttribute('data-nome'),b.getAttribute('data-mes'));
-    });
-  });
 }
 
 
@@ -1279,7 +1309,7 @@ function renderProjs() {
   var el = document.getElementById('projs-cont');
   if (!projList.length) { el.innerHTML = '<div class="empty"><p>Nenhum projeto.</p></div>'; return; }
 
-  var totalGeral = projList.reduce(function(s,p){return s+p.total;},0);
+  var totalGeral = f.reduce(function(s,r){return s+r.valor;},0);
   var maxTotal = Math.max.apply(null, projList.map(function(p){return p.total;})) || 1;
 
   var palette = ['#F05C23','#2563EB','#7E22CE','#16A34A','#D97706','#0891B2','#DB2777','#4F46E5'];
@@ -1472,6 +1502,12 @@ function renderFolha(){
 
   el.innerHTML=h;
   bindActions(el);
+  el.querySelectorAll('[data-toggle-pag]').forEach(function(b){
+    b.addEventListener('click',function(ev){
+      ev.stopPropagation();
+      togglePagamento(b.getAttribute('data-nome'),b.getAttribute('data-mes'));
+    });
+  });
 }
 
 
@@ -2324,11 +2360,25 @@ function renderOperPautas(){
 }
 
 function renderOperLanc(){
-  var f=D.filter(function(d){return d.tipo!=='Reembolso';});
+  var base=D.filter(function(d){return d.tipo!=='Reembolso';});
+  var f,mostrandoRecente=false;
+  if(LANC_MODO_RECENTE){
+    var topIds=getUltimasPautasIds(5);
+    var topSet={};topIds.forEach(function(id){topSet[id]=1;});
+    var mesAtualStr2=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+    f=base.filter(function(d){return(d.pautaId&&topSet[d.pautaId])||(!d.pautaId&&d.mes===mesAtualStr2);});
+    mostrandoRecente=true;
+  } else {
+    f=base;
+  }
   f.sort(function(a,b){var ka=pautaOrdemKey(a.pautaId),kb=pautaOrdemKey(b.pautaId);if(ka!==kb)return ka.localeCompare(kb);return(b.criadoEm||'').localeCompare(a.criadoEm||'');});
   var el=document.getElementById('op-tbl-lanc');
   if(!el)return;
-  if(!f.length){el.innerHTML='<div class="empty"><p>Nenhum lançamento.</p></div>';return;}
+
+  var toggleBtn='<button class="btn btn-ghost btn-sm" onclick="toggleLancModo()" style="font-size:11px">'+(LANC_MODO_RECENTE?'Ver histórico completo':'Ver só recentes (últimas 5 pautas)')+'</button>';
+  var banner=mostrandoRecente?'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>Mostrando lançamentos das últimas 5 pautas + manuais do mês atual.</span>'+toggleBtn+'</div>':'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;justify-content:flex-end">'+toggleBtn+'</div>';
+
+  if(!f.length){el.innerHTML=banner+'<div class="empty"><p>Nenhum lançamento.</p></div>';return;}
 
   var totalGeral=f.reduce(function(s,d){return s+d.valor;},0);
   var tipoColor={'Entrega':'#16A34A','Diária':'#D97706','Edição':'#2563EB','Motion':'#7E22CE'};
@@ -2363,7 +2413,7 @@ function renderOperLanc(){
   });
   h+='</div>';
 
-  el.innerHTML=h;
+  el.innerHTML=banner+h;
   bindActions(el);
 }
 
