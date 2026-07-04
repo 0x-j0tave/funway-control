@@ -1444,11 +1444,15 @@ function renderFolha(){
   });
 
   var totalGeral=f.reduce(function(s,d){return s+d.valor;},0);
+  var totalPautas=f.filter(function(d){return d.tipo!=='Reembolso';}).reduce(function(s,d){return s+d.valor;},0);
+  var totalReemb=f.filter(function(d){return d.tipo==='Reembolso';}).reduce(function(s,d){return s+d.valor;},0);
   var cols=Object.keys(byC).sort(function(a,b){return normName(byC[a].nome).localeCompare(normName(byC[b].nome));});
   var pagoCount=0;
 
   var h='<div class="sumgrid" style="margin-bottom:18px">'
-    +'<div class="sc"><div class="lbl">Total '+fml(mes)+'</div><div class="val" style="color:var(--or)">'+fv(totalGeral)+'</div><div class="sub">'+cols.length+' colaborador'+(cols.length!==1?'es':'')+'</div></div>'
+    +'<div class="sc"><div class="lbl">Pautas '+fml(mes)+'</div><div class="val" style="color:var(--or)">'+fv(totalPautas)+'</div><div class="sub">trabalho da equipe</div></div>'
+    +'<div class="sc"><div class="lbl">Reembolsos '+fml(mes)+'</div><div class="val" style="color:var(--pu)">'+fv(totalReemb)+'</div><div class="sub">gastos reembolsados</div></div>'
+    +'<div class="sc"><div class="lbl">Total geral</div><div class="val" style="color:var(--t)">'+fv(totalGeral)+'</div><div class="sub">'+cols.length+' colaborador'+(cols.length!==1?'es':'')+'</div></div>'
     +'</div>';
 
   h+='<div style="display:flex;flex-direction:column;gap:10px">';
@@ -1533,7 +1537,7 @@ function renderMeses(){
   var el=document.getElementById('meses-cont');
   if(!todos.length){el.innerHTML='<div class="empty"><p>Nenhum m\u00eas com dados.</p></div>';return;}
   var h='';
-  todos.forEach(function(m){var fec=MS[m]==='fechado';var qtd=D.filter(function(d){return d.mes===m;}).length;var total=D.filter(function(d){return d.mes===m;}).reduce(function(s,r){return s+r.valor;},0);h+='<div class="mes-card"><div><div style="font-weight:700;font-size:15px;display:flex;align-items:center;gap:9px;margin-bottom:4px">'+fml(m)+' <span class="badge '+(fec?'b-lock':'b-open')+'">'+(fec?'Fechado':'Aberto')+'</span></div><div style="font-size:13px;color:var(--t2)">'+qtd+' lan\u00e7amento'+(qtd!==1?'s':'')+' - '+fv(total)+'</div></div><button class="btn '+(fec?'':'btn-rd')+' btn-sm" data-mes="'+m+'">'+(fec?'Reabrir':'Fechar m\u00eas')+'</button></div>';});
+  todos.forEach(function(m){var fec=MS[m]==='fechado';var itensMes=D.filter(function(d){return d.mes===m;});var itensPautas=itensMes.filter(function(d){return d.tipo!=='Reembolso';});var itensReemb=itensMes.filter(function(d){return d.tipo==='Reembolso';});var totalPautas=itensPautas.reduce(function(s,r){return s+r.valor;},0);var totalReemb=itensReemb.reduce(function(s,r){return s+r.valor;},0);var totalMes=totalPautas+totalReemb;h+='<div class="mes-card"><div><div style="font-weight:700;font-size:15px;display:flex;align-items:center;gap:9px;margin-bottom:4px">'+fml(m)+' <span class="badge '+(fec?'b-lock':'b-open')+'">'+(fec?'Fechado':'Aberto')+'</span></div><div style="font-size:13px;color:var(--t2);display:flex;gap:12px;flex-wrap:wrap"><span>'+itensPautas.length+' pauta'+(itensPautas.length!==1?'s':'')+' \u00b7 '+fv(totalPautas)+'</span><span style="color:var(--pu)">'+itensReemb.length+' reembolso'+(itensReemb.length!==1?'s':'')+' \u00b7 '+fv(totalReemb)+'</span><span style="color:var(--t);font-weight:700">Total: '+fv(totalMes)+'</span></div></div><button class="btn '+(fec?'':'btn-rd')+' btn-sm" data-mes="'+m+'">'+(fec?'Reabrir':'Fechar m\u00eas')+'</button></div>';});
   el.innerHTML=h;el.querySelectorAll('[data-mes]').forEach(function(b){b.addEventListener('click',function(){toggleMes(b.getAttribute('data-mes'));});});}
 
 // Sheets panel
