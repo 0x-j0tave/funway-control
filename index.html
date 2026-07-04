@@ -1122,7 +1122,7 @@ function renderLanc(){
   var toggleBtn='<button class="btn btn-ghost btn-sm" onclick="toggleLancModo()" style="font-size:11px">'+(LANC_MODO_RECENTE?'Ver histórico completo':'Ver só recentes (últimas 5 pautas)')+'</button>';
   var banner='';
   if(mostrandoRecente){
-    banner='<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>Mostrando lançamentos das últimas 5 pautas + manuais do mês atual. Histórico completo continua em Projetos e Folha.</span>'+toggleBtn+'</div>';
+    banner='<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>Mostrando lançamentos das últimas 5 pautas. Histórico completo continua em Projetos e Folha ou no botão à direita.</span>'+toggleBtn+'</div>';
   } else if(!filtrosAtivos){
     banner='<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;justify-content:flex-end">'+toggleBtn+'</div>';
   }
@@ -1410,13 +1410,14 @@ function folhaSubtitulo(items){
 }
 
 function pautaOrdemKey(pautaId){
-  if(!pautaId)return '9999-99-99';
+  if(!pautaId)return '9999-99-99-99999';
   var p=null;
   for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===pautaId){p=PAUTAS[i];break;}}
-  if(!p)return '9999-99-99';
+  if(!p)return '9999-99-99-99999';
   var mes=p.mes||'9999-99';
   var dia=parseInt((p.data_rec||'0').split('/')[0])||0;
-  return mes+'-'+String(dia).padStart(2,'0');
+  var ordem=(typeof p.ordem==='number')?p.ordem:99999;
+  return mes+'-'+String(dia).padStart(2,'0')+'-'+String(ordem).padStart(5,'0');
 }
 
 function renderFolha(){
@@ -2376,7 +2377,7 @@ function renderOperLanc(){
   if(!el)return;
 
   var toggleBtn='<button class="btn btn-ghost btn-sm" onclick="toggleLancModo()" style="font-size:11px">'+(LANC_MODO_RECENTE?'Ver histórico completo':'Ver só recentes (últimas 5 pautas)')+'</button>';
-  var banner=mostrandoRecente?'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>Mostrando lançamentos das últimas 5 pautas + manuais do mês atual.</span>'+toggleBtn+'</div>':'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;justify-content:flex-end">'+toggleBtn+'</div>';
+  var banner=mostrandoRecente?'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>Mostrando lançamentos das últimas 5 pautas. Histórico completo continua em Projetos e Folha ou no botão à direita.</span>'+toggleBtn+'</div>':'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;justify-content:flex-end">'+toggleBtn+'</div>';
 
   if(!f.length){el.innerHTML=banner+'<div class="empty"><p>Nenhum lançamento.</p></div>';return;}
 
