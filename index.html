@@ -777,8 +777,21 @@ async function carregarMeusGastos(){
 function renderMeusGastos(){
   var el=document.getElementById('meus-reembolsos-cont');
   if(!el)return;
+  var mesAtualStrM=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+  var lista=MEUS_GASTOS;
+  var mostrandoAtualM=false;
+  if(MEUS_GASTOS_MODO_ATUAL){
+    lista=MEUS_GASTOS.filter(function(g){return g.mes===mesAtualStrM;});
+    mostrandoAtualM=true;
+  }
+  var toggleBtnM='<button class="btn btn-ghost btn-sm" onclick="toggleMeusGastosModo()" style="font-size:11px">'+(MEUS_GASTOS_MODO_ATUAL?'Ver hist\u00f3rico completo':'Ver s\u00f3 m\u00eas atual')+'</button>';
+  var bannerM=mostrandoAtualM?'<div style="font-size:12px;color:var(--t2);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>Mostrando envios de '+fml(mesAtualStrM)+'.</span>'+toggleBtnM+'</div>':'<div style="font-size:12px;color:var(--t2);margin-bottom:10px;display:flex;justify-content:flex-end">'+toggleBtnM+'</div>';
   if(!MEUS_GASTOS.length){
     el.innerHTML='<div class="empty"><p>Voc\u00ea ainda n\u00e3o enviou nenhum gasto.</p></div>';
+    return;
+  }
+  if(!lista.length){
+    el.innerHTML=bannerM+'<div class="empty"><p>Nenhum envio '+(mostrandoAtualM?'neste m\u00eas.':'encontrado.')+'</p></div>';
     return;
   }
 
@@ -793,8 +806,8 @@ function renderMeusGastos(){
     return{label:'PENDENTE',led:'#D97706',bg:'#FEF3C7',fg:'#92400E'};
   }
 
-  var h='<div style="display:flex;flex-direction:column;gap:8px">';
-  MEUS_GASTOS.forEach(function(g){
+  var h=bannerM+'<div style="display:flex;flex-direction:column;gap:8px">';
+  lista.forEach(function(g){
     var ti=tipInfoLocal(g.tipo);
     var si=statusInfo(g.status);
     var dataStr=g.data_gasto?g.data_gasto.split('-').reverse().join('/'):fm(g.mes);
@@ -1268,18 +1281,31 @@ function renderLanc(){
 function renderReemb(){
   var fc=document.getElementById('fil-rcol').value,fm2=document.getElementById('fil-rmes').value;
   var el=document.getElementById('tbl-reemb');
+  var filtrosAtivos=!!(fc||fm2);
+  var mesAtualStr3=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
 
   var pendentes=GASTOS_ADMIN.filter(function(g){return g.status==='pendente';});
-  var f=D.filter(function(d){return d.tipo==='Reembolso'&&(!fc||normName(d.colaborador)===normName(fc))&&(!fm2||d.mes===fm2);});
+  var base=D.filter(function(d){return d.tipo==='Reembolso'&&(!fc||normName(d.colaborador)===normName(fc))&&(!fm2||d.mes===fm2);});
+  var f,mostrandoAtual=false;
+  if(REEMB_MODO_ATUAL&&!filtrosAtivos){
+    f=base.filter(function(d){return d.mes===mesAtualStr3;});
+    mostrandoAtual=true;
+  } else {
+    f=base;
+  }
 
-  if(!pendentes.length&&!f.length){el.innerHTML='<div class="empty"><p>Nenhum reembolso ainda.</p></div>';return;}
+  if(!pendentes.length&&!f.length&&!mostrandoAtual){el.innerHTML='<div class="empty"><p>Nenhum reembolso ainda.</p></div>';return;}
 
   var totalPend=pendentes.reduce(function(s,g){return s+(parseFloat(g.valor)||0);},0);
   var totalAprov=f.reduce(function(s,d){return s+d.valor;},0);
 
-  var h='<div class="sumgrid" style="margin-bottom:20px">'
+  var toggleBtnR='<button class="btn btn-ghost btn-sm" onclick="toggleReembModo()" style="font-size:11px">'+(REEMB_MODO_ATUAL?'Ver histórico completo':'Ver só mês atual')+'</button>';
+  var bannerR=mostrandoAtual?'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>Mostrando reembolsos aprovados de '+fml(mesAtualStr3)+'.</span>'+toggleBtnR+'</div>':(!filtrosAtivos?'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;justify-content:flex-end">'+toggleBtnR+'</div>':'');
+
+  var h=bannerR;
+  h+='<div class="sumgrid" style="margin-bottom:20px">'
     +'<div class="sc"><div class="lbl">Pendentes de aprovação</div><div class="val" style="color:var(--am)">'+pendentes.length+'</div><div class="sub">'+fv(totalPend)+'</div></div>'
-    +'<div class="sc"><div class="lbl">Aprovados'+(fm2?(' · '+fml(fm2)):'')+'</div><div class="val" style="color:var(--gr)">'+fv(totalAprov)+'</div><div class="sub">'+f.length+' lançamento'+(f.length!==1?'s':'')+'</div></div>'
+    +'<div class="sc"><div class="lbl">Aprovados'+(mostrandoAtual?(' · '+fml(mesAtualStr3)):(fm2?(' · '+fml(fm2)):''))+'</div><div class="val" style="color:var(--gr)">'+fv(totalAprov)+'</div><div class="sub">'+f.length+' lançamento'+(f.length!==1?'s':'')+'</div></div>'
     +'</div>';
 
   function tipInfo(t){
@@ -1644,6 +1670,10 @@ var PAUTA_FILTROS = {status:'',cidade:'',mes:''};
 var PAUTA_MES_SEL = null;
 var HOME_MES_SEL = null;
 var GASTOS_INTERVAL = null;
+var REEMB_MODO_ATUAL = true;
+var MEUS_GASTOS_MODO_ATUAL = true;
+function toggleMeusGastosModo(){MEUS_GASTOS_MODO_ATUAL=!MEUS_GASTOS_MODO_ATUAL;renderMeusGastos();}
+function toggleReembModo(){REEMB_MODO_ATUAL=!REEMB_MODO_ATUAL;if(USER_ROLE==='operacional')renderOperReemb();else renderReemb();}
 var PAUTAS_INTERVAL = null;
 var EDIT_PAUTA_ID = null;
 var CIDADES = ['Salvador','São Paulo','Rio de Janeiro','Belo Horizonte','Curitiba','Floripa','Fortaleza','Recife','Porto Alegre','Brasília','Belém','Outras'];
@@ -2625,18 +2655,30 @@ function renderOperLanc(){
 function renderOperReemb(){
   var el=document.getElementById('op-tbl-reemb');
   if(!el)return;
+  var mesAtualStrO=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
 
   var pendentes=GASTOS_ADMIN.filter(function(g){return g.status==='pendente';});
-  var f=D.filter(function(d){return d.tipo==='Reembolso';});
+  var base=D.filter(function(d){return d.tipo==='Reembolso';});
+  var f,mostrandoAtualO=false;
+  if(REEMB_MODO_ATUAL){
+    f=base.filter(function(d){return d.mes===mesAtualStrO;});
+    mostrandoAtualO=true;
+  } else {
+    f=base;
+  }
 
-  if(!pendentes.length&&!f.length){el.innerHTML='<div class="empty"><p>Nenhum reembolso.</p></div>';return;}
+  var toggleBtnRO='<button class="btn btn-ghost btn-sm" onclick="toggleReembModo()" style="font-size:11px">'+(REEMB_MODO_ATUAL?'Ver hist\u00f3rico completo':'Ver s\u00f3 m\u00eas atual')+'</button>';
+  var bannerRO=mostrandoAtualO?'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>Mostrando reembolsos aprovados de '+fml(mesAtualStrO)+'.</span>'+toggleBtnRO+'</div>':'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;justify-content:flex-end">'+toggleBtnRO+'</div>';
+
+  if(!pendentes.length&&!f.length&&!mostrandoAtualO){el.innerHTML=bannerRO+'<div class="empty"><p>Nenhum reembolso.</p></div>';return;}
 
   var totalPend=pendentes.reduce(function(s,g){return s+(parseFloat(g.valor)||0);},0);
   var totalAprov=f.reduce(function(s,d){return s+d.valor;},0);
 
-  var h='<div class="sumgrid" style="margin-bottom:20px">'
+  var h=bannerRO;
+  h+='<div class="sumgrid" style="margin-bottom:20px">'
     +'<div class="sc"><div class="lbl">Pendentes de aprova\u00e7\u00e3o</div><div class="val" style="color:var(--am)">'+pendentes.length+'</div><div class="sub">'+fv(totalPend)+'</div></div>'
-    +'<div class="sc"><div class="lbl">Aprovados</div><div class="val" style="color:var(--pu)">'+fv(totalAprov)+'</div><div class="sub">'+f.length+' lan\u00e7amento'+(f.length!==1?'s':'')+'</div></div>'
+    +'<div class="sc"><div class="lbl">Aprovados'+(mostrandoAtualO?(' \u00b7 '+fml(mesAtualStrO)):'')+'</div><div class="val" style="color:var(--pu)">'+fv(totalAprov)+'</div><div class="sub">'+f.length+' lan\u00e7amento'+(f.length!==1?'s':'')+'</div></div>'
     +'</div>';
 
   function tipInfo(t){
