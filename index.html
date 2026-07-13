@@ -614,6 +614,8 @@ tbody tr:hover td{background:#FEF0EA}
         </div>
         <button class="btn btn-or" onclick="enviarGasto()" style="width:100%;justify-content:center">Enviar gasto</button>
       </div>
+      <div class="sec">Meus envios</div>
+      <div id="meus-reembolsos-cont"><div class="empty"><p>Carregando...</p></div></div>
       </div><!-- /emp-reimb-cont -->
     </div>
   </div>
@@ -705,7 +707,7 @@ async function routeUser(){if(_routedOnce)return;_routedOnce=true;var res=await 
     var ofr=document.getElementById('op-fr-mes');if(ofr)ofr.value=ma;
     renderAtivePage();
     if(PAUTAS_INTERVAL)clearInterval(PAUTAS_INTERVAL);PAUTAS_INTERVAL=setInterval(carregarPautas,30000);
-  }else{showScreen('emp');iniciarPollingPautas();}}
+  }else{showScreen('emp');iniciarPollingPautas();await carregarMeusGastos();if(GASTOS_INTERVAL)clearInterval(GASTOS_INTERVAL);GASTOS_INTERVAL=setInterval(carregarMeusGastos,30000);}}
 function showScreen(s){document.getElementById('login-screen').style.display=s==='login'?'flex':'none';document.getElementById('admin-panel').style.display=s==='admin'?'block':'none';document.getElementById('oper-panel').style.display=s==='oper'?'block':'none';document.getElementById('emp-panel').style.display=s==='emp'?'block':'none';}
 async function fazerLogin(){var email=document.getElementById('login-email').value.trim();var pass=document.getElementById('login-pass').value;var err=document.getElementById('login-err');err.style.display='none';var btn=document.getElementById('login-btn');if(!email||!pass){err.textContent='Preencha email e senha.';err.style.display='block';return;}btn.disabled=true;btn.textContent='Entrando...';var res=await SB.auth.signInWithPassword({email:email,password:pass});btn.disabled=false;btn.textContent='Entrar';if(res.error){err.textContent='Email ou senha incorretos.';err.style.display='block';}}
 async function fazerLogout(){await SB.auth.signOut();}
@@ -757,6 +759,67 @@ async function toggleMes(m){var fechado=MS[m]==='fechado';if(!confirm((fechado?'
 function onFileSelect(e){var f=e.target.files[0];if(!f)return;SEL_FILE=f;document.getElementById('up-placeholder').style.display='none';document.getElementById('up-selected').style.display='block';document.getElementById('up-filename').textContent=f.name;document.getElementById('upload-area').classList.add('has-file');}
 function onFileSelect2(e){var f=e.target.files[0];if(!f)return;SEL_FILE2=f;document.getElementById('up2-placeholder').style.display='none';document.getElementById('up2-selected').style.display='block';document.getElementById('up2-filename').textContent=f.name;}
 
+var MEUS_GASTOS=[];
+
+async function carregarMeusGastos(){
+  var el=document.getElementById('meus-reembolsos-cont');
+  if(!el||!CURRENT_USER)return;
+  try{
+    var r=await SB.from('gastos').select('*').eq('user_id',CURRENT_USER.id).order('criado_em',{ascending:false});
+    if(r.error)throw new Error(r.error.message);
+    MEUS_GASTOS=r.data||[];
+    renderMeusGastos();
+  }catch(e){
+    el.innerHTML='<div class="empty"><p>N\u00e3o foi poss\u00edvel carregar seu hist\u00f3rico.</p><button class="btn btn-or" style="margin-top:10px" onclick="carregarMeusGastos()">Tentar novamente</button></div>';
+  }
+}
+
+function renderMeusGastos(){
+  var el=document.getElementById('meus-reembolsos-cont');
+  if(!el)return;
+  if(!MEUS_GASTOS.length){
+    el.innerHTML='<div class="empty"><p>Voc\u00ea ainda n\u00e3o enviou nenhum gasto.</p></div>';
+    return;
+  }
+
+  function tipInfoLocal(t){
+    if(t==='cartao')return{label:'Cart\u00e3o Funway',bg:'#EDE9FE',fg:'#6D28D9'};
+    if(t==='gastos_gerais')return{label:'Gastos em Geral',bg:'#DCFCE7',fg:'#15803D'};
+    return{label:'Reembolso',bg:'#FEF0EA',fg:'#E2501B'};
+  }
+  function statusInfo(s){
+    if(s==='aprovado')return{label:'APROVADO',led:'#16A34A',bg:'#DCFCE7',fg:'#15803D'};
+    if(s==='rejeitado')return{label:'REJEITADO',led:'#DC2626',bg:'#FEE2E2',fg:'#B91C1C'};
+    return{label:'PENDENTE',led:'#D97706',bg:'#FEF3C7',fg:'#92400E'};
+  }
+
+  var h='<div style="display:flex;flex-direction:column;gap:8px">';
+  MEUS_GASTOS.forEach(function(g){
+    var ti=tipInfoLocal(g.tipo);
+    var si=statusInfo(g.status);
+    var dataStr=g.data_gasto?g.data_gasto.split('-').reverse().join('/'):fm(g.mes);
+    var pulse=g.status==='pendente'?'animation:pulse 1.6s infinite;':'';
+    h+='<div style="background:#fff;border:1px solid var(--br);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden;position:relative">'
+      +'<div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:'+si.led+'"></div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px 12px 20px;flex-wrap:wrap">'
+      +'<div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">'
+      +'<span style="width:8px;height:8px;border-radius:50%;background:'+si.led+';flex-shrink:0;'+pulse+'"></span>'
+      +'<div style="min-width:0">'
+      +'<div style="font-size:13px;font-weight:600;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px">'+g.descricao+'</div>'
+      +'<div style="display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap">'
+      +'<span class="badge" style="background:'+ti.bg+';color:'+ti.fg+'">'+ti.label+'</span>'
+      +'<span style="font-size:11px;color:var(--t3)">'+dataStr+'</span>'
+      +(g.observacao?'<span style="font-size:11px;color:var(--rd)" title="'+g.observacao.replace(/"/g,'&quot;')+'">Motivo: '+g.observacao+'</span>':'')
+      +'</div></div></div>'
+      +'<div style="display:flex;align-items:center;gap:10px;flex-shrink:0">'
+      +'<div style="font-size:15px;font-weight:800;color:var(--t)">'+fv(g.valor)+'</div>'
+      +'<span class="badge" style="background:'+si.bg+';color:'+si.fg+'">'+si.label+'</span>'
+      +'</div></div></div>';
+  });
+  h+='</div>';
+  el.innerHTML=h;
+}
+
 async function enviarGasto(){
   var tipo=document.getElementById('eg-tipo').value;
   var desc=document.getElementById('eg-desc').value.trim();
@@ -787,6 +850,8 @@ async function enviarGasto(){
     var r=await SB.from('gastos').insert(row);
     if(r.error)throw new Error(r.error.message);
     GASTOS_ADMIN.unshift(row);
+    MEUS_GASTOS.unshift(row);
+    renderMeusGastos();
     showMsg('msg-emp','Gasto enviado com sucesso!','ok');
     document.getElementById('eg-nome').value='';document.getElementById('eg-pauta').value='';document.getElementById('eg-desc').value='';document.getElementById('eg-val').value='';document.getElementById('eg-data').value='';
     document.getElementById('eg-file').value='';SEL_FILE=null;
@@ -1578,6 +1643,7 @@ var PAUTAS = [];
 var PAUTA_FILTROS = {status:'',cidade:'',mes:''};
 var PAUTA_MES_SEL = null;
 var HOME_MES_SEL = null;
+var GASTOS_INTERVAL = null;
 var PAUTAS_INTERVAL = null;
 var EDIT_PAUTA_ID = null;
 var CIDADES = ['Salvador','São Paulo','Rio de Janeiro','Belo Horizonte','Curitiba','Floripa','Fortaleza','Recife','Porto Alegre','Brasília','Belém','Outras'];
