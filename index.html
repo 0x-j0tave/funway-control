@@ -703,9 +703,12 @@ function getMeses(){var s={};D.forEach(function(d){if(d.mes)s[d.mes]=1;});return
 function getColabs(){var seen={},result=[];D.forEach(function(d){if(!d.colaborador)return;var k=normName(d.colaborador);if(!seen[k]){seen[k]=d.colaborador;result.push(d.colaborador);}});return result.sort(function(a,b){return normName(a).localeCompare(normName(b));});}
 function getProjs(){var s={};D.filter(function(d){return d.tipo!=='Reembolso';}).forEach(function(d){if(d.projeto)s[d.projeto]=1;});return Object.keys(s).sort();}
 function getProjsSeparadosMesAtual(){
-  var mesAtual=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+  var hoje=new Date();
+  var mesAtual=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0');
+  var prevDate=new Date(hoje.getFullYear(),hoje.getMonth()-1,1);
+  var mesAnterior=prevDate.getFullYear()+'-'+String(prevDate.getMonth()+1).padStart(2,'0');
   var s={};
-  D.filter(function(d){return d.tipo!=='Reembolso'&&d.mes===mesAtual;}).forEach(function(d){
+  D.filter(function(d){return d.tipo!=='Reembolso'&&(d.mes===mesAtual||d.mes===mesAnterior);}).forEach(function(d){
     if(!d.projeto)return;
     d.projeto.split(/\s*\+\s*/).forEach(function(p){p=p.trim();if(p)s[p]=1;});
   });
