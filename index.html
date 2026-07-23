@@ -476,9 +476,10 @@ tbody tr:hover td{background:#FEF0EA}
         <div id="pg-pautas" class="page">
           <div id="msg-p"></div>
           <div class="ph"><h2 id="planilha-titulo">Pautas</h2><p id="planilha-subtitulo">Gerencie as pautas do mês.</p></div>
-          <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--br);padding-bottom:0">
+          <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--br);padding-bottom:0;flex-wrap:wrap">
             <button class="btn btn-ghost" id="tab-planilha-pautas" onclick="trocarPlanilha('pautas')" style="border-radius:8px 8px 0 0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px">Pautas</button>
-            <button class="btn btn-ghost" id="tab-planilha-edicao" onclick="trocarPlanilha('edicao')" style="border-radius:8px 8px 0 0">Edição</button>
+            <button class="btn btn-ghost" id="tab-planilha-edicao_tarcisio" onclick="trocarPlanilha('edicao_tarcisio')" style="border-radius:8px 8px 0 0">Edição Tarcisio</button>
+            <button class="btn btn-ghost" id="tab-planilha-edicao_guiga" onclick="trocarPlanilha('edicao_guiga')" style="border-radius:8px 8px 0 0">Edição Guiga</button>
             <button class="btn btn-ghost" id="tab-planilha-motion" onclick="trocarPlanilha('motion')" style="border-radius:8px 8px 0 0">Motion</button>
           </div>
           <div id="pautas-admin-cont"></div>
@@ -542,9 +543,10 @@ tbody tr:hover td{background:#FEF0EA}
         <div id="op-pg-pautas" class="page active">
           <div id="op-msg-p"></div>
           <div class="ph"><h2 id="op-planilha-titulo">Pautas</h2><p id="op-planilha-subtitulo">Gerencie as pautas do mês.</p></div>
-          <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--br);padding-bottom:0">
+          <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--br);padding-bottom:0;flex-wrap:wrap">
             <button class="btn btn-ghost" id="op-tab-planilha-pautas" onclick="trocarPlanilhaOper('pautas')" style="border-radius:8px 8px 0 0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px">Pautas</button>
-            <button class="btn btn-ghost" id="op-tab-planilha-edicao" onclick="trocarPlanilhaOper('edicao')" style="border-radius:8px 8px 0 0">Edição</button>
+            <button class="btn btn-ghost" id="op-tab-planilha-edicao_tarcisio" onclick="trocarPlanilhaOper('edicao_tarcisio')" style="border-radius:8px 8px 0 0">Edição Tarcisio</button>
+            <button class="btn btn-ghost" id="op-tab-planilha-edicao_guiga" onclick="trocarPlanilhaOper('edicao_guiga')" style="border-radius:8px 8px 0 0">Edição Guiga</button>
             <button class="btn btn-ghost" id="op-tab-planilha-motion" onclick="trocarPlanilhaOper('motion')" style="border-radius:8px 8px 0 0">Motion</button>
           </div>
           <div id="op-pautas-cont"></div>
@@ -1379,9 +1381,10 @@ function renderReemb(){
         var fec=MS[d.mes]==='fechado';
         var arquivoBtn='<span style="color:var(--t3);font-size:11px">Sem comprovante</span>';
         if(d.origem==='gasto'&&d.sheetsKey){var gastoId=d.sheetsKey.replace('gasto_','');for(var gi=0;gi<GASTOS_ADMIN.length;gi++){if(GASTOS_ADMIN[gi].id===gastoId&&GASTOS_ADMIN[gi].arquivo_path){arquivoBtn='<button class="btn btn-ghost btn-sm" data-view="'+GASTOS_ADMIN[gi].arquivo_path+'" style="font-size:11px;color:var(--bl);font-weight:600;padding:2px 6px">Ver</button>';break;}}}
+        var dataExib=getDataExibicao(d);
         rows+='<tr>'
           +'<td style="padding:8px 16px 8px 44px;font-size:12px;color:var(--t)">'+d.projeto+'</td>'
-          +'<td style="padding:8px 16px"><span class="badge b-mes">'+fm(d.mes)+'</span></td>'
+          +'<td style="padding:8px 16px"><span class="badge b-mes">'+(dataExib||fm(d.mes))+'</span></td>'
           +'<td style="padding:8px 16px">'+arquivoBtn+'</td>'
           +'<td style="padding:8px 16px;text-align:right"><span style="font-weight:600;color:var(--gr)">'+fv(d.valor)+'</span></td>'
           +'<td style="padding:8px 16px;text-align:right">'+actBtns(d.id,fec)+'</td>'
@@ -1488,10 +1491,11 @@ function renderProjs() {
       inner += '<table style="width:100%;table-layout:fixed"><colgroup><col style="width:170px"><col><col style="width:80px"><col style="width:90px"><col style="width:110px"><col style="width:140px"></colgroup><tbody>';
       cidRegs.forEach(function(r) {
         var fec = MS[r.mes] === 'fechado';
+        var dataExib = getDataExibicao(r);
         inner += '<tr>'
                + '<td style="padding:7px 13px 7px 22px"><div style="display:flex;align-items:center;gap:7px"><div class="av">' + ini(r.colaborador) + '</div>' + r.colaborador + '</div></td>'
                + '<td style="padding:7px 13px;font-size:12px;color:var(--t2)">' + r.projeto + '</td>'
-               + '<td style="padding:7px 13px"><span class="badge b-mes">' + fm(r.mes) + '</span></td>'
+               + '<td style="padding:7px 13px"><span class="badge b-mes">' + (dataExib||fm(r.mes)) + '</span></td>'
                + '<td style="padding:7px 13px">' + tipBadge(r.tipo) + '</td>'
                + '<td style="padding:7px 13px;font-weight:700;color:var(--gr);text-align:right">' + fv(r.valor) + '</td>'
                + '<td style="padding:7px 13px">' + actBtns(r.id, fec) + '</td>'
@@ -1544,6 +1548,25 @@ function folhaSubtitulo(items){
   if(nPautas)parts.push(nPautas+' pauta'+(nPautas!==1?'s':''));
   if(nReemb)parts.push(nReemb+' reembolso'+(nReemb!==1?'s':''));
   return parts.join(' · ')||'0 pautas';
+}
+
+function getDataExibicao(d){
+  if(d.pautaId){
+    for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===d.pautaId)return PAUTAS[i].data_rec||'';}
+  }
+  if(d.planilhaId){
+    for(var i=0;i<PLANILHAS_PROD.length;i++){if(PLANILHAS_PROD[i].id===d.planilhaId)return fmtPrazo(PLANILHAS_PROD[i].prazo);}
+  }
+  if(d.origem==='gasto'&&d.sheetsKey&&d.sheetsKey.indexOf('gasto_')===0){
+    var gastoId=d.sheetsKey.replace('gasto_','');
+    for(var j=0;j<GASTOS_ADMIN.length;j++){
+      if(GASTOS_ADMIN[j].id===gastoId&&GASTOS_ADMIN[j].data_gasto){
+        var p=GASTOS_ADMIN[j].data_gasto.split('-');
+        if(p.length===3)return p[2]+'/'+p[1];
+      }
+    }
+  }
+  return '';
 }
 
 function pautaOrdemKey(pautaId){
@@ -1609,9 +1632,11 @@ function renderFolha(){
       return pautaOrdemKey(a.pautaId).localeCompare(pautaOrdemKey(b.pautaId));
     });
     itemsOrdenados.forEach(function(d){
+      var dataExib=getDataExibicao(d);
       rows+='<tr>'
         +'<td style="padding:8px 16px 8px 44px;font-size:12px">'+tipBadge(d.tipo)+'</td>'
         +'<td style="padding:8px 16px;font-size:12px;color:var(--t)">'+d.projeto+'</td>'
+        +'<td style="padding:8px 16px;font-size:11px;color:var(--t3);white-space:nowrap">'+(dataExib||'—')+'</td>'
         +'<td style="padding:8px 16px;text-align:right"><span style="font-weight:600;color:var(--or)">'+fv(d.valor)+'</span></td>'
         +'<td style="padding:8px 16px;text-align:right">'+actBtns(d.id,fec)+'</td>'
         +'</tr>';
@@ -1631,7 +1656,7 @@ function renderFolha(){
       +'<button class="btn btn-sm '+(pago?'':'btn-or')+'" data-toggle-pag="1" data-nome="'+nome.replace(/"/g,'&quot;')+'" data-mes="'+mes+'" style="font-size:11px;padding:5px 12px">'+(pago?'Desmarcar':'Marcar pago')+'</button>'
       +'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);display:inline-block;transition:transform .2s">▾</span>'
       +'</div></div>'
-      +'<div id="'+eid+'" class="detail-tbl-wrap" style="display:none;border-top:1px solid var(--br)"><table style="width:100%;table-layout:fixed"><colgroup><col style="width:120px"><col><col style="width:120px"><col style="width:145px"></colgroup><tbody>'+rows+'</tbody></table></div>'
+      +'<div id="'+eid+'" class="detail-tbl-wrap" style="display:none;border-top:1px solid var(--br)"><table style="width:100%;table-layout:fixed"><colgroup><col style="width:120px"><col><col style="width:70px"><col style="width:120px"><col style="width:145px"></colgroup><tbody>'+rows+'</tbody></table></div>'
       +'</div>';
   });
 
@@ -1716,7 +1741,7 @@ async function carregarPautas(retryCount){
   PAUTAS = r.data||[];
   renderPautasPublica();
   renderNotificacoes();
-  if(PA==='pautas'){
+  if(PA==='pautas'&&PLANILHA_ATIVA==='pautas'){
     if(USER_ROLE==='operacional')renderOperPautas();
     else renderPautasAdmin();
   }
@@ -1764,12 +1789,19 @@ async function carregarPlanilhasProd(retryCount){
   }
   PLANILHAS_PROD=r.data||[];
   renderNotificacoes();
-  if(PA==='pautas'&&(PLANILHA_ATIVA==='edicao'||PLANILHA_ATIVA==='motion'))renderPlanilhaProd(PLANILHA_ATIVA);
+  if(PA==='pautas'&&(PLANILHA_ATIVA==='edicao_tarcisio'||PLANILHA_ATIVA==='edicao_guiga'||PLANILHA_ATIVA==='motion'))renderPlanilhaProd(PLANILHA_ATIVA);
+}
+
+function planilhaLabel(cat){
+  if(cat==='edicao_tarcisio')return'Edição Tarcisio';
+  if(cat==='edicao_guiga')return'Edição Guiga';
+  if(cat==='motion')return'Motion';
+  return'Pautas';
 }
 
 function trocarPlanilha(cat){
   PLANILHA_ATIVA=cat;
-  ['pautas','edicao','motion'].forEach(function(c){
+  ['pautas','edicao_tarcisio','edicao_guiga','motion'].forEach(function(c){
     var btn=document.getElementById('tab-planilha-'+c);
     if(btn){
       if(c===cat){btn.style.cssText='border-radius:8px 8px 0 0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px';}
@@ -1783,8 +1815,8 @@ function trocarPlanilha(cat){
     if(hist)hist.style.display='';
     renderPautasAdmin();
   } else {
-    if(titulo)titulo.textContent=cat==='motion'?'Motion':'Edição';
-    if(sub)sub.textContent='Prazos e equipe de '+(cat==='motion'?'motion':'edição')+'.';
+    if(titulo)titulo.textContent=planilhaLabel(cat);
+    if(sub)sub.textContent='Prazos e equipe de '+planilhaLabel(cat).toLowerCase()+'.';
     if(hist)hist.style.display='none';
     renderPlanilhaProd(cat);
   }
@@ -1792,7 +1824,7 @@ function trocarPlanilha(cat){
 
 function trocarPlanilhaOper(cat){
   PLANILHA_ATIVA=cat;
-  ['pautas','edicao','motion'].forEach(function(c){
+  ['pautas','edicao_tarcisio','edicao_guiga','motion'].forEach(function(c){
     var btn=document.getElementById('op-tab-planilha-'+c);
     if(btn){
       if(c===cat){btn.style.cssText='border-radius:8px 8px 0 0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px';}
@@ -1804,8 +1836,8 @@ function trocarPlanilhaOper(cat){
     if(titulo)titulo.textContent='Pautas';if(sub)sub.textContent='Gerencie as pautas do mês.';
     renderOperPautas();
   } else {
-    if(titulo)titulo.textContent=cat==='motion'?'Motion':'Edição';
-    if(sub)sub.textContent='Prazos e equipe de '+(cat==='motion'?'motion':'edição')+'.';
+    if(titulo)titulo.textContent=planilhaLabel(cat);
+    if(sub)sub.textContent='Prazos e equipe de '+planilhaLabel(cat).toLowerCase()+'.';
     renderPlanilhaProd(cat);
   }
 }
@@ -1918,7 +1950,7 @@ function fecharPlanilhaModalDir(){var m=document.getElementById('planilha-modal-
 function abrirNovaPlanilhaItem(categoria){
   EDIT_PLANILHA_ID=null;
   PLANILHA_ATIVA=categoria;
-  document.getElementById('pl-title').textContent='Novo item \u2014 '+(categoria==='motion'?'Motion':'Edi\u00e7\u00e3o');
+  document.getElementById('pl-title').textContent='Novo item \u2014 '+planilhaLabel(categoria);
   document.getElementById('pl-cliente').value='';
   document.getElementById('pl-projeto').value='';
   document.getElementById('pl-prazo').value='';
@@ -1932,7 +1964,7 @@ function abrirEditPlanilhaItemById(id){
   for(var i=0;i<PLANILHAS_PROD.length;i++){if(String(PLANILHAS_PROD[i].id)===String(id)){p=PLANILHAS_PROD[i];break;}}
   if(!p)return;
   EDIT_PLANILHA_ID=p.id;
-  document.getElementById('pl-title').textContent='Editar item \u2014 '+(p.categoria==='motion'?'Motion':'Edi\u00e7\u00e3o');
+  document.getElementById('pl-title').textContent='Editar item \u2014 '+planilhaLabel(p.categoria);
   document.getElementById('pl-cliente').value=p.cliente||'';
   document.getElementById('pl-projeto').value=p.projeto||'';
   document.getElementById('pl-prazo').value=p.prazo||'';
@@ -2062,7 +2094,7 @@ function renderNotificacoes(){
           var it=a.item;
           var corTxt=a.atrasado?'#DC2626':(a.diffDias===0?'#D97706':'#2563EB');
           var label=a.atrasado?('Atrasado h\u00e1 '+Math.abs(a.diffDias)+' dia'+(Math.abs(a.diffDias)!==1?'s':'')):(a.diffDias===0?'Vence hoje':'Vence em '+a.diffDias+' dia'+(a.diffDias!==1?'s':''));
-          var catLabel=it.categoria==='motion'?'Motion':'Edi\u00e7\u00e3o';
+          var catLabel=planilhaLabel(it.categoria);
           h+='<div class="notif-item" data-notif-pid="'+it.id+'" data-notif-cat="'+it.categoria+'" style="padding:10px 14px;border-bottom:1px solid var(--br);cursor:pointer;transition:background .12s">'
             +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">'
             +'<span style="width:7px;height:7px;border-radius:50%;background:'+corTxt+';flex-shrink:0"></span>'
@@ -3016,9 +3048,10 @@ function renderOperReemb(){
       var rows='';
       items.forEach(function(d){
         var fec=MS[d.mes]==='fechado';
+        var dataExib=getDataExibicao(d);
         rows+='<tr>'
           +'<td style="padding:8px 16px 8px 44px;font-size:12px;color:var(--t)">'+d.projeto+'</td>'
-          +'<td style="padding:8px 16px"><span class="badge b-mes">'+fm(d.mes)+'</span></td>'
+          +'<td style="padding:8px 16px"><span class="badge b-mes">'+(dataExib||fm(d.mes))+'</span></td>'
           +'<td style="padding:8px 16px;text-align:right"><span style="font-weight:600;color:var(--pu)">'+fv(d.valor)+'</span></td>'
           +'<td style="padding:8px 16px;text-align:right">'+actBtns(d.id,fec)+'</td>'
           +'</tr>';
