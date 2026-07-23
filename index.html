@@ -481,9 +481,9 @@ tbody tr:hover td{background:#FEF0EA}
           <div class="ph"><h2 id="planilha-titulo">Pautas</h2><p id="planilha-subtitulo">Gerencie as pautas do mês.</p></div>
           <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--br);padding-bottom:0;flex-wrap:wrap">
             <button class="btn btn-ghost" id="tab-planilha-pautas" onclick="trocarPlanilha('pautas')" style="border-radius:8px 8px 0 0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px">Pautas</button>
-            <button class="btn btn-ghost" id="tab-planilha-edicao" onclick="trocarPlanilha('edicao')" style="border-radius:8px 8px 0 0">Edição</button>
             <button class="btn btn-ghost" id="tab-planilha-edicao_tarcisio" onclick="trocarPlanilha('edicao_tarcisio')" style="border-radius:8px 8px 0 0">Edição Tarcisio</button>
             <button class="btn btn-ghost" id="tab-planilha-edicao_guiga" onclick="trocarPlanilha('edicao_guiga')" style="border-radius:8px 8px 0 0">Edição Guiga</button>
+            <button class="btn btn-ghost" id="tab-planilha-edicao" onclick="trocarPlanilha('edicao')" style="border-radius:8px 8px 0 0">Edição</button>
             <button class="btn btn-ghost" id="tab-planilha-motion" onclick="trocarPlanilha('motion')" style="border-radius:8px 8px 0 0">Motion</button>
           </div>
           <div id="pautas-admin-cont"></div>
@@ -549,9 +549,9 @@ tbody tr:hover td{background:#FEF0EA}
           <div class="ph"><h2 id="op-planilha-titulo">Pautas</h2><p id="op-planilha-subtitulo">Gerencie as pautas do mês.</p></div>
           <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--br);padding-bottom:0;flex-wrap:wrap">
             <button class="btn btn-ghost" id="op-tab-planilha-pautas" onclick="trocarPlanilhaOper('pautas')" style="border-radius:8px 8px 0 0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px">Pautas</button>
-            <button class="btn btn-ghost" id="op-tab-planilha-edicao" onclick="trocarPlanilhaOper('edicao')" style="border-radius:8px 8px 0 0">Edição</button>
             <button class="btn btn-ghost" id="op-tab-planilha-edicao_tarcisio" onclick="trocarPlanilhaOper('edicao_tarcisio')" style="border-radius:8px 8px 0 0">Edição Tarcisio</button>
             <button class="btn btn-ghost" id="op-tab-planilha-edicao_guiga" onclick="trocarPlanilhaOper('edicao_guiga')" style="border-radius:8px 8px 0 0">Edição Guiga</button>
+            <button class="btn btn-ghost" id="op-tab-planilha-edicao" onclick="trocarPlanilhaOper('edicao')" style="border-radius:8px 8px 0 0">Edição</button>
             <button class="btn btn-ghost" id="op-tab-planilha-motion" onclick="trocarPlanilhaOper('motion')" style="border-radius:8px 8px 0 0">Motion</button>
           </div>
           <div id="op-pautas-cont"></div>
@@ -985,7 +985,7 @@ function goPage(id){
   var pg=document.getElementById('pg-'+id);var nb=document.getElementById('nb-'+id);
   if(pg)pg.classList.add('active');if(nb)nb.classList.add('active');
   PA=id;renderAtivePage();}
-function renderAtivePage(){if(USER_ROLE==='operacional'){if(PA==='pautas'){if(PLANILHA_ATIVA==='edicao'||PLANILHA_ATIVA==='motion')renderPlanilhaProd(PLANILHA_ATIVA);else renderOperPautas();}else if(PA==='lancar')renderOperLanc();else if(PA==='reembolsos')renderOperReemb();return;}if(PA==='home')renderHome();else if(PA==='logs'){carregarLogs();}else if(PA==='pautas'){if(PLANILHA_ATIVA==='edicao'||PLANILHA_ATIVA==='motion')renderPlanilhaProd(PLANILHA_ATIVA);else renderPautasAdmin();}else if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
+function renderAtivePage(){if(USER_ROLE==='operacional'){if(PA==='pautas'){if(isPlanilhaSecundaria(PLANILHA_ATIVA))renderPlanilhaProd(PLANILHA_ATIVA);else renderOperPautas();}else if(PA==='lancar')renderOperLanc();else if(PA==='reembolsos')renderOperReemb();return;}if(PA==='home')renderHome();else if(PA==='logs'){carregarLogs();}else if(PA==='pautas'){if(isPlanilhaSecundaria(PLANILHA_ATIVA))renderPlanilhaProd(PLANILHA_ATIVA);else renderPautasAdmin();}else if(PA==='lancar')renderLanc();else if(PA==='reembolsos')renderReemb();else if(PA==='projetos')renderProjs();else if(PA==='folha')renderFolha();else if(PA==='meses')renderMeses();}
 function tipBadge(t){if(t==='Di\u00e1ria'||t==='Diaria')return'<span class="badge b-di">Di\u00e1ria</span>';if(t==='Reembolso')return'<span class="badge b-re">Reembolso</span>';if(t==='Edi\u00e7\u00e3o')return'<span class="badge" style="background:#DBEAFE;color:#1D4ED8">Edi\u00e7\u00e3o</span>';if(t==='Motion')return'<span class="badge" style="background:#F3E8FF;color:#7E22CE">Motion</span>';return'<span class="badge b-en">Entrega</span>';}
 function actBtns(id,fechado){if(fechado)return'<span style="font-size:12px;color:var(--t3)">[fechado]</span>';return'<div style="display:flex;gap:6px;justify-content:flex-end;padding-right:6px"><button class="btn btn-ghost btn-sm" data-edit="'+id+'" style="padding:5px 11px;color:var(--t2)">Editar</button><button class="btn btn-ghost btn-sm" data-del="'+id+'" style="padding:5px 10px;color:var(--rd);min-width:28px;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';}
 function bindActions(el){el.querySelectorAll('[data-edit]').forEach(function(b){b.addEventListener('click',function(){abrirEdit(b.getAttribute('data-edit'));});});el.querySelectorAll('[data-del]').forEach(function(b){b.addEventListener('click',function(){deletar(b.getAttribute('data-del'));});});}
@@ -1810,8 +1810,10 @@ async function carregarPlanilhasProd(retryCount){
   }
   PLANILHAS_PROD=r.data||[];
   renderNotificacoes();
-  if(PA==='pautas'&&(PLANILHA_ATIVA==='edicao'||PLANILHA_ATIVA==='edicao_tarcisio'||PLANILHA_ATIVA==='edicao_guiga'||PLANILHA_ATIVA==='motion'))renderPlanilhaProd(PLANILHA_ATIVA);
+  if(PA==='pautas'&&isPlanilhaSecundaria(PLANILHA_ATIVA))renderPlanilhaProd(PLANILHA_ATIVA);
 }
+
+function isPlanilhaSecundaria(cat){return cat==='edicao'||cat==='edicao_tarcisio'||cat==='edicao_guiga'||cat==='motion';}
 
 function planilhaLabel(cat){
   if(cat==='edicao')return'Edição';
@@ -2628,7 +2630,7 @@ async function deletarPauta(id){
   if(r.error){alert('Erro: '+r.error.message);return;}
   PAUTAS=PAUTAS.filter(function(p){return p.id!==id;});
   await registrarLog('deletou','Pauta',id,'Removeu pauta');
-  renderPautasAdmin();populateFiltros();renderAtivePage();
+  populateFiltros();renderAtivePage();
 }
 
 
