@@ -371,7 +371,10 @@ tbody tr:hover td{background:#FEF0EA}
             <span id="notif-badge-admin" style="display:none;position:absolute;top:-4px;right:-4px;background:#DC2626;color:#fff;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:20px;align-items:center;justify-content:center;padding:0 3px;line-height:1">0</span>
           </button>
           <div class="notif-dropdown" id="notif-dropdown-admin" style="position:absolute;top:calc(100% + 8px);right:0;width:320px;max-height:400px;overflow-y:auto;background:#fff;border:1px solid var(--br);border-radius:var(--rl);box-shadow:0 12px 32px rgba(0,0,0,.15);z-index:200;display:none">
-            <div style="padding:12px 14px;border-bottom:1px solid var(--br);font-weight:700;font-size:13px">Prazos de edição</div>
+            <div style="padding:12px 14px;border-bottom:1px solid var(--br);display:flex;align-items:center;justify-content:space-between">
+              <span style="font-weight:700;font-size:13px">Prazos de edição</span>
+              <button class="btn btn-ghost btn-sm" onclick="abrirNotifCfgModal()" style="padding:3px 8px;font-size:11px">Configurar avisos</button>
+            </div>
             <div id="notif-list-admin"></div>
           </div>
           </div>
@@ -393,7 +396,7 @@ tbody tr:hover td{background:#FEF0EA}
             <div class="frow">
               <div class="field"><label>Colaborador</label><input id="fl-col" list="dl-col" autocomplete="off" placeholder="Nome"><datalist id="dl-col"></datalist></div>
               <div class="field" style="max-width:110px"><label>Tipo</label><select id="fl-tip"><option value="Entrega">Entrega</option><option value="Diária">Diária</option><option value="Edição">Edição</option><option value="Motion">Motion</option></select></div>
-              <div class="field"><label>Projeto / Campanha</label><input id="fl-proj" list="dl-proj" autocomplete="off" placeholder="Nome do projeto"><datalist id="dl-proj"></datalist></div>
+              <div class="field"><label>Projeto / Campanha</label><input id="fl-proj" list="dl-proj" autocomplete="off" placeholder="Nome do projeto"><datalist id="dl-proj"></datalist></div><datalist id="dl-cliente"></datalist>
               <div class="field" style="max-width:110px"><label>Valor (R$)</label><input type="number" id="fl-val" min="0" step="0.01" placeholder="0,00"></div>
               <div class="field" style="max-width:145px"><label>Mês</label><input type="month" id="fl-mes"></div>
               <div style="align-self:flex-end"><button class="btn btn-or" onclick="lancar()">+ Adicionar</button></div>
@@ -718,7 +721,7 @@ async function routeUser(){if(_routedOnce)return;_routedOnce=true;var res=await 
     document.querySelectorAll('#admin-panel .ni').forEach(function(b){b.classList.remove('active');});
     var pgP=document.getElementById('pg-pautas');if(pgP)pgP.classList.add('active');
     var nbP=document.getElementById('nb-pautas');if(nbP)nbP.classList.add('active');
-    await Promise.all([carregarDados(),carregarPautas(),carregarPlanilhasProd()]);renderAtivePage();if(PAUTAS_INTERVAL)clearInterval(PAUTAS_INTERVAL);PAUTAS_INTERVAL=setInterval(function(){carregarPautas();carregarPlanilhasProd();},30000);}else if(USER_ROLE==='operacional'){showScreen('oper');PA='pautas';await Promise.all([carregarDados(),carregarPautas(),carregarPlanilhasProd()]);
+    await Promise.all([carregarDados(),carregarPautas(),carregarPlanilhasProd(),carregarNotifDestinatarios()]);renderAtivePage();if(PAUTAS_INTERVAL)clearInterval(PAUTAS_INTERVAL);PAUTAS_INTERVAL=setInterval(function(){carregarPautas();carregarPlanilhasProd();},30000);}else if(USER_ROLE==='operacional'){showScreen('oper');PA='pautas';await Promise.all([carregarDados(),carregarPautas(),carregarPlanilhasProd()]);
     var nm=document.getElementById('op-user-name');if(nm)nm.textContent=CURRENT_USER.email.split('@')[0];
     var em=document.getElementById('op-user-email');if(em)em.textContent=CURRENT_USER.email;
     var ma=new Date().toISOString().slice(0,7);
@@ -948,6 +951,7 @@ function populateFiltros(){
   var ff=document.getElementById('fil-mf');if(ff){var curf=ff.value;ff.innerHTML='<option value="">Selecione um m\u00eas</option>';meses.forEach(function(m){ff.innerHTML+='<option value="'+m+'">'+fml(m)+'</option>';});if(curf)ff.value=curf;else if(meses.length)ff.value=meses[0];}
   var dc=document.getElementById('dl-col');if(dc)dc.innerHTML=colabs.map(function(c){return'<option value="'+c+'">';}).join('');
   var dp=document.getElementById('dl-proj');if(dp)dp.innerHTML=getProjs().map(function(p){return'<option value="'+p+'">';}).join('');
+  var dcl=document.getElementById('dl-cliente');if(dcl)dcl.innerHTML=getClientes().map(function(c){return'<option value="'+c+'">';}).join('');
   var den=document.getElementById('dl-eg-nome');if(den)den.innerHTML=colabs.map(function(c){return'<option value="'+c+'">';}).join('');}
 
 var PAGE_TITLES={lancar:'Lan\u00e7amentos',reembolsos:'Reembolsos',colaboradores:'Colaboradores',projetos:'Projetos',folha:'Folha de Pagamento',meses:'Meses'};
@@ -2055,6 +2059,59 @@ async function deletarPlanilhaItem(id){
   renderPlanilhaProd(PLANILHA_ATIVA);
 }
 
+var NOTIF_DESTINATARIOS=[];
+
+async function carregarNotifDestinatarios(){
+  var r=await SB.from('notif_destinatarios').select('*').order('criado_em',{ascending:true});
+  if(!r.error)NOTIF_DESTINATARIOS=r.data||[];
+}
+
+function abrirNotifCfgModal(){
+  toggleNotifDropdown('admin',false);
+  document.getElementById('notifcfg-modal-bg').classList.add('show');
+  renderNotifCfgLista();
+}
+function fecharNotifCfgModal(e){if(!e||e.target===document.getElementById('notifcfg-modal-bg'))fecharNotifCfgModalDir();}
+function fecharNotifCfgModalDir(){document.getElementById('notifcfg-modal-bg').classList.remove('show');}
+
+function renderNotifCfgLista(){
+  var cat=document.getElementById('ncfg-categoria').value;
+  var el=document.getElementById('ncfg-lista');
+  var lista=NOTIF_DESTINATARIOS.filter(function(n){return n.categoria===cat;});
+  if(!lista.length){el.innerHTML='<div style="padding:14px;text-align:center;color:var(--t3);font-size:12px">Nenhum destinat\u00e1rio para '+planilhaLabel(cat)+'.</div>';return;}
+  var h='';
+  lista.forEach(function(n){
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--br)">'
+      +'<div><div style="font-size:13px;font-weight:600">'+(n.nome||n.email)+'</div><div style="font-size:11px;color:var(--t2)">'+n.email+'</div></div>'
+      +'<button class="btn btn-ghost btn-sm" data-ndel="'+n.id+'" style="color:var(--rd);padding:3px 8px">Remover</button>'
+      +'</div>';
+  });
+  el.innerHTML=h;
+  el.querySelectorAll('[data-ndel]').forEach(function(b){b.addEventListener('click',function(){removerNotifDestinatario(b.getAttribute('data-ndel'));});});
+}
+
+async function adicionarNotifDestinatario(){
+  var cat=document.getElementById('ncfg-categoria').value;
+  var nome=document.getElementById('ncfg-nome').value.trim();
+  var email=document.getElementById('ncfg-email').value.trim();
+  if(!email||email.indexOf('@')<0){alert('Informe um e-mail v\u00e1lido.');return;}
+  var row={id:uid(),categoria:cat,nome:nome,email:email,ativo:true,criado_em:new Date().toISOString()};
+  var r=await SB.from('notif_destinatarios').insert(row);
+  if(r.error){alert('Erro: '+r.error.message);return;}
+  NOTIF_DESTINATARIOS.push(row);
+  document.getElementById('ncfg-nome').value='';
+  document.getElementById('ncfg-email').value='';
+  renderNotifCfgLista();
+}
+
+async function removerNotifDestinatario(id){
+  if(!confirm('Remover este destinat\u00e1rio?'))return;
+  var r=await SB.from('notif_destinatarios').delete().eq('id',id);
+  if(r.error){alert('Erro: '+r.error.message);return;}
+  NOTIF_DESTINATARIOS=NOTIF_DESTINATARIOS.filter(function(n){return n.id!==id;});
+  renderNotifCfgLista();
+}
+
 function getNotificacoesPrazo(){
   var hoje=new Date();hoje.setHours(0,0,0,0);
   var alertas=[];
@@ -3122,13 +3179,40 @@ async function lancarReembOper(){
 
 </script>
 
+<!-- NOTIF CONFIG MODAL -->
+<div id="notifcfg-modal-bg" class="modal-bg" onclick="fecharNotifCfgModal(event)">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head" style="background:var(--or)"><span style="font-size:15px;font-weight:700">Destinatários de notificação</span></div>
+    <div class="modal-body">
+      <div class="field"><label>Planilha</label>
+        <select id="ncfg-categoria" onchange="renderNotifCfgLista()" style="width:100%">
+          <option value="edicao">Edição</option>
+          <option value="edicao_tarcisio">Edição Tarcisio</option>
+          <option value="edicao_guiga">Edição Guiga</option>
+          <option value="motion">Motion</option>
+        </select>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Nome</label><input id="ncfg-nome" placeholder="Ex: Tarcisio"></div>
+        <div class="field"><label>E-mail</label><input type="email" id="ncfg-email" placeholder="tarcisio@funway.com.br"></div>
+        <div style="align-self:flex-end"><button class="btn btn-or" onclick="adicionarNotifDestinatario()">+ Adicionar</button></div>
+      </div>
+      <div class="sec" style="margin-top:14px">Destinatários cadastrados</div>
+      <div id="ncfg-lista"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="fecharNotifCfgModalDir()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- PLANILHA PROD MODAL (Edição/Motion) -->
 <div id="planilha-modal-bg" class="modal-bg" onclick="fecharPlanilhaModal(event)">
   <div class="modal" style="max-width:480px">
     <div class="modal-head" style="background:var(--or)"><span id="pl-title" style="font-size:15px;font-weight:700">Novo item</span></div>
     <div class="modal-body">
-      <div class="field"><label>Cliente</label><input id="pl-cliente" placeholder="Ex: Eletromidia"></div>
-      <div class="field"><label>Projeto</label><input id="pl-projeto" placeholder="Ex: Campanha Copa do Mundo"></div>
+      <div class="field"><label>Cliente</label><input id="pl-cliente" list="dl-cliente" autocomplete="off" placeholder="Ex: Eletromidia"></div>
+      <div class="field"><label>Projeto</label><input id="pl-projeto" list="dl-proj" autocomplete="off" placeholder="Ex: Campanha Copa do Mundo"></div>
       <div class="field"><label>Prazo</label><input type="date" id="pl-prazo"></div>
       <div class="field"><label>Status</label>
         <select id="pl-status" style="width:100%">
@@ -3151,7 +3235,7 @@ async function lancarReembOper(){
   <div class="modal pauta-modal" style="max-width:560px">
     <div class="modal-head" style="background:var(--or)"><span id="pm-title" style="font-size:15px;font-weight:700">Nova pauta</span></div>
     <div class="modal-body">
-      <div class="field"><label>Cliente</label><input id="pm-cliente" placeholder="Ex: Eletromidia"></div>
+      <div class="field"><label>Cliente</label><input id="pm-cliente" list="dl-cliente" autocomplete="off" placeholder="Ex: Eletromidia"></div>
       <div class="field"><label>Data</label><input id="pm-data" placeholder="Ex: 01/07"></div>
       <div class="field-full field"><label>Campanha (Enter para adicionar)</label><div id="pm-campanha-cont"></div></div>
       <div class="field"><label>Cidade</label>
