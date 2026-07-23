@@ -1465,7 +1465,7 @@ function renderProjs() {
 
     var porCidade = {};
     regs.forEach(function(r) {
-      var cid = r.cidade || 'Sem cidade';
+      var cid = r.cidade || ((r.tipo==='Edição'||r.tipo==='Motion')?'Pós-produção':'Sem cidade');
       if (!porCidade[cid]) porCidade[cid] = [];
       porCidade[cid].push(r);
     });
