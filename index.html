@@ -396,7 +396,7 @@ tbody tr:hover td{background:#FEF0EA}
             <div class="frow">
               <div class="field"><label>Colaborador</label><input id="fl-col" list="dl-col" autocomplete="off" placeholder="Nome"><datalist id="dl-col"></datalist></div>
               <div class="field" style="max-width:110px"><label>Tipo</label><select id="fl-tip"><option value="Entrega">Entrega</option><option value="Diária">Diária</option><option value="Edição">Edição</option><option value="Motion">Motion</option></select></div>
-              <div class="field"><label>Projeto / Campanha</label><input id="fl-proj" list="dl-proj" autocomplete="off" placeholder="Nome do projeto"><datalist id="dl-proj"></datalist></div><datalist id="dl-cliente"></datalist>
+              <div class="field"><label>Projeto / Campanha</label><input id="fl-proj" list="dl-proj" autocomplete="off" placeholder="Nome do projeto"><datalist id="dl-proj"></datalist></div><datalist id="dl-cliente"></datalist><datalist id="dl-proj-planilha"></datalist>
               <div class="field" style="max-width:110px"><label>Valor (R$)</label><input type="number" id="fl-val" min="0" step="0.01" placeholder="0,00"></div>
               <div class="field" style="max-width:145px"><label>Mês</label><input type="month" id="fl-mes"></div>
               <div style="align-self:flex-end"><button class="btn btn-or" onclick="lancar()">+ Adicionar</button></div>
@@ -702,6 +702,15 @@ function ini(n){return(n||'?').trim().split(/\s+/).slice(0,2).map(function(p){re
 function getMeses(){var s={};D.forEach(function(d){if(d.mes)s[d.mes]=1;});return Object.keys(s).sort().reverse();}
 function getColabs(){var seen={},result=[];D.forEach(function(d){if(!d.colaborador)return;var k=normName(d.colaborador);if(!seen[k]){seen[k]=d.colaborador;result.push(d.colaborador);}});return result.sort(function(a,b){return normName(a).localeCompare(normName(b));});}
 function getProjs(){var s={};D.filter(function(d){return d.tipo!=='Reembolso';}).forEach(function(d){if(d.projeto)s[d.projeto]=1;});return Object.keys(s).sort();}
+function getProjsSeparadosMesAtual(){
+  var mesAtual=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+  var s={};
+  D.filter(function(d){return d.tipo!=='Reembolso'&&d.mes===mesAtual;}).forEach(function(d){
+    if(!d.projeto)return;
+    d.projeto.split(/\s*\+\s*/).forEach(function(p){p=p.trim();if(p)s[p]=1;});
+  });
+  return Object.keys(s).sort();
+}
 function getClientes(){var s={};D.forEach(function(d){if(d.cliente)s[d.cliente]=1;});return Object.keys(s).sort();}
 function showMsg(id,txt,tipo,persist){var el=document.getElementById(id);if(!el)return;el.innerHTML='<div class="msg msg-'+tipo+'">'+txt+'</div>';if(!persist)setTimeout(function(){if(el)el.innerHTML='';},5000);}
 function setSync(tipo,txt){['sdot','op-sdot'].forEach(function(id){var el=document.getElementById(id);if(el)el.className='sdot'+(tipo?' '+tipo:'');});['stxt','op-stxt'].forEach(function(id){var st=document.getElementById(id);if(st)st.textContent=txt;});}
@@ -952,6 +961,7 @@ function populateFiltros(){
   var dc=document.getElementById('dl-col');if(dc)dc.innerHTML=colabs.map(function(c){return'<option value="'+c+'">';}).join('');
   var dp=document.getElementById('dl-proj');if(dp)dp.innerHTML=getProjs().map(function(p){return'<option value="'+p+'">';}).join('');
   var dcl=document.getElementById('dl-cliente');if(dcl)dcl.innerHTML=getClientes().map(function(c){return'<option value="'+c+'">';}).join('');
+  var dpp=document.getElementById('dl-proj-planilha');if(dpp)dpp.innerHTML=getProjsSeparadosMesAtual().map(function(p){return'<option value="'+p+'">';}).join('');
   var den=document.getElementById('dl-eg-nome');if(den)den.innerHTML=colabs.map(function(c){return'<option value="'+c+'">';}).join('');}
 
 var PAGE_TITLES={lancar:'Lan\u00e7amentos',reembolsos:'Reembolsos',colaboradores:'Colaboradores',projetos:'Projetos',folha:'Folha de Pagamento',meses:'Meses'};
@@ -3212,7 +3222,7 @@ async function lancarReembOper(){
     <div class="modal-head" style="background:var(--or)"><span id="pl-title" style="font-size:15px;font-weight:700">Novo item</span></div>
     <div class="modal-body">
       <div class="field"><label>Cliente</label><input id="pl-cliente" list="dl-cliente" autocomplete="off" placeholder="Ex: Eletromidia"></div>
-      <div class="field"><label>Projeto</label><input id="pl-projeto" list="dl-proj" autocomplete="off" placeholder="Ex: Campanha Copa do Mundo"></div>
+      <div class="field"><label>Projeto</label><input id="pl-projeto" list="dl-proj-planilha" autocomplete="off" placeholder="Ex: Campanha Copa do Mundo"></div>
       <div class="field"><label>Prazo</label><input type="date" id="pl-prazo"></div>
       <div class="field"><label>Status</label>
         <select id="pl-status" style="width:100%">
