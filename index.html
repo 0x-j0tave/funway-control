@@ -478,6 +478,7 @@ tbody tr:hover td{background:#FEF0EA}
           <div class="ph"><h2 id="planilha-titulo">Pautas</h2><p id="planilha-subtitulo">Gerencie as pautas do mês.</p></div>
           <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--br);padding-bottom:0;flex-wrap:wrap">
             <button class="btn btn-ghost" id="tab-planilha-pautas" onclick="trocarPlanilha('pautas')" style="border-radius:8px 8px 0 0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px">Pautas</button>
+            <button class="btn btn-ghost" id="tab-planilha-edicao" onclick="trocarPlanilha('edicao')" style="border-radius:8px 8px 0 0">Edição</button>
             <button class="btn btn-ghost" id="tab-planilha-edicao_tarcisio" onclick="trocarPlanilha('edicao_tarcisio')" style="border-radius:8px 8px 0 0">Edição Tarcisio</button>
             <button class="btn btn-ghost" id="tab-planilha-edicao_guiga" onclick="trocarPlanilha('edicao_guiga')" style="border-radius:8px 8px 0 0">Edição Guiga</button>
             <button class="btn btn-ghost" id="tab-planilha-motion" onclick="trocarPlanilha('motion')" style="border-radius:8px 8px 0 0">Motion</button>
@@ -545,6 +546,7 @@ tbody tr:hover td{background:#FEF0EA}
           <div class="ph"><h2 id="op-planilha-titulo">Pautas</h2><p id="op-planilha-subtitulo">Gerencie as pautas do mês.</p></div>
           <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--br);padding-bottom:0;flex-wrap:wrap">
             <button class="btn btn-ghost" id="op-tab-planilha-pautas" onclick="trocarPlanilhaOper('pautas')" style="border-radius:8px 8px 0 0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px">Pautas</button>
+            <button class="btn btn-ghost" id="op-tab-planilha-edicao" onclick="trocarPlanilhaOper('edicao')" style="border-radius:8px 8px 0 0">Edição</button>
             <button class="btn btn-ghost" id="op-tab-planilha-edicao_tarcisio" onclick="trocarPlanilhaOper('edicao_tarcisio')" style="border-radius:8px 8px 0 0">Edição Tarcisio</button>
             <button class="btn btn-ghost" id="op-tab-planilha-edicao_guiga" onclick="trocarPlanilhaOper('edicao_guiga')" style="border-radius:8px 8px 0 0">Edição Guiga</button>
             <button class="btn btn-ghost" id="op-tab-planilha-motion" onclick="trocarPlanilhaOper('motion')" style="border-radius:8px 8px 0 0">Motion</button>
@@ -1488,20 +1490,21 @@ function renderProjs() {
       var cidRegs  = porCidade[cid];
       var cidTotal = cidRegs.reduce(function(s,r){ return s+r.valor; }, 0);
       inner += '<div style="padding:7px 18px 4px;background:var(--bg);font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--br)">' + cid + '</div>';
-      inner += '<table style="width:100%;table-layout:fixed"><colgroup><col style="width:170px"><col><col style="width:80px"><col style="width:90px"><col style="width:110px"><col style="width:140px"></colgroup><tbody>';
+      inner += '<table style="width:100%;table-layout:fixed"><colgroup><col style="width:170px"><col><col style="width:110px"><col style="width:80px"><col style="width:90px"><col style="width:110px"><col style="width:140px"></colgroup><tbody>';
       cidRegs.forEach(function(r) {
         var fec = MS[r.mes] === 'fechado';
         var dataExib = getDataExibicao(r);
         inner += '<tr>'
                + '<td style="padding:7px 13px 7px 22px"><div style="display:flex;align-items:center;gap:7px"><div class="av">' + ini(r.colaborador) + '</div>' + r.colaborador + '</div></td>'
                + '<td style="padding:7px 13px;font-size:12px;color:var(--t2)">' + r.projeto + '</td>'
+               + '<td style="padding:7px 13px;font-size:11px;color:var(--t2)">' + (r.cliente||'—') + '</td>'
                + '<td style="padding:7px 13px"><span class="badge b-mes">' + (dataExib||fm(r.mes)) + '</span></td>'
                + '<td style="padding:7px 13px">' + tipBadge(r.tipo) + '</td>'
                + '<td style="padding:7px 13px;font-weight:700;color:var(--gr);text-align:right">' + fv(r.valor) + '</td>'
                + '<td style="padding:7px 13px">' + actBtns(r.id, fec) + '</td>'
                + '</tr>';
       });
-      inner += '<tr style="background:var(--bg)"><td colspan="4" style="padding:5px 13px 5px 22px;font-size:12px;font-weight:700;color:var(--t2)">Total ' + cid + '</td>'
+      inner += '<tr style="background:var(--bg)"><td colspan="5" style="padding:5px 13px 5px 22px;font-size:12px;font-weight:700;color:var(--t2)">Total ' + cid + '</td>'
              + '<td style="padding:5px 13px;font-weight:700;color:var(--gr);text-align:right">' + fv(cidTotal) + '</td><td></td></tr>';
       inner += '</tbody></table>';
     });
@@ -1636,6 +1639,7 @@ function renderFolha(){
       rows+='<tr>'
         +'<td style="padding:8px 16px 8px 44px;font-size:12px">'+tipBadge(d.tipo)+'</td>'
         +'<td style="padding:8px 16px;font-size:12px;color:var(--t)">'+d.projeto+'</td>'
+        +'<td style="padding:8px 16px;font-size:11px;color:var(--t2)">'+(d.cliente||'—')+'</td>'
         +'<td style="padding:8px 16px;font-size:11px;color:var(--t3);white-space:nowrap">'+(dataExib||'—')+'</td>'
         +'<td style="padding:8px 16px;text-align:right"><span style="font-weight:600;color:var(--or)">'+fv(d.valor)+'</span></td>'
         +'<td style="padding:8px 16px;text-align:right">'+actBtns(d.id,fec)+'</td>'
@@ -1656,7 +1660,7 @@ function renderFolha(){
       +'<button class="btn btn-sm '+(pago?'':'btn-or')+'" data-toggle-pag="1" data-nome="'+nome.replace(/"/g,'&quot;')+'" data-mes="'+mes+'" style="font-size:11px;padding:5px 12px">'+(pago?'Desmarcar':'Marcar pago')+'</button>'
       +'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);display:inline-block;transition:transform .2s">▾</span>'
       +'</div></div>'
-      +'<div id="'+eid+'" class="detail-tbl-wrap" style="display:none;border-top:1px solid var(--br)"><table style="width:100%;table-layout:fixed"><colgroup><col style="width:120px"><col><col style="width:70px"><col style="width:120px"><col style="width:145px"></colgroup><tbody>'+rows+'</tbody></table></div>'
+      +'<div id="'+eid+'" class="detail-tbl-wrap" style="display:none;border-top:1px solid var(--br)"><table style="width:100%;table-layout:fixed"><colgroup><col style="width:120px"><col><col style="width:110px"><col style="width:70px"><col style="width:120px"><col style="width:145px"></colgroup><tbody>'+rows+'</tbody></table></div>'
       +'</div>';
   });
 
@@ -1789,10 +1793,11 @@ async function carregarPlanilhasProd(retryCount){
   }
   PLANILHAS_PROD=r.data||[];
   renderNotificacoes();
-  if(PA==='pautas'&&(PLANILHA_ATIVA==='edicao_tarcisio'||PLANILHA_ATIVA==='edicao_guiga'||PLANILHA_ATIVA==='motion'))renderPlanilhaProd(PLANILHA_ATIVA);
+  if(PA==='pautas'&&(PLANILHA_ATIVA==='edicao'||PLANILHA_ATIVA==='edicao_tarcisio'||PLANILHA_ATIVA==='edicao_guiga'||PLANILHA_ATIVA==='motion'))renderPlanilhaProd(PLANILHA_ATIVA);
 }
 
 function planilhaLabel(cat){
+  if(cat==='edicao')return'Edição';
   if(cat==='edicao_tarcisio')return'Edição Tarcisio';
   if(cat==='edicao_guiga')return'Edição Guiga';
   if(cat==='motion')return'Motion';
@@ -1801,7 +1806,7 @@ function planilhaLabel(cat){
 
 function trocarPlanilha(cat){
   PLANILHA_ATIVA=cat;
-  ['pautas','edicao_tarcisio','edicao_guiga','motion'].forEach(function(c){
+  ['pautas','edicao','edicao_tarcisio','edicao_guiga','motion'].forEach(function(c){
     var btn=document.getElementById('tab-planilha-'+c);
     if(btn){
       if(c===cat){btn.style.cssText='border-radius:8px 8px 0 0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px';}
@@ -1824,7 +1829,7 @@ function trocarPlanilha(cat){
 
 function trocarPlanilhaOper(cat){
   PLANILHA_ATIVA=cat;
-  ['pautas','edicao_tarcisio','edicao_guiga','motion'].forEach(function(c){
+  ['pautas','edicao','edicao_tarcisio','edicao_guiga','motion'].forEach(function(c){
     var btn=document.getElementById('op-tab-planilha-'+c);
     if(btn){
       if(c===cat){btn.style.cssText='border-radius:8px 8px 0 0;border-bottom:2px solid var(--or);color:var(--or);margin-bottom:-2px';}
