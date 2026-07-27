@@ -2213,7 +2213,7 @@ function renderColabCad(){
       +'<div class="card-hd-l" style="display:flex;align-items:center;gap:12px">'
       +'<div class="av">'+ini(c.nome_completo||c.apelido||'?')+'</div>'
       +'<div><div style="font-weight:700;font-size:15px">'+(c.nome_completo||'—')+(c.apelido?' <span style="font-weight:600;color:var(--t2);font-size:12px">('+c.apelido+')</span>':'')+'</div>'
-      +'<div style="font-size:11px;color:var(--t2)">'+(c.funcao?c.funcao+' · ':'')+(c.email||'sem e-mail cadastrado')+'</div></div>'
+      +'<div style="font-size:11px;color:var(--t2)">'+(chipsFromStr(c.funcao).join(' + ')||'Sem função cadastrada')+'</div></div>'
       +'</div>'
       +'<div class="card-hd-r" style="display:flex;align-items:center;gap:14px">'
       +'<div style="text-align:right"><div style="font-size:10px;color:var(--t3);text-transform:uppercase">Folha '+fml(new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'))+'</div><div style="font-weight:700;font-size:15px;color:var(--or)">'+fv(totalMes)+'</div></div>'
@@ -2245,7 +2245,8 @@ function fecharColabCadModalDir(){document.getElementById('colabcad-modal-bg').c
 function abrirNovoColabCad(){
   EDIT_COLABCAD_ID=null;
   document.getElementById('cc-title').textContent='Novo colaborador';
-  ['cc-nome','cc-apelido','cc-funcao','cc-nascimento','cc-telefone','cc-email','cc-equipamentos','cc-cnpj','cc-bancarios'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['cc-nome','cc-apelido','cc-nascimento','cc-telefone','cc-email','cc-equipamentos','cc-cnpj','cc-bancarios'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  criarChipInput('cc-funcao-cont','','');
   document.getElementById('colabcad-modal-bg').classList.add('show');
 }
 
@@ -2257,7 +2258,7 @@ function abrirEditColabCadById(id){
   document.getElementById('cc-title').textContent='Editar colaborador';
   document.getElementById('cc-nome').value=c.nome_completo||'';
   document.getElementById('cc-apelido').value=c.apelido||'';
-  document.getElementById('cc-funcao').value=c.funcao||'';
+  criarChipInput('cc-funcao-cont',c.funcao||'','');
   document.getElementById('cc-nascimento').value=c.data_nascimento||'';
   document.getElementById('cc-telefone').value=c.telefone||'';
   document.getElementById('cc-email').value=c.email||'';
@@ -2270,7 +2271,7 @@ function abrirEditColabCadById(id){
 async function salvarColabCad(){
   var nome=document.getElementById('cc-nome').value.trim();
   var apelido=document.getElementById('cc-apelido').value.trim();
-  var funcao=document.getElementById('cc-funcao').value.trim();
+  var funcao=getChipValues('cc-funcao-cont');
   var nascimento=document.getElementById('cc-nascimento').value||null;
   var telefone=document.getElementById('cc-telefone').value.trim();
   var email=document.getElementById('cc-email').value.trim();
@@ -3377,7 +3378,7 @@ async function lancarReembOper(){
       <div class="frow">
         <div class="field"><label>Nome completo</label><input id="cc-nome" placeholder="Ex: Caio Silva Santos"></div>
         <div class="field" style="max-width:160px"><label>Apelido (usado no sistema)</label><input id="cc-apelido" placeholder="Ex: CAIO"></div>
-        <div class="field"><label>Função</label><input id="cc-funcao" placeholder="Ex: Editor de vídeo"></div>
+        <div class="field"><label>Função (Enter para adicionar)</label><div id="cc-funcao-cont"></div></div>
       </div>
       <div class="frow">
         <div class="field"><label>Data de nascimento</label><input type="date" id="cc-nascimento"></div>
