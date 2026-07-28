@@ -2197,6 +2197,29 @@ function folhaMesAtualColab(apelido){
   return D.filter(function(d){return d.mes===mesAtual&&normName(d.colaborador)===key;}).reduce(function(s,d){return s+d.valor;},0);
 }
 
+var COLABCAD_FILTRO_CIDADE='';
+
+var CIDADE_CORES={
+  'Salvador':{bg:'#FEE2E2',fg:'#991B1B'},
+  'São Paulo':{bg:'#DBEAFE',fg:'#1D4ED8'},
+  'Rio de Janeiro':{bg:'#F3E8FF',fg:'#7E22CE'},
+  'Belo Horizonte':{bg:'#FEF3C7',fg:'#92400E'},
+  'Curitiba':{bg:'#DCFCE7',fg:'#15803D'},
+  'Floripa':{bg:'#CFFAFE',fg:'#0E7490'},
+  'Fortaleza':{bg:'#FFEDD5',fg:'#C2410C'},
+  'Recife':{bg:'#FCE7F3',fg:'#BE185D'},
+  'Porto Alegre':{bg:'#E0E7FF',fg:'#4338CA'},
+  'Brasília':{bg:'#ECFCCB',fg:'#4D7C0F'},
+  'Belém':{bg:'#FEF9C3',fg:'#854D0E'},
+  'Outras':{bg:'#F3F4F6',fg:'#374151'},
+  '—':{bg:'#F3F4F6',fg:'#6B7280'}
+};
+
+function toggleColabCadFiltro(cid){
+  COLABCAD_FILTRO_CIDADE=(COLABCAD_FILTRO_CIDADE===cid)?'':cid;
+  renderColabCad();
+}
+
 function renderColabCad(){
   var el=colabCadContEl();
   if(!el)return;
@@ -2204,37 +2227,66 @@ function renderColabCad(){
   var addBtn='<button class="pauta-add-btn" onclick="abrirNovoColabCad()">+ Novo colaborador</button>';
   if(!lista.length){el.innerHTML='<div class="empty"><p>Nenhum colaborador cadastrado ainda.</p></div>'+addBtn;return;}
 
-  var h='<div style="display:flex;flex-direction:column;gap:8px">';
-  lista.forEach(function(c){
-    var eid='cc_'+c.id;
-    var totalMes=folhaMesAtualColab(c.apelido);
-    h+='<div style="background:var(--sf);border:1px solid var(--br);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden">'
-      +'<div class="card-hd" style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer" onclick="toggleFD(\''+eid+'\')">'
-      +'<div class="card-hd-l" style="display:flex;align-items:center;gap:12px">'
-      +'<div class="av">'+ini(c.nome_completo||c.apelido||'?')+'</div>'
-      +'<div><div style="font-weight:700;font-size:15px">'+(c.nome_completo||'—')+(c.apelido?' <span style="font-weight:600;color:var(--t2);font-size:12px">('+c.apelido+')</span>':'')+'</div>'
-      +'<div style="font-size:11px;color:var(--t2)">'+(chipsFromStr(c.funcao).join(' + ')||'Sem função cadastrada')+'</div></div>'
-      +'</div>'
-      +'<div class="card-hd-r" style="display:flex;align-items:center;gap:14px">'
-      +'<div style="text-align:right"><div style="font-size:10px;color:var(--t3);text-transform:uppercase">Folha '+fml(new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'))+'</div><div style="font-weight:700;font-size:15px;color:var(--or)">'+fv(totalMes)+'</div></div>'
-      +'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);display:inline-block;transition:transform .2s">▾</span>'
-      +'</div></div>'
-      +'<div id="'+eid+'" style="display:none;border-top:1px solid var(--br);padding:14px 18px">'
-      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">'
-      +'<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">Data de nascimento</div>'+(c.data_nascimento?c.data_nascimento.split('-').reverse().join('/'):'—')+'</div>'
-      +'<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">Telefone</div>'+(c.telefone||'—')+'</div>'
-      +'<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">CNPJ</div>'+(c.cnpj||'—')+'</div>'
-      +'<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">E-mail</div>'+(c.email||'—')+'</div>'
-      +'<div style="grid-column:1/-1"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">Equipamentos</div>'+(c.equipamentos||'—').replace(/\n/g,'<br>')+'</div>'
-      +'<div style="grid-column:1/-1"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">Dados bancários</div>'+(c.dados_bancarios||'—').replace(/\n/g,'<br>')+'</div>'
-      +'</div>'
-      +'<div style="display:flex;gap:6px;justify-content:flex-end;margin-top:14px">'
-      +'<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();abrirEditColabCadById(\''+c.id+'\')" style="color:var(--t2)">Editar</button>'
-      +'<button class="btn btn-ghost btn-sm" data-dcc="'+c.id+'" style="color:var(--rd)">Remover</button>'
-      +'</div>'
-      +'</div></div>';
+  var porCidade={};
+  lista.forEach(function(c){var cid=c.cidade||'—';if(!porCidade[cid])porCidade[cid]=[];porCidade[cid].push(c);});
+  var cidadesOrdenadas=Object.keys(porCidade).sort(function(a,b){
+    if(a==='—')return 1;if(b==='—')return -1;
+    return a.localeCompare(b);
   });
-  h+='</div>'+addBtn;
+
+  var filtroHtml='<div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">';
+  cidadesOrdenadas.forEach(function(cid){
+    var cor=CIDADE_CORES[cid]||CIDADE_CORES['Outras'];
+    var ativo=COLABCAD_FILTRO_CIDADE===cid;
+    filtroHtml+='<button onclick="toggleColabCadFiltro(\''+cid.replace(/'/g,"\\'")+'\')" style="padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;border:2px solid '+(ativo?cor.fg:'transparent')+';background:'+cor.bg+';color:'+cor.fg+';cursor:pointer;font-family:inherit">'+cid+' ('+porCidade[cid].length+')</button>';
+  });
+  filtroHtml+='</div>';
+
+  var cidadesParaMostrar=COLABCAD_FILTRO_CIDADE?[COLABCAD_FILTRO_CIDADE]:cidadesOrdenadas;
+
+  var h=filtroHtml;
+  cidadesParaMostrar.forEach(function(cid){
+    var itensCidade=porCidade[cid];
+    if(!itensCidade)return;
+    var cor=CIDADE_CORES[cid]||CIDADE_CORES['Outras'];
+    h+='<div style="display:flex;align-items:center;gap:8px;margin:18px 0 10px">'
+      +'<span style="font-size:11px;font-weight:700;background:'+cor.bg+';color:'+cor.fg+';padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px">'+cid+'</span>'
+      +'<span style="font-size:11px;color:var(--t3)">'+itensCidade.length+' colaborador'+(itensCidade.length!==1?'es':'')+'</span>'
+      +'<div style="flex:1;height:1px;background:var(--br)"></div>'
+      +'</div>';
+    h+='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">';
+    itensCidade.forEach(function(c){
+      var eid='cc_'+c.id;
+      var totalMes=folhaMesAtualColab(c.apelido);
+      h+='<div style="background:var(--sf);border:1px solid var(--br);border-left:4px solid '+cor.fg+';border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden">'
+        +'<div class="card-hd" style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer" onclick="toggleFD(\''+eid+'\')">'
+        +'<div class="card-hd-l" style="display:flex;align-items:center;gap:12px">'
+        +'<div class="av">'+ini(c.nome_completo||c.apelido||'?')+'</div>'
+        +'<div><div style="font-weight:700;font-size:15px">'+(c.nome_completo||'—')+(c.apelido?' <span style="font-weight:600;color:var(--t2);font-size:12px">('+c.apelido+')</span>':'')+'</div>'
+        +'<div style="font-size:11px;color:var(--t2)">'+(chipsFromStr(c.funcao).join(' + ')||'Sem função cadastrada')+'</div></div>'
+        +'</div>'
+        +'<div class="card-hd-r" style="display:flex;align-items:center;gap:14px">'
+        +'<div style="text-align:right"><div style="font-size:10px;color:var(--t3);text-transform:uppercase">Folha '+fml(new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'))+'</div><div style="font-weight:700;font-size:15px;color:var(--or)">'+fv(totalMes)+'</div></div>'
+        +'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);display:inline-block;transition:transform .2s">▾</span>'
+        +'</div></div>'
+        +'<div id="'+eid+'" style="display:none;border-top:1px solid var(--br);padding:14px 18px">'
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">'
+        +'<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">Data de nascimento</div>'+(c.data_nascimento?c.data_nascimento.split('-').reverse().join('/'):'—')+'</div>'
+        +'<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">Telefone</div>'+(c.telefone||'—')+'</div>'
+        +'<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">CNPJ</div>'+(c.cnpj||'—')+'</div>'
+        +'<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">E-mail</div>'+(c.email||'—')+'</div>'
+        +'<div style="grid-column:1/-1"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">Equipamentos</div>'+(c.equipamentos||'—').replace(/\n/g,'<br>')+'</div>'
+        +'<div style="grid-column:1/-1"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">Dados bancários</div>'+(c.dados_bancarios||'—').replace(/\n/g,'<br>')+'</div>'
+        +'</div>'
+        +'<div style="display:flex;gap:6px;justify-content:flex-end;margin-top:14px">'
+        +'<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();abrirEditColabCadById(\''+c.id+'\')" style="color:var(--t2)">Editar</button>'
+        +'<button class="btn btn-ghost btn-sm" data-dcc="'+c.id+'" style="color:var(--rd)">Remover</button>'
+        +'</div>'
+        +'</div></div>';
+    });
+    h+='</div>';
+  });
+  h+=addBtn;
   el.innerHTML=h;
   el.querySelectorAll('[data-dcc]').forEach(function(b){b.addEventListener('click',function(ev){ev.stopPropagation();deletarColabCad(b.getAttribute('data-dcc'));});});
 }
@@ -2245,7 +2297,7 @@ function fecharColabCadModalDir(){document.getElementById('colabcad-modal-bg').c
 function abrirNovoColabCad(){
   EDIT_COLABCAD_ID=null;
   document.getElementById('cc-title').textContent='Novo colaborador';
-  ['cc-nome','cc-apelido','cc-nascimento','cc-telefone','cc-email','cc-equipamentos','cc-cnpj','cc-bancarios'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['cc-nome','cc-apelido','cc-nascimento','cc-telefone','cc-email','cc-equipamentos','cc-cnpj','cc-bancarios','cc-cidade'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   criarChipInput('cc-funcao-cont','','');
   document.getElementById('colabcad-modal-bg').classList.add('show');
 }
@@ -2259,6 +2311,7 @@ function abrirEditColabCadById(id){
   document.getElementById('cc-nome').value=c.nome_completo||'';
   document.getElementById('cc-apelido').value=c.apelido||'';
   criarChipInput('cc-funcao-cont',c.funcao||'','');
+  document.getElementById('cc-cidade').value=c.cidade||'';
   document.getElementById('cc-nascimento').value=c.data_nascimento||'';
   document.getElementById('cc-telefone').value=c.telefone||'';
   document.getElementById('cc-email').value=c.email||'';
@@ -2272,6 +2325,7 @@ async function salvarColabCad(){
   var nome=document.getElementById('cc-nome').value.trim();
   var apelido=document.getElementById('cc-apelido').value.trim();
   var funcao=getChipValues('cc-funcao-cont');
+  var cidade=document.getElementById('cc-cidade').value;
   var nascimento=document.getElementById('cc-nascimento').value||null;
   var telefone=document.getElementById('cc-telefone').value.trim();
   var email=document.getElementById('cc-email').value.trim();
@@ -2281,12 +2335,12 @@ async function salvarColabCad(){
   if(!nome){alert('Preencha o nome completo.');return;}
   var now=new Date().toISOString();
   if(EDIT_COLABCAD_ID){
-    var upd={nome_completo:nome,apelido:apelido,funcao:funcao,data_nascimento:nascimento,telefone:telefone,email:email,equipamentos:equipamentos,cnpj:cnpj,dados_bancarios:bancarios,atualizado_em:now};
+    var upd={nome_completo:nome,apelido:apelido,funcao:funcao,cidade:cidade,data_nascimento:nascimento,telefone:telefone,email:email,equipamentos:equipamentos,cnpj:cnpj,dados_bancarios:bancarios,atualizado_em:now};
     var r=await SB.from('colaboradores_cadastro').update(upd).eq('id',EDIT_COLABCAD_ID);
     if(r.error){alert('Erro: '+r.error.message);return;}
   } else {
     var newId=uid();
-    var insert={id:newId,nome_completo:nome,apelido:apelido,funcao:funcao,data_nascimento:nascimento,telefone:telefone,email:email,equipamentos:equipamentos,cnpj:cnpj,dados_bancarios:bancarios,ordem:COLABORADORES_CAD.length,criado_em:now,atualizado_em:now};
+    var insert={id:newId,nome_completo:nome,apelido:apelido,funcao:funcao,cidade:cidade,data_nascimento:nascimento,telefone:telefone,email:email,equipamentos:equipamentos,cnpj:cnpj,dados_bancarios:bancarios,ordem:COLABORADORES_CAD.length,criado_em:now,atualizado_em:now};
     var r2=await SB.from('colaboradores_cadastro').insert(insert);
     if(r2.error){alert('Erro: '+r2.error.message);return;}
   }
@@ -3379,6 +3433,15 @@ async function lancarReembOper(){
         <div class="field"><label>Nome completo</label><input id="cc-nome" placeholder="Ex: Caio Silva Santos"></div>
         <div class="field" style="max-width:160px"><label>Apelido (usado no sistema)</label><input id="cc-apelido" placeholder="Ex: CAIO"></div>
         <div class="field"><label>Função (Enter para adicionar)</label><div id="cc-funcao-cont"></div></div>
+      <div class="field"><label>Cidade</label>
+        <select id="cc-cidade" style="width:100%">
+          <option value="">Selecione...</option>
+          <option>Salvador</option><option>São Paulo</option><option>Rio de Janeiro</option>
+          <option>Belo Horizonte</option><option>Curitiba</option><option>Floripa</option>
+          <option>Fortaleza</option><option>Recife</option><option>Porto Alegre</option>
+          <option>Brasília</option><option>Belém</option><option>Outras</option>
+        </select>
+      </div>
       </div>
       <div class="frow">
         <div class="field"><label>Data de nascimento</label><input type="date" id="cc-nascimento"></div>
