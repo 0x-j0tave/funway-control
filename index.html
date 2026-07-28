@@ -2172,6 +2172,7 @@ async function removerNotifDestinatario(id){
 }
 
 var COLABORADORES_CAD=[];
+var COLABCAD_CARREGADO=false;
 var EDIT_COLABCAD_ID=null;
 
 async function carregarColaboradoresCad(retryCount){
@@ -2183,6 +2184,7 @@ async function carregarColaboradoresCad(retryCount){
     return;
   }
   COLABORADORES_CAD=r.data||[];
+  COLABCAD_CARREGADO=true;
   if(PA==='colaboradores-cad')renderColabCad();
 }
 
@@ -2225,7 +2227,15 @@ function renderColabCad(){
   if(!el)return;
   var lista=COLABORADORES_CAD.slice().sort(function(a,b){return(a.nome_completo||'').localeCompare(b.nome_completo||'');});
   var addBtn='<button class="pauta-add-btn" onclick="abrirNovoColabCad()">+ Novo colaborador</button>';
-  if(!lista.length){el.innerHTML='<div class="empty"><p>Nenhum colaborador cadastrado ainda.</p></div>'+addBtn;return;}
+  if(!lista.length){
+    if(!COLABCAD_CARREGADO){
+      el.innerHTML='<div class="empty"><p>Carregando colaboradores...</p></div>';
+      carregarColaboradoresCad();
+      return;
+    }
+    el.innerHTML='<div class="empty"><p>Nenhum colaborador cadastrado ainda.</p></div>'+addBtn;
+    return;
+  }
 
   var porCidade={};
   lista.forEach(function(c){var cid=c.cidade||'—';if(!porCidade[cid])porCidade[cid]=[];porCidade[cid].push(c);});
