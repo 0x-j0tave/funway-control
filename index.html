@@ -2494,7 +2494,9 @@ function renderPautasPublica(){
   }
 
   if(isMobileView()){
+    var _scrollPosPM=el.scrollTop;
     el.innerHTML='<div style="padding:12px">'+pautaCardsHtml(f,false)+'</div>';
+    el.scrollTop=_scrollPosPM;
     return;
   }
 
@@ -2544,7 +2546,9 @@ function renderPautasPublica(){
       +'<td style="padding:12px 16px;'+tdBase+'">'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
       +'</tr>';
   });
+  var _scrollWrapOldP=el.querySelector('.pauta-tbl-wrap');var _scrollPosP=_scrollWrapOldP?_scrollWrapOldP.scrollTop:0;
   el.innerHTML=h+'</tbody></table></div>';
+  var _scrollWrapNewP=el.querySelector('.pauta-tbl-wrap');if(_scrollWrapNewP)_scrollWrapNewP.scrollTop=_scrollPosP;
 }
 
 
@@ -2613,7 +2617,9 @@ function renderPautasAdmin(){
 
   if(isMobileView()){
     var mh=tabsHtml+pautaCardsHtml(f,true)+'<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
+    var _scrollPosAM=el.scrollTop;
     el.innerHTML=mh;
+    el.scrollTop=_scrollPosAM;
     el.querySelectorAll('[data-dp]').forEach(function(b){b.addEventListener('click',function(){deletarPauta(b.getAttribute('data-dp'));});});
     return;
   }
@@ -2652,7 +2658,9 @@ function renderPautasAdmin(){
   });
   h+='</tbody></table></div>';
   h+='<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
+  var _scrollWrapOld=el.querySelector('.pauta-tbl-wrap');var _scrollPos=_scrollWrapOld?_scrollWrapOld.scrollTop:0;
   el.innerHTML=tabsHtml+h;
+  var _scrollWrapNew=el.querySelector('.pauta-tbl-wrap');if(_scrollWrapNew)_scrollWrapNew.scrollTop=_scrollPos;
   el.querySelectorAll('[data-dp]').forEach(function(b){b.addEventListener('click',function(){deletarPauta(b.getAttribute('data-dp'));});});
 
   document.addEventListener('click',function(){
@@ -3138,7 +3146,9 @@ function renderOperPautas(){
   var tabsHtml='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap" id="op-mes-tabs"></div>';
 
   if(isMobileView()){
+    var _scrollElOldM=el;var _scrollPosM=_scrollElOldM?_scrollElOldM.scrollTop:0;
     el.innerHTML=tabsHtml+pautaCardsHtml(f,true)+'<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
+    if(el)el.scrollTop=_scrollPosM;
     var tabsElM=document.getElementById('op-mes-tabs');
     if(tabsElM){mesesList.forEach(function(m){var btn=document.createElement('button');btn.textContent=fml(m);btn.style.cssText='padding:6px 16px;font-size:13px;font-weight:600;border-radius:20px;cursor:pointer;border:2px solid '+(m===PAUTA_MES_SEL?'var(--or)':'var(--br2)')+';background:'+(m===PAUTA_MES_SEL?'var(--or)':'transparent')+';color:'+(m===PAUTA_MES_SEL?'#fff':'var(--t2)')+';font-family:inherit;transition:all .15s';btn.addEventListener('click',function(){PAUTA_MES_SEL=m;renderOperPautas();});tabsElM.appendChild(btn);});}
     el.querySelectorAll('[data-dp]').forEach(function(b){b.addEventListener('click',function(){deletarPauta(b.getAttribute('data-dp'));});});
@@ -3194,7 +3204,9 @@ function renderOperPautas(){
   });
   h+='</tbody></table></div><button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
 
+  var _scrollWrapOldO=el.querySelector('.pauta-tbl-wrap');var _scrollPosO=_scrollWrapOldO?_scrollWrapOldO.scrollTop:0;
   el.innerHTML=tabsHtml+h;
+  var _scrollWrapNewO=el.querySelector('.pauta-tbl-wrap');if(_scrollWrapNewO)_scrollWrapNewO.scrollTop=_scrollPosO;
 
   var tabsEl=document.getElementById('op-mes-tabs');
   if(tabsEl){mesesList.forEach(function(m){var btn=document.createElement('button');btn.textContent=fml(m);btn.style.cssText='padding:6px 16px;font-size:13px;font-weight:600;border-radius:20px;cursor:pointer;border:2px solid '+(m===PAUTA_MES_SEL?'var(--or)':'var(--br2)')+';background:'+(m===PAUTA_MES_SEL?'var(--or)':'transparent')+';color:'+(m===PAUTA_MES_SEL?'#fff':'var(--t2)')+';font-family:inherit;transition:all .15s';btn.addEventListener('click',function(){PAUTA_MES_SEL=m;renderOperPautas();});tabsEl.appendChild(btn);});}
