@@ -1928,20 +1928,55 @@ function planilhaStatusBadge(s){
   return '<span style="font-size:11px;font-weight:700;background:#FEE2E2;color:#B91C1C;padding:3px 10px;border-radius:20px">PRODU\u00c7\u00c3O</span>';
 }
 
+var PLANILHA_MES_SEL={};
+
+function planilhaMesFromPrazo(prazo){
+  if(!prazo)return '9999-99';
+  return prazo.slice(0,7);
+}
+
+function trocarPlanilhaMes(categoria,mes){
+  PLANILHA_MES_SEL[categoria]=mes;
+  renderPlanilhaProd(categoria);
+}
+
 function renderPlanilhaProd(categoria){
   var el=planilhaContEl();
   if(!el)return;
-  var itens=PLANILHAS_PROD.filter(function(p){return p.categoria===categoria;});
+  var todosItens=PLANILHAS_PROD.filter(function(p){return p.categoria===categoria;});
+
+  var mesesDisp={};
+  todosItens.forEach(function(p){mesesDisp[planilhaMesFromPrazo(p.prazo)]=1;});
+  var mesesList=Object.keys(mesesDisp).sort();
+  if(!PLANILHA_MES_SEL[categoria]||!mesesDisp[PLANILHA_MES_SEL[categoria]]){
+    var hojeStr=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+    PLANILHA_MES_SEL[categoria]=mesesDisp[hojeStr]?hojeStr:(mesesList[mesesList.length-1]||hojeStr);
+  }
+  var mesAtivo=PLANILHA_MES_SEL[categoria];
+
+  var itens=todosItens.filter(function(p){return planilhaMesFromPrazo(p.prazo)===mesAtivo;});
   itens.sort(function(a,b){
     var pa=a.prazo||'9999-99-99',pb=b.prazo||'9999-99-99';
     if(pa!==pb)return pa.localeCompare(pb);
     return(a.ordem||0)-(b.ordem||0);
   });
 
+  var tabsHtml='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">';
+  mesesList.forEach(function(m){
+    var active=m===mesAtivo;
+    var label=m==='9999-99'?'Sem prazo':fml(m);
+    tabsHtml+='<button onclick="trocarPlanilhaMes(\''+categoria+'\',\''+m+'\')" style="padding:6px 16px;font-size:13px;font-weight:600;border-radius:20px;cursor:pointer;border:2px solid '+(active?'var(--or)':'var(--br2)')+';background:'+(active?'var(--or)':'transparent')+';color:'+(active?'#fff':'var(--t2)')+';font-family:inherit;transition:all .15s">'+label+'</button>';
+  });
+  tabsHtml+='</div>';
+
   var addBtn='<button class="pauta-add-btn" onclick="abrirNovaPlanilhaItem(\''+categoria+'\')">+ Novo item</button>';
 
-  if(!itens.length){
+  if(!todosItens.length){
     el.innerHTML='<div class="empty"><p>Nenhum item ainda.</p></div>'+addBtn;
+    return;
+  }
+  if(!itens.length){
+    el.innerHTML=tabsHtml+'<div class="empty"><p>Nenhum item neste mês.</p></div>'+addBtn;
     return;
   }
 
@@ -1965,7 +2000,7 @@ function renderPlanilhaProd(categoria){
         +'</div></div></div>';
     });
     hMob+='</div>'+addBtn;
-    el.innerHTML=hMob;
+    el.innerHTML=tabsHtml+hMob;
     el.querySelectorAll('[data-dpl]').forEach(function(b){b.addEventListener('click',function(){deletarPlanilhaItem(b.getAttribute('data-dpl'));});});
     return;
   }
@@ -2008,7 +2043,7 @@ function renderPlanilhaProd(categoria){
       +'</div></td></tr>';
   });
   h+='</tbody></table></div>'+addBtn;
-  el.innerHTML=h;
+  el.innerHTML=tabsHtml+h;
   el.querySelectorAll('[data-dpl]').forEach(function(b){b.addEventListener('click',function(){deletarPlanilhaItem(b.getAttribute('data-dpl'));});});
 }
 
