@@ -590,6 +590,13 @@ tbody tr:hover td{background:#FEF0EA}
               <div style="align-self:flex-end"><button class="btn btn-or" onclick="lancarReembOper()">+ Adicionar</button></div>
             </div>
           </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:8px">
+            <div class="sec" style="margin-bottom:0">Reembolsos</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <select id="op-fil-rcol" onchange="renderOperReemb()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos colaboradores</option></select>
+              <select id="op-fil-rmes" onchange="renderOperReemb()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os meses</option></select>
+            </div>
+          </div>
           <div id="op-tbl-reemb"></div>
         </div>
         <div id="op-pg-colaboradores-cad" class="page">
@@ -973,6 +980,7 @@ function populateFiltros(){
   function fillSel(id,items,fn,label){var el=document.getElementById(id);if(!el)return;var cur=el.value;el.innerHTML='<option value="">'+label+'</option>';items.forEach(function(x){el.innerHTML+='<option value="'+x+'">'+fn(x)+'</option>';});if(cur)el.value=cur;}
   fillSel('fil-ml',meses,fml,'Todos os meses');fillSel('fil-mp',meses,fml,'Todos os meses');
   fillSel('fil-rcol',colabs,function(x){return x;},'Todos colaboradores');fillSel('fil-rmes',meses,fml,'Todos os meses');
+  fillSel('op-fil-rcol',colabs,function(x){return x;},'Todos colaboradores');fillSel('op-fil-rmes',meses,fml,'Todos os meses');
   fillSel('fil-col',colabs,function(x){return x;},'Todos colaboradores');fillSel('fil-cp',clientes,function(x){return x;},'Todos clientes');
   var ff=document.getElementById('fil-mf');if(ff){var curf=ff.value;ff.innerHTML='<option value="">Selecione um m\u00eas</option>';meses.forEach(function(m){ff.innerHTML+='<option value="'+m+'">'+fml(m)+'</option>';});if(curf)ff.value=curf;else if(meses.length)ff.value=meses[0];}
   var dc=document.getElementById('dl-col');if(dc)dc.innerHTML=colabs.map(function(c){return'<option value="'+c+'">';}).join('');
@@ -3333,11 +3341,14 @@ function renderOperReemb(){
   var el=document.getElementById('op-tbl-reemb');
   if(!el)return;
   var mesAtualStrO=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+  var fc=(document.getElementById('op-fil-rcol')||{}).value||'';
+  var fm2=(document.getElementById('op-fil-rmes')||{}).value||'';
+  var filtrosAtivosO=!!(fc||fm2);
 
   var pendentes=GASTOS_ADMIN.filter(function(g){return g.status==='pendente';});
-  var base=D.filter(function(d){return d.tipo==='Reembolso';});
+  var base=D.filter(function(d){return d.tipo==='Reembolso'&&(!fc||normName(d.colaborador)===normName(fc))&&(!fm2||d.mes===fm2);});
   var f,mostrandoAtualO=false;
-  if(REEMB_MODO_ATUAL){
+  if(REEMB_MODO_ATUAL&&!filtrosAtivosO){
     f=base.filter(function(d){return d.mes===mesAtualStrO;});
     mostrandoAtualO=true;
   } else {
@@ -3345,7 +3356,7 @@ function renderOperReemb(){
   }
 
   var toggleBtnRO='<button class="btn btn-ghost btn-sm" onclick="toggleReembModo()" style="font-size:11px">'+(REEMB_MODO_ATUAL?'Ver hist\u00f3rico completo':'Ver s\u00f3 m\u00eas atual')+'</button>';
-  var bannerRO=mostrandoAtualO?'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>Mostrando reembolsos aprovados de '+fml(mesAtualStrO)+'.</span>'+toggleBtnRO+'</div>':'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;justify-content:flex-end">'+toggleBtnRO+'</div>';
+  var bannerRO=mostrandoAtualO?'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>Mostrando reembolsos aprovados de '+fml(mesAtualStrO)+'.</span>'+toggleBtnRO+'</div>':(!filtrosAtivosO?'<div style="font-size:12px;color:var(--t2);margin-bottom:12px;display:flex;justify-content:flex-end">'+toggleBtnRO+'</div>':'');
 
   if(!pendentes.length&&!f.length&&!mostrandoAtualO){el.innerHTML=bannerRO+'<div class="empty"><p>Nenhum reembolso.</p></div>';return;}
 
@@ -3413,9 +3424,12 @@ function renderOperReemb(){
       items.forEach(function(d){
         var fec=MS[d.mes]==='fechado';
         var dataExib=getDataExibicao(d);
+        var arquivoBtnO='<span style="color:var(--t3);font-size:11px">Sem comprovante</span>';
+        if(d.origem==='gasto'&&d.sheetsKey){var gastoIdO=d.sheetsKey.replace('gasto_','');for(var gi=0;gi<GASTOS_ADMIN.length;gi++){if(GASTOS_ADMIN[gi].id===gastoIdO&&GASTOS_ADMIN[gi].arquivo_path){arquivoBtnO='<button class="btn btn-ghost btn-sm" data-view="'+GASTOS_ADMIN[gi].arquivo_path+'" style="font-size:11px;color:var(--bl);font-weight:600;padding:2px 6px">Ver</button>';break;}}}
         rows+='<tr>'
           +'<td style="padding:8px 16px 8px 44px;font-size:12px;color:var(--t)">'+d.projeto+'</td>'
           +'<td style="padding:8px 16px"><span class="badge b-mes">'+(dataExib||fm(d.mes))+'</span></td>'
+          +'<td style="padding:8px 16px">'+arquivoBtnO+'</td>'
           +'<td style="padding:8px 16px;text-align:right"><span style="font-weight:600;color:var(--pu)">'+fv(d.valor)+'</span></td>'
           +'<td style="padding:8px 16px;text-align:right">'+actBtns(d.id,fec)+'</td>'
           +'</tr>';
@@ -3431,7 +3445,7 @@ function renderOperReemb(){
         +'<div style="font-size:17px;font-weight:700;color:var(--pu)">'+fv(total)+'</div>'
         +'<span id="arr-'+eid+'" style="font-size:10px;color:var(--t3);display:inline-block;transition:transform .2s">\u25be</span>'
         +'</div></div>'
-        +'<div id="'+eid+'" class="detail-tbl-wrap" style="display:none;border-top:1px solid var(--br)"><table style="width:100%;table-layout:fixed"><colgroup><col><col style="width:100px"><col style="width:120px"><col style="width:145px"></colgroup><tbody>'+rows+'</tbody></table></div>'
+        +'<div id="'+eid+'" class="detail-tbl-wrap" style="display:none;border-top:1px solid var(--br)"><table style="width:100%;table-layout:fixed"><colgroup><col><col style="width:100px"><col style="width:100px"><col style="width:120px"><col style="width:145px"></colgroup><tbody>'+rows+'</tbody></table></div>'
         +'</div>';
     });
     h+='</div>';
