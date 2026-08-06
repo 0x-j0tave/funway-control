@@ -3040,10 +3040,10 @@ async function criarLancamentosDePauta(pautaId,pauta){
 async function sincronizarLancamentosPauta(pautaId,novosDados,dadosAntigos){
   var membrosNovos=chipsFromStr(novosDados.equipe);
   var membrosAntigos=chipsFromStr(dadosAntigos?dadosAntigos.equipe:'');
-  var mes=mesAtualStr();
-  // Atualiza projeto/cidade nos lancamentos existentes
-  var r=await SB.from('lancamentos').update({projeto:novosDados.campanha,cidade:novosDados.cidade,cliente:novosDados.cliente}).eq('pauta_id',pautaId);
-  D.forEach(function(d){if(d.pautaId===pautaId){d.projeto=novosDados.campanha;d.cidade=novosDados.cidade;d.cliente=novosDados.cliente;}});
+  var mes=novosDados.mes||mesAtualStr();
+  // Atualiza projeto/cidade/mes nos lancamentos existentes
+  var r=await SB.from('lancamentos').update({projeto:novosDados.campanha,cidade:novosDados.cidade,cliente:novosDados.cliente,mes:mes}).eq('pauta_id',pautaId);
+  D.forEach(function(d){if(d.pautaId===pautaId){d.projeto=novosDados.campanha;d.cidade=novosDados.cidade;d.cliente=novosDados.cliente;d.mes=mes;}});
   // Adiciona novos membros
   var novos=membrosNovos.filter(function(m){return membrosAntigos.indexOf(m)<0;});
   for(var i=0;i<novos.length;i++){
