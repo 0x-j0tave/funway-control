@@ -448,7 +448,7 @@ tbody tr:hover td{background:#FEF0EA}
 
         <div id="pg-folha" class="page">
           <div class="ph"><h2>Folha de Pagamento</h2><p>Consolidado mensal para fechamento.</p></div>
-          <div style="margin-bottom:16px"><select id="fil-mf" onchange="renderFolha()" style="width:auto;font-size:14px;padding:8px 13px"><option value="">Selecione um mês</option></select></div>
+          <div style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap"><select id="fil-mf" onchange="renderFolha()" style="width:auto;font-size:14px;padding:8px 13px"><option value="">Selecione um mês</option></select><select id="fil-fcidade" onchange="renderFolha()" style="width:auto;font-size:13px;padding:8px 13px"><option value="">Todas as cidades</option></select></div>
           <div id="folha-cont"></div>
         </div>
 
@@ -1626,8 +1626,21 @@ function renderFolha(){
   var mes=document.getElementById('fil-mf').value;
   var el=document.getElementById('folha-cont');
   if(!mes){el.innerHTML='<div class="empty"><p>Selecione um mês.</p></div>';return;}
-  var f=D.filter(function(d){return d.mes===mes;});
-  if(!f.length){el.innerHTML='<div class="empty"><p>Sem lançamentos para '+fm(mes)+'.</p></div>';return;}
+  var fMes=D.filter(function(d){return d.mes===mes;});
+
+  // Popula filtro de cidade com as cidades presentes neste mês
+  var selCid=document.getElementById('fil-fcidade');
+  if(selCid){
+    var cidsDisp={};fMes.forEach(function(d){if(d.cidade)cidsDisp[d.cidade]=1;});
+    var cidList=Object.keys(cidsDisp).sort();
+    var curCid=selCid.value;
+    selCid.innerHTML='<option value="">Todas as cidades</option>'+cidList.map(function(c){return'<option value="'+c+'">'+c+'</option>';}).join('');
+    if(cidList.indexOf(curCid)>=0)selCid.value=curCid;
+  }
+  var fcidade=selCid?selCid.value:'';
+
+  var f=fcidade?fMes.filter(function(d){return d.cidade===fcidade;}):fMes;
+  if(!f.length){el.innerHTML='<div class="empty"><p>Sem lançamentos para '+fm(mes)+(fcidade?' em '+fcidade:'')+'.</p></div>';return;}
   var fec=MS[mes]==='fechado';
 
   var byC={};
@@ -1760,9 +1773,11 @@ function exportarFolhaColaborador(nome,mes){
   var html=''
     +'<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
     +'<title>Folha - '+nome+' - '+fml(mes)+'</title>'
+    +'<link rel="preconnect" href="https://fonts.googleapis.com">'
+    +'<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
     +'<style>'
     +'@page{margin:24px}'
-    +'body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:0;margin:0}'
+    +'body{font-family:\'Raleway\',Arial,Helvetica,sans-serif;color:#111;padding:0;margin:0}'
     +'.header{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #F05C23;padding-bottom:16px;margin-bottom:24px}'
     +'.header h1{font-size:20px;margin:0 0 4px}'
     +'.header p{font-size:13px;color:#666;margin:0}'
@@ -1784,7 +1799,7 @@ function exportarFolhaColaborador(nome,mes){
     +'<tr class="total-row"><td colspan="4">Total</td><td style="text-align:right">'+fv(total)+'</td></tr>'
     +'</tbody></table>'
     +'<div class="footer">Gerado em '+new Date().toLocaleDateString('pt-BR')+' às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' pelo Funway Control</div>'
-    +'<script>window.onload=function(){window.print();};<\/script>'
+    +'<script>window.onload=function(){if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){setTimeout(function(){window.print();},100);});}else{setTimeout(function(){window.print();},300);}};<\/script>'
     +'</body></html>';
 
   var win=window.open('','_blank');
