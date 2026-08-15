@@ -17,6 +17,18 @@ body.dark-mode table tbody tr:hover td{background:#292A2F}
 body.dark-mode .pauta-table th,body.dark-mode th{background:var(--bg)}
 body.dark-mode th{color:var(--t2)}
 body.dark-mode .empty::before{opacity:.5}
+/* Dark mode overrides for tables with hardcoded inline colors (broad coverage) */
+body.dark-mode table{background:transparent!important}
+body.dark-mode tr[style*="background:#fff"],body.dark-mode tr[style*="background: #fff"]{background:var(--sf)!important}
+body.dark-mode tr[style*="background:#FAFAF8"]{background:#26272C!important}
+body.dark-mode td,body.dark-mode th{border-color:var(--br)!important}
+body.dark-mode td[style*="color:#374151"],body.dark-mode span[style*="color:#374151"],body.dark-mode div[style*="color:#374151"]{color:var(--t)!important}
+body.dark-mode td[style*="color:#111827"],body.dark-mode div[style*="color:#111827"]{color:var(--t)!important}
+body.dark-mode td[style*="color:#4B5563"],body.dark-mode div[style*="color:#4B5563"]{color:var(--t2)!important}
+body.dark-mode td[style*="color:#9CA3AF"],body.dark-mode span[style*="color:#9CA3AF"],body.dark-mode div[style*="color:#9CA3AF"]{color:var(--t3)!important}
+body.dark-mode div[style*="border:1px solid #E5E5E2"]{border-color:var(--br)!important;background:var(--sf)!important}
+body.dark-mode span[style*="background:#F3F4F6"]{background:var(--bg)!important;color:var(--t2)!important}
+body.dark-mode .pauta-tbl-wrap,body.dark-mode .detail-tbl-wrap{background:var(--sf)!important}
 html,body{height:100%;font-family:'Raleway',system-ui,sans-serif;background:var(--bg);color:var(--t);font-size:14px;overflow-x:hidden;max-width:100%}
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#111 0%,#1c1c1c 100%);padding:20px}
 .login-card{background:var(--sf);border-radius:20px;padding:40px;width:100%;max-width:380px;box-shadow:0 24px 64px rgba(0,0,0,.3)}
@@ -2733,7 +2745,7 @@ function renderPautasPublica(){
   var tdBase='font-family:\'Raleway\',sans-serif';
   var h='<div style="height:100%;overflow-y:auto;border-radius:14px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);border:1px solid #EFEFEB" class="pauta-tbl-wrap">'
     +'<table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">'
-    +'<colgroup><col style="width:90px"><col style="width:60px"><col><col style="width:110px"><col style="width:170px"><col style="width:90px"><col style="width:90px"></colgroup>'
+    +'<colgroup><col style="width:90px"><col style="width:60px"><col style="width:220px"><col style="width:135px"><col style="width:200px"><col style="width:90px"><col style="width:90px"></colgroup>'
     +'<thead><tr style="position:sticky;top:0;z-index:2">'
     +'<th style="'+thBase+';background:#1A3A20;width:90px">Cliente</th>'
     +'<th style="'+thBase+';background:#2D5A34">Data</th>'
@@ -2749,11 +2761,11 @@ function renderPautasPublica(){
     var eq=chipsFromStr(p.equipe).join(' + ')||'—';
     var bg=i%2===0?'#fff':'#FAFAF8';
     h+='<tr style="background:'+bg+';border-bottom:1px solid #EFEFED;border-left:'+statusBorder(p.status)+'">'
-      +'<td style="padding:12px 16px;font-size:11px;color:#6B7280;white-space:nowrap;'+tdBase+'">'+(p.cliente||'—')+'</td>'
-      +'<td style="padding:12px 16px;font-size:13px;font-weight:700;color:#374151;white-space:nowrap;'+tdBase+'">'+(p.data_rec||'—')+'</td>'
+      +'<td style="padding:12px 16px;font-size:11px;color:#6B7280;word-break:break-word;'+tdBase+'">'+(p.cliente||'—')+'</td>'
+      +'<td style="padding:12px 16px;font-size:13px;font-weight:700;color:#374151;'+tdBase+'">'+(p.data_rec||'—')+'</td>'
       +'<td style="padding:12px 16px;font-size:14px;font-weight:600;color:#111827;max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+tdBase+'" title="'+camps+'">'+camps+'</td>'
-      +'<td style="padding:12px 16px;'+tdBase+'">'+cidadePill(p.cidade)+'</td>'
-      +'<td style="padding:12px 16px;font-size:12px;color:#4B5563;max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+tdBase+'" title="'+eq+'">'+eq+'</td>'
+      +'<td style="padding:12px 16px;white-space:nowrap;'+tdBase+'">'+cidadePill(p.cidade)+'</td>'
+      +'<td style="padding:12px 16px;font-size:12px;color:#4B5563;word-break:break-word;'+tdBase+'">'+eq+'</td>'
       +'<td style="padding:12px 16px;'+tdBase+'">'+stBadge(p.status)+'</td>'
       +'<td style="padding:12px 16px;'+tdBase+'">'+roteiroCell(p.roteiro,p.roteiro==='PENDENTE')+'</td>'
       +'</tr>';
