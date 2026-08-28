@@ -3918,7 +3918,9 @@ function oohRenderPontos(){
     var cor = p.n_marcas===5?'#F05C23':p.n_marcas===4?'#7E22CE':p.n_marcas===3?'#2563EB':'#9CA3AF';
     var tagsMarcas = p.marcas.map(function(m){
       var c = OOH_MARCA_CORES[m]||'#888';
-      return '<span class="ooh-tag" style="background:'+c+'20;color:'+c+'">'+m+'</span>';
+      var datas = OOH_DATA.datas_marca[m] && OOH_DATA.datas_marca[m][p.ambiente];
+      var dataStr = datas ? (' <span style="opacity:0.65;font-weight:500">'+datas.inicio+'–'+datas.fim+'</span>') : '';
+      return '<span class="ooh-tag" style="background:'+c+'20;color:'+c+'">'+m+dataStr+'</span>';
     }).join('');
     return '<div class="ooh-ponto-row"><div class="ooh-ponto-cod">#'+p.cod+'</div><div style="flex:1;min-width:0"><div class="ooh-ponto-nome">'+(p.nome||'—')+'</div><div class="ooh-ponto-tags"><span class="ooh-tag" style="background:var(--orl);color:var(--or2)">'+p.ambiente+'</span>'+tagsMarcas+'<span class="ooh-tag" style="background:'+cor+'20;color:'+cor+'">'+p.n_marcas+'/5</span></div></div></div>';
   }).join('');
@@ -4029,7 +4031,9 @@ function oohRenderEnderecos(){
 
   var listHtml = lista.slice(0,300).map(function(p){
     var marcaTag = OOH_MARCA_END_ATIVA==='todas' ? '<span class="ooh-tag" style="background:'+(OOH_MARCA_CORES[p.marca]||'#888')+'20;color:'+(OOH_MARCA_CORES[p.marca]||'#888')+'">'+p.marca+'</span>' : '';
-    return '<div class="ooh-ponto-row"><div class="ooh-ponto-cod">#'+p.cod+'</div><div style="flex:1;min-width:0"><div class="ooh-ponto-nome">'+(p.nome||'—')+'</div><div style="font-size:11px;color:var(--t3);margin-top:2px">'+(p.endereco||'')+(p.uf?' · '+p.uf:'')+'</div><div class="ooh-ponto-tags"><span class="ooh-tag" style="background:var(--orl);color:var(--or2)">'+p.ambiente+'</span>'+marcaTag+'</div></div></div>';
+    var datasEnd = OOH_DATA.datas_marca[p.marca] && OOH_DATA.datas_marca[p.marca][p.ambiente];
+    var dataTagEnd = datasEnd ? '<span class="ooh-tag" style="background:var(--bg);color:var(--t3)">'+datasEnd.inicio+'–'+datasEnd.fim+'</span>' : '';
+    return '<div class="ooh-ponto-row"><div class="ooh-ponto-cod">#'+p.cod+'</div><div style="flex:1;min-width:0"><div class="ooh-ponto-nome">'+(p.nome||'—')+'</div><div style="font-size:11px;color:var(--t3);margin-top:2px">'+(p.endereco||'')+(p.uf?' · '+p.uf:'')+'</div><div class="ooh-ponto-tags"><span class="ooh-tag" style="background:var(--orl);color:var(--or2)">'+p.ambiente+'</span>'+marcaTag+dataTagEnd+'</div></div></div>';
   }).join('');
 
   el.innerHTML = '<div class="card" style="padding:16px;margin-bottom:14px">'+
