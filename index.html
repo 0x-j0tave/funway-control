@@ -160,6 +160,9 @@ tbody tr:hover td{background:#FEF0EA}
 .ooh-filtro-btn.active{background:var(--t);color:#fff;border-color:var(--t)}
 .ooh-ponto-list{max-height:420px;overflow-y:auto}
 .ooh-ponto-row{display:flex;gap:10px;padding:9px 11px;border-radius:var(--r);margin-bottom:6px;background:var(--bg);border:1px solid var(--br)}
+.ooh-copy-btn{flex-shrink:0;align-self:center;width:28px;height:28px;border-radius:8px;border:1px solid var(--br2);background:var(--sf);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s}
+.ooh-copy-btn:hover{background:var(--orl);border-color:var(--or)}
+.ooh-copy-btn.copiado{background:#DCFCE7;border-color:#22C55E;color:#16A34A}
 .ooh-ponto-cod{font-size:9px;font-weight:800;color:var(--t3);width:48px;flex-shrink:0;padding-top:2px}
 .ooh-ponto-nome{font-size:12px;font-weight:600;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ooh-ponto-tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;align-items:center}
@@ -3948,9 +3951,45 @@ function oohRenderPontos(){
       var dataStr = datas ? (' <span style="opacity:0.65;font-weight:500">'+datas.inicio+'–'+datas.fim+'</span>') : '';
       return '<span class="ooh-tag" style="background:'+c+'20;color:'+c+'">'+m+dataStr+'</span>';
     }).join('');
-    return '<div class="ooh-ponto-row"><div class="ooh-ponto-cod">#'+p.cod+'</div><div style="flex:1;min-width:0"><div class="ooh-ponto-nome">'+(p.nome||'—')+'</div><div class="ooh-ponto-tags"><span class="ooh-tag" style="background:var(--orl);color:var(--or2)">'+p.ambiente+'</span>'+tagsMarcas+'<span class="ooh-tag" style="background:'+cor+'20;color:'+cor+'">'+p.n_marcas+'/'+OOH_DATA.marcas_com_dados.length+'</span></div></div></div>';
+    return '<div class="ooh-ponto-row"><div class="ooh-ponto-cod">#'+p.cod+'</div><div style="flex:1;min-width:0"><div class="ooh-ponto-nome">'+(p.nome||'—')+'</div><div class="ooh-ponto-tags"><span class="ooh-tag" style="background:var(--orl);color:var(--or2)">'+p.ambiente+'</span>'+tagsMarcas+'<span class="ooh-tag" style="background:'+cor+'20;color:'+cor+'">'+p.n_marcas+'/'+OOH_DATA.marcas_com_dados.length+'</span></div></div><button class="ooh-copy-btn" onclick="oohCopiarMarcas(this)" data-marcas="'+p.marcas.join(',')+'" title="Copiar marcas para colar no Excel">📋</button></div>';
   }).join('');
   document.getElementById(OOH_PREFIX+'ooh-pontos-list').innerHTML = html || '<div class="empty"><p>Nenhum ponto encontrado</p></div>';
+}
+
+function oohCopiarMarcas(btn){
+  var marcas = (btn.getAttribute('data-marcas')||'').split(',').filter(Boolean);
+  var texto = marcas.join('\n');
+  function feedbackOk(){
+    var original = btn.textContent;
+    btn.textContent = '✓';
+    btn.classList.add('copiado');
+    setTimeout(function(){ btn.textContent = original; btn.classList.remove('copiado'); }, 1200);
+  }
+  function feedbackErro(){
+    var original = btn.textContent;
+    btn.textContent = '✗';
+    setTimeout(function(){ btn.textContent = original; }, 1200);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(texto).then(feedbackOk, function(){
+      oohCopiarFallback(texto, feedbackOk, feedbackErro);
+    });
+  } else {
+    oohCopiarFallback(texto, feedbackOk, feedbackErro);
+  }
+}
+function oohCopiarFallback(texto, ok, erro){
+  try{
+    var ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    var sucesso = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if(sucesso) ok(); else erro();
+  }catch(e){ erro(); }
 }
 
 // ---- Check de Captação / Brutos ----
