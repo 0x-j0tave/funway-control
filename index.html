@@ -914,7 +914,7 @@ async function deletar(id){showConfirmX('Remover este lan\u00e7amento?',async fu
 function abrirEdit(id){EID=id;var d=null;for(var i=0;i<D.length;i++){if(D[i].id===id){d=D[i];break;}}if(!d)return;document.getElementById('edit-col').value=d.colaborador||'';document.getElementById('edit-tip').value=d.tipo||'Entrega';document.getElementById('edit-proj').value=d.projeto||'';document.getElementById('edit-val').value=d.valor||'';document.getElementById('edit-mes').value=d.mes||'';document.getElementById('edit-bg').classList.add('show');}
 function fecharEditDir(){document.getElementById('edit-bg').classList.remove('show');EID=null;}
 function fecharEdit(e){if(!e||e.target===document.getElementById('edit-bg'))fecharEditDir();}
-async function salvarEdit(){if(!EID)return;var u={colaborador:document.getElementById('edit-col').value.trim(),tipo:document.getElementById('edit-tip').value,projeto:document.getElementById('edit-proj').value.trim(),valor:parseFloat(document.getElementById('edit-val').value)||0,mes:document.getElementById('edit-mes').value};if(!u.colaborador||!u.projeto||!u.valor||!u.mes){showAlertX('Preencha todos os campos.');return;}var idx=-1;for(var i=0;i<D.length;i++){if(D[i].id===EID){idx=i;break;}}if(idx<0)return;var bk=JSON.parse(JSON.stringify(D[idx]));var id=EID;Object.assign(D[idx],u);populateFiltros();renderAtivePage();fecharEditDir();setSync('spin','Salvando...');try{await sbUpdate(id,u);setSync('ok','Salvo');await registrarLog('editou','Lançamento',id,D[idx].colaborador+' — '+D[idx].projeto+' '+fv(D[idx].valor));}catch(e){Object.assign(D[idx],bk);populateFiltros();renderAtivePage();setSync('err','Erro');showAlertX('Erro: '+e.message);}}
+async function salvarEdit(){if(!EID)return;var u={colaborador:document.getElementById('edit-col').value.trim(),tipo:document.getElementById('edit-tip').value,projeto:document.getElementById('edit-proj').value.trim(),valor:parseFloat(document.getElementById('edit-val').value)||0,mes:document.getElementById('edit-mes').value};if(!u.colaborador||!u.projeto||isNaN(u.valor)||u.valor<0||!u.mes){showAlertX('Preencha todos os campos.');return;}var idx=-1;for(var i=0;i<D.length;i++){if(D[i].id===EID){idx=i;break;}}if(idx<0)return;var bk=JSON.parse(JSON.stringify(D[idx]));var id=EID;Object.assign(D[idx],u);populateFiltros();renderAtivePage();fecharEditDir();setSync('spin','Salvando...');try{await sbUpdate(id,u);setSync('ok','Salvo');await registrarLog('editou','Lançamento',id,D[idx].colaborador+' — '+D[idx].projeto+' '+fv(D[idx].valor));}catch(e){Object.assign(D[idx],bk);populateFiltros();renderAtivePage();setSync('err','Erro');showAlertX('Erro: '+e.message);}}
 function toggleMes(m){var fechado=MS[m]==='fechado';showConfirmX((fechado?'Reabrir':'Fechar')+' o m\u00eas '+fml(m)+'?',async function(){var prev=MS[m];if(fechado)delete MS[m];else MS[m]='fechado';renderMeses();try{await sbSetMes(m,fechado?'aberto':'fechado');showMsg('msg-m','M\u00eas atualizado.','ok');}catch(e){MS[m]=prev;if(!prev)delete MS[m];renderMeses();showMsg('msg-m','Erro: '+e.message,'err');}});}
 
 function onFileSelect(e){var f=e.target.files[0];if(!f)return;SEL_FILE=f;document.getElementById('up-placeholder').style.display='none';document.getElementById('up-selected').style.display='block';document.getElementById('up-filename').textContent=f.name;document.getElementById('upload-area').classList.add('has-file');}
@@ -3323,10 +3323,13 @@ async function criarLancamentosDePauta(pautaId,pauta){
   membros.forEach(function(m){
     novos.push({id:uid(),colaborador:m,tipo:'Entrega',projeto:pauta.campanha,valor:0,mes:mes,cliente:pauta.cliente||'',cidade:pauta.cidade||'',origem:'pauta',sheets_key:'pauta_'+pautaId+'_'+normName(m).replace(/[^a-z0-9]/g,'_'),pauta_id:pautaId,criado_em:new Date().toISOString()});
   });
+  var errosCriacao=[];
   for(var i=0;i<novos.length;i++){
     var r=await SB.from('lancamentos').insert(novos[i]);
-    if(!r.error){novos[i].pautaId=pautaId;D.unshift(novos[i]);}
+    if(r.error){errosCriacao.push(novos[i].colaborador+': '+r.error.message);continue;}
+    novos[i].pautaId=pautaId;D.unshift(novos[i]);
   }
+  if(errosCriacao.length){showAlertX('Aten\u00e7\u00e3o: falha ao criar lan\u00e7amento para: '+errosCriacao.join(' | ')+'. Reabra e salve a pauta novamente para tentar de novo.');}
   populateFiltros();
 }
 
@@ -3337,14 +3340,21 @@ async function sincronizarLancamentosPauta(pautaId,novosDados,dadosAntigos){
   // Atualiza projeto/cidade/mes nos lancamentos existentes
   var r=await SB.from('lancamentos').update({projeto:novosDados.campanha,cidade:novosDados.cidade,cliente:novosDados.cliente,mes:mes}).eq('pauta_id',pautaId);
   D.forEach(function(d){if(d.pautaId===pautaId){d.projeto=novosDados.campanha;d.cidade=novosDados.cidade;d.cliente=novosDados.cliente;d.mes=mes;}});
-  // Adiciona novos membros
-  var novos=membrosNovos.filter(function(m){return membrosAntigos.indexOf(m)<0;});
-  for(var i=0;i<novos.length;i++){
-    var item={id:uid(),colaborador:novos[i],tipo:'Entrega',projeto:novosDados.campanha,valor:0,mes:mes,cliente:novosDados.cliente||'',cidade:novosDados.cidade||'',origem:'pauta',sheets_key:'pauta_'+pautaId+'_'+normName(novos[i]).replace(/[^a-z0-9]/g,'_'),pauta_id:pautaId,criado_em:new Date().toISOString()};
+  // Adiciona membros da equipe atual que NÃO têm lançamento existente
+  // (cobre tanto membros novos quanto recuperação de falhas de inserção anteriores)
+  var faltando=membrosNovos.filter(function(m){
+    var key='pauta_'+pautaId+'_'+normName(m).replace(/[^a-z0-9]/g,'_');
+    return !D.some(function(d){return d.sheetsKey===key;});
+  });
+  var errosCriacao=[];
+  for(var i=0;i<faltando.length;i++){
+    var item={id:uid(),colaborador:faltando[i],tipo:'Entrega',projeto:novosDados.campanha,valor:0,mes:mes,cliente:novosDados.cliente||'',cidade:novosDados.cidade||'',origem:'pauta',sheets_key:'pauta_'+pautaId+'_'+normName(faltando[i]).replace(/[^a-z0-9]/g,'_'),pauta_id:pautaId,criado_em:new Date().toISOString()};
     var r2=await SB.from('lancamentos').insert(item);
-    if(!r2.error){item.pautaId=pautaId;D.unshift(item);}
+    if(r2.error){errosCriacao.push(faltando[i]+': '+r2.error.message);continue;}
+    item.pautaId=pautaId;D.unshift(item);
   }
-  // Remove membros removidos (só os com valor=0 e não editados)
+  if(errosCriacao.length){showAlertX('Erro ao criar lançamento para: '+errosCriacao.join(' | '));}
+  // Remove lançamentos de membros que saíram da equipe
   var removidos=membrosAntigos.filter(function(m){return membrosNovos.indexOf(m)<0;});
   for(var j=0;j<removidos.length;j++){
     var key='pauta_'+pautaId+'_'+normName(removidos[j]).replace(/[^a-z0-9]/g,'_');
