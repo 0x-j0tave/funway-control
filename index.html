@@ -133,8 +133,8 @@ tbody tr:hover td{background:#FEF0EA}
 .msg-ok{background:var(--grl);color:#15803D}.msg-err{background:var(--rdl);color:var(--rd)}.msg-warn{background:#FEF9C3;color:#854D0E}
 .empty{text-align:center;padding:44px 20px;color:var(--t2)}.empty-icon{font-size:28px;margin-bottom:8px}
 /* OOH Eventos */
-.ooh-manutencao{position:relative;height:60vh;min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:repeating-linear-gradient(135deg,#FEF3C7,#FEF3C7 22px,#FDE68A 22px,#FDE68A 44px);background-size:200% 200%;animation:oohStripes 14s linear infinite;border-radius:var(--rl);border:1px solid var(--br)}
-@keyframes oohStripes{0%{background-position:0 0}100%{background-position:124px 124px}}
+.ooh-manutencao{position:relative;height:calc(100vh - 130px);min-height:480px;margin:-22px;width:calc(100% + 44px);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:repeating-linear-gradient(135deg,#FEF3C7,#FEF3C7 22px,#FDE68A 22px,#FDE68A 44px);animation:oohStripes 10s linear infinite;border-radius:0}
+@keyframes oohStripes{0%{background-position:0 0}100%{background-position:-176px -176px}}
 .ooh-manutencao-icon{width:46px;height:46px;margin-bottom:18px;color:#111;opacity:.75;animation:oohIconFloat 2.6s ease-in-out infinite}
 @keyframes oohIconFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-6px) rotate(-4deg)}}
 .ooh-manutencao-faixa{background:#111;color:#FDE68A;font-family:'Raleway',sans-serif;font-weight:800;font-size:clamp(18px,3.2vw,34px);letter-spacing:2px;text-transform:uppercase;padding:22px 0;width:150%;text-align:center;transform:rotate(-8deg);box-shadow:0 8px 30px rgba(0,0,0,.35);border-top:4px solid #F05C23;border-bottom:4px solid #F05C23;animation:oohGlow 3s ease-in-out infinite}
