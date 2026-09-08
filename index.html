@@ -133,14 +133,17 @@ tbody tr:hover td{background:#FEF0EA}
 .msg-ok{background:var(--grl);color:#15803D}.msg-err{background:var(--rdl);color:var(--rd)}.msg-warn{background:#FEF9C3;color:#854D0E}
 .empty{text-align:center;padding:44px 20px;color:var(--t2)}.empty-icon{font-size:28px;margin-bottom:8px}
 /* OOH Eventos */
-.ooh-manutencao{position:relative;height:calc(100vh - 130px);min-height:480px;margin:-22px;width:calc(100% + 44px);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:repeating-linear-gradient(135deg,#FEF3C7,#FEF3C7 22px,#FDE68A 22px,#FDE68A 44px);animation:oohStripes 10s linear infinite;border-radius:0}
-@keyframes oohStripes{0%{background-position:0 0}100%{background-position:-176px -176px}}
-.ooh-manutencao-icon{width:46px;height:46px;margin-bottom:18px;color:#111;opacity:.75;animation:oohIconFloat 2.6s ease-in-out infinite}
-@keyframes oohIconFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-6px) rotate(-4deg)}}
-.ooh-manutencao-faixa{background:#111;color:#FDE68A;font-family:'Raleway',sans-serif;font-weight:800;font-size:clamp(18px,3.2vw,34px);letter-spacing:2px;text-transform:uppercase;padding:22px 0;width:150%;text-align:center;transform:rotate(-8deg);box-shadow:0 8px 30px rgba(0,0,0,.35);border-top:4px solid #F05C23;border-bottom:4px solid #F05C23;animation:oohGlow 3s ease-in-out infinite}
-@keyframes oohGlow{0%,100%{box-shadow:0 8px 30px rgba(0,0,0,.35),0 0 0 rgba(240,92,35,0)}50%{box-shadow:0 8px 34px rgba(0,0,0,.4),0 0 28px rgba(240,92,35,.45)}}
-.ooh-manutencao-sub{margin-top:20px;font-family:'Raleway',sans-serif;font-size:13px;font-weight:600;color:#78350F;opacity:.8;animation:oohFadeIn .8s ease .3s both}
-@keyframes oohFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:.8;transform:translateY(0)}}
+.ooh-manutencao{position:relative;height:calc(100vh - 130px);min-height:480px;margin:-22px;width:calc(100% + 44px);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#1c1c1c 0%,#111 65%);border-radius:0}
+.ooh-manutencao::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(240,92,35,.06) 1px,transparent 1px);background-size:26px 26px;opacity:.6}
+.ooh-manutencao-ring{position:relative;width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:28px}
+.ooh-manutencao-ring::before{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(240,92,35,.22) 0%,rgba(240,92,35,0) 72%);animation:oohPulseRing 2.8s ease-in-out infinite}
+.ooh-manutencao-icon{position:relative;width:34px;height:34px;color:var(--or);z-index:1}
+@keyframes oohPulseRing{0%,100%{transform:scale(.85);opacity:.7}50%{transform:scale(1.15);opacity:1}}
+.ooh-manutencao-faixa{position:relative;font-family:'Raleway',sans-serif;font-weight:700;font-size:clamp(20px,2.6vw,30px);letter-spacing:1px;color:#fff;text-align:center;margin:0 20px}
+.ooh-manutencao-sub{position:relative;margin-top:14px;font-family:'Raleway',sans-serif;font-size:14px;font-weight:400;color:#9CA3AF;text-align:center;max-width:380px;animation:oohFadeIn .8s ease .3s both}
+@keyframes oohFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.ooh-manutencao-linha{position:relative;width:52px;height:2px;background:var(--or);border-radius:2px;margin-top:22px;animation:oohLinha 2.4s ease-in-out infinite}
+@keyframes oohLinha{0%,100%{width:52px;opacity:.5}50%{width:88px;opacity:1}}
 .ooh-subtabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--br);flex-wrap:wrap}
 .ooh-stab{padding:10px 14px;font-size:12px;font-weight:600;color:var(--t2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;font-family:'Raleway',inherit;transition:all .15s}
 .ooh-stab:hover{color:var(--t)}
@@ -3956,9 +3959,10 @@ function renderOOHPage(prefix){
     var pageEl = document.getElementById(pageId);
     if(pageEl){
       pageEl.innerHTML = '<div class="ooh-manutencao">'
-        + '<svg class="ooh-manutencao-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/></svg>'
-        + '<div class="ooh-manutencao-faixa">AGUARDANDO PRÓXIMO EVENTO</div>'
+        + '<div class="ooh-manutencao-ring"><svg class="ooh-manutencao-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/></svg></div>'
+        + '<div class="ooh-manutencao-faixa">Aguardando próximo evento</div>'
         + '<div class="ooh-manutencao-sub">Voltamos assim que a próxima captação começar</div>'
+        + '<div class="ooh-manutencao-linha"></div>'
         + '</div>';
     }
     return;
