@@ -676,21 +676,12 @@ tbody tr:hover td{background:#FEF0EA}
         </div>
         <div id="op-pg-reembolsos" class="page">
           <div id="op-msg-r"></div>
-          <div class="ph" style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h2>Reembolsos</h2><p>Valores a reembolsar.</p></div><button class="btn btn-or" onclick="abrirPropReembModal()">+ Lançar meu reembolso</button></div>
-          <div class="card" style="padding:16px;margin-bottom:20px">
-            <div class="frow">
-              <div class="field"><label>Colaborador</label><input id="op-fr-col" list="dl-col" autocomplete="off" placeholder="Nome"></div>
-              <div class="field"><label>Descrição</label><input id="op-fr-desc" placeholder="Ex: Uber, Hotel..."></div>
-              <div class="field" style="max-width:110px"><label>Valor (R$)</label><input type="number" id="op-fr-val" min="0" step="0.01" placeholder="0,00"></div>
-              <div class="field" style="max-width:145px"><label>Mês</label><input type="month" id="op-fr-mes"></div>
-              <div style="align-self:flex-end"><button class="btn btn-or" onclick="lancarReembOper()">+ Adicionar</button></div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:8px">
-            <div class="sec" style="margin-bottom:0">Reembolsos</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <div class="ph" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <h2 style="margin:0">Reembolsos</h2>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
               <select id="op-fil-rcol" onchange="renderOperReemb()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos colaboradores</option></select>
               <select id="op-fil-rmes" onchange="renderOperReemb()" style="width:auto;font-size:12px;padding:5px 9px"><option value="">Todos os meses</option></select>
+              <button class="btn btn-or" onclick="abrirPropReembModal()">+ Lançar meu reembolso</button>
             </div>
           </div>
           <div id="op-tbl-reemb"></div>
