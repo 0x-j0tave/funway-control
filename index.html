@@ -3538,7 +3538,6 @@ window.addEventListener('resize',function(){
 document.addEventListener('DOMContentLoaded',function(){
   var ma=new Date().toISOString().slice(0,7);
   document.getElementById('fl-mes').value=ma;
-  document.getElementById('fr-mes').value=ma;
   var egdata=document.getElementById('eg-data');if(egdata)egdata.value=new Date().toISOString().slice(0,10);
   // Carrega pautas antes do login (visão pública)
   SB.from('pautas').select('*').order('ordem',{ascending:true}).order('data_rec',{ascending:true}).then(function(r){if(!r.error){PAUTAS=r.data||[];renderPautasPublica();}});
