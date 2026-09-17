@@ -3245,7 +3245,14 @@ function _abrirModalPauta(p){
 }
 
 
+var SALVANDO_PAUTA=false;
 async function salvarPauta(){
+  if(SALVANDO_PAUTA)return;
+  SALVANDO_PAUTA=true;
+  var btnSalvarPauta=document.querySelector('#pauta-modal-bg .btn.btn-or');
+  var txtOriginal=btnSalvarPauta?btnSalvarPauta.textContent:'';
+  if(btnSalvarPauta){btnSalvarPauta.disabled=true;btnSalvarPauta.textContent='Salvando...';}
+  try{
   var campanha=getChipValues('pm-campanha-cont');
   var equipe=getChipValues('pm-equipe-cont');
   var cliente=document.getElementById('pm-cliente').value.trim();
@@ -3279,6 +3286,10 @@ async function salvarPauta(){
   fecharPautaModalDir();
   await carregarPautas();
   renderNotificacoes();
+  }finally{
+    SALVANDO_PAUTA=false;
+    if(btnSalvarPauta){btnSalvarPauta.disabled=false;btnSalvarPauta.textContent=txtOriginal||'Salvar';}
+  }
 }
 
 function deletarPauta(id){
