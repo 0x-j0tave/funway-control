@@ -3472,8 +3472,13 @@ function gradeAbrirStatus(e,pautaId,marca){
   dd.innerHTML=html;
   document.body.appendChild(dd);
   var r=e.target.closest('.grade-cel').getBoundingClientRect();
-  dd.style.left=Math.min(r.left,window.innerWidth-224)+'px';
-  dd.style.top=(r.bottom+window.scrollY+4)+'px';
+  var ddAltura=140;
+  dd.style.left=Math.max(4,Math.min(r.left,window.innerWidth-224))+'px';
+  if(r.bottom+ddAltura+4>window.innerHeight){
+    dd.style.top=Math.max(4,r.top-ddAltura-4)+'px';
+  }else{
+    dd.style.top=(r.bottom+4)+'px';
+  }
   setTimeout(function(){document.addEventListener('click',function h(){dd.remove();document.removeEventListener('click',h);});},0);
 }
 
