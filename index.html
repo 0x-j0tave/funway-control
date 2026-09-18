@@ -568,7 +568,11 @@ tbody tr:hover td{background:#FEF0EA}
             <button class="btn btn-ghost" id="tab-planilha-edicao" onclick="trocarPlanilha('edicao')" style="border-radius:8px 8px 0 0">Edição</button>
             <button class="btn btn-ghost" id="tab-planilha-motion" onclick="trocarPlanilha('motion')" style="border-radius:8px 8px 0 0">Motion</button>
           </div>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:10px" id="grade-toggle-wrap">
+            <button class="btn btn-ghost btn-sm" id="btn-grade-toggle" onclick="toggleGradeCaptacao()">Ver grade de captação</button>
+          </div>
           <div id="pautas-admin-cont"></div>
+          <div id="grade-captacao-cont" style="display:none"></div>
           <div id="pauta-hist-cont" style="margin-top:20px"></div>
         </div>
         <div id="pg-meses" class="page">
@@ -659,7 +663,11 @@ tbody tr:hover td{background:#FEF0EA}
             <button class="btn btn-ghost" id="op-tab-planilha-edicao" onclick="trocarPlanilhaOper('edicao')" style="border-radius:8px 8px 0 0">Edição</button>
             <button class="btn btn-ghost" id="op-tab-planilha-motion" onclick="trocarPlanilhaOper('motion')" style="border-radius:8px 8px 0 0">Motion</button>
           </div>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:10px" id="op-grade-toggle-wrap">
+            <button class="btn btn-ghost btn-sm" id="op-btn-grade-toggle" onclick="toggleGradeCaptacao()">Ver grade de captação</button>
+          </div>
           <div id="op-pautas-cont"></div>
+          <div id="op-grade-captacao-cont" style="display:none"></div>
         </div>
         <div id="op-pg-lancar" class="page">
           <div id="op-msg-l"></div>
@@ -2105,7 +2113,8 @@ async function carregarPautas(retryCount){
   renderPautasPublica();
   renderNotificacoes();
   if(PA==='pautas'&&PLANILHA_ATIVA==='pautas'){
-    if(USER_ROLE==='operacional')renderOperPautas();
+    if(GRADE_MODO)renderGradeCaptacao();
+    else if(USER_ROLE==='operacional')renderOperPautas();
     else renderPautasAdmin();
   }
 }
@@ -2195,14 +2204,18 @@ function trocarPlanilha(cat){
   });
   var titulo=document.getElementById('planilha-titulo'),sub=document.getElementById('planilha-subtitulo');
   var hist=document.getElementById('pauta-hist-cont');
+  var gtw=document.getElementById('grade-toggle-wrap');
   if(cat==='pautas'){
     if(titulo)titulo.textContent='Pautas';if(sub)sub.textContent='Gerencie as pautas do mês.';
     if(hist)hist.style.display='';
+    if(gtw)gtw.style.display='';
     renderPautasAdmin();
   } else {
     if(titulo)titulo.textContent=planilhaLabel(cat);
     if(sub)sub.textContent='Prazos e equipe de '+planilhaLabel(cat).toLowerCase()+'.';
     if(hist)hist.style.display='none';
+    if(gtw)gtw.style.display='none';
+    if(GRADE_MODO)toggleGradeCaptacao();
     renderPlanilhaProd(cat);
   }
 }
@@ -2217,12 +2230,16 @@ function trocarPlanilhaOper(cat){
     }
   });
   var titulo=document.getElementById('op-planilha-titulo'),sub=document.getElementById('op-planilha-subtitulo');
+  var gtw=document.getElementById('op-grade-toggle-wrap');
   if(cat==='pautas'){
     if(titulo)titulo.textContent='Pautas';if(sub)sub.textContent='Gerencie as pautas do mês.';
+    if(gtw)gtw.style.display='';
     renderOperPautas();
   } else {
     if(titulo)titulo.textContent=planilhaLabel(cat);
     if(sub)sub.textContent='Prazos e equipe de '+planilhaLabel(cat).toLowerCase()+'.';
+    if(gtw)gtw.style.display='none';
+    if(GRADE_MODO)toggleGradeCaptacao();
     renderPlanilhaProd(cat);
   }
 }
@@ -3289,6 +3306,204 @@ async function salvarPauta(){
   }finally{
     SALVANDO_PAUTA=false;
     if(btnSalvarPauta){btnSalvarPauta.disabled=false;btnSalvarPauta.textContent=txtOriginal||'Salvar';}
+  }
+}
+
+// ── GRADE DE CAPTAÇÃO (marca × cidade) ──────────────────────────────────────
+function statusCaptStyle(s){
+  if(s==='captado')return{bg:'#DCFCE7',fg:'#15803D',label:'Captado'};
+  if(s==='nao_tinha')return{bg:'#FEE2E2',fg:'#B91C1C',label:'Não tinha na rua'};
+  return{bg:'#FEF3C7',fg:'#92400E',label:'Em rota'};
+}
+function pautaDataObj(p){
+  if(!p.data_rec)return null;
+  var partes=p.data_rec.split('/');
+  var dia=parseInt(partes[0]);
+  if(!dia)return null;
+  var ano,mesIdx;
+  if(p.mes){var mp=p.mes.split('-');ano=parseInt(mp[0]);mesIdx=parseInt(mp[1])-1;}
+  else{var hoje0=new Date();ano=hoje0.getFullYear();mesIdx=partes[1]?parseInt(partes[1])-1:hoje0.getMonth();}
+  var d=new Date(ano,mesIdx,dia);d.setHours(0,0,0,0);
+  return d;
+}
+function getMondaySemana(d){
+  var day=d.getDay();var diff=(day===0?-6:1-day);
+  var monday=new Date(d);monday.setDate(d.getDate()+diff);monday.setHours(0,0,0,0);
+  return monday;
+}
+function fmtDiaMes(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');}
+
+var GRADE_MODO=false;
+var GRADE_SEMANA_REF=getMondaySemana(new Date());
+var GRADE_OCULTAR_COMPLETOS=(localStorage.getItem('fw_grade_ocultar')==='1');
+
+function pautasListContEl(){return USER_ROLE==='operacional'?document.getElementById('op-pautas-cont'):document.getElementById('pautas-admin-cont');}
+function gradeContEl(){return USER_ROLE==='operacional'?document.getElementById('op-grade-captacao-cont'):document.getElementById('grade-captacao-cont');}
+function gradeToggleBtnEl(){return USER_ROLE==='operacional'?document.getElementById('op-btn-grade-toggle'):document.getElementById('btn-grade-toggle');}
+
+function toggleGradeCaptacao(){
+  GRADE_MODO=!GRADE_MODO;
+  var listCont=pautasListContEl(),gradeCont=gradeContEl(),hist=document.getElementById('pauta-hist-cont'),btn=gradeToggleBtnEl();
+  if(GRADE_MODO){
+    if(listCont)listCont.style.display='none';
+    if(gradeCont)gradeCont.style.display='block';
+    if(hist)hist.style.display='none';
+    if(btn)btn.textContent='Ver lista de pautas';
+    renderGradeCaptacao();
+  }else{
+    if(listCont)listCont.style.display='';
+    if(gradeCont)gradeCont.style.display='none';
+    if(hist&&PLANILHA_ATIVA==='pautas')hist.style.display='';
+    if(btn)btn.textContent='Ver grade de captação';
+    if(USER_ROLE==='operacional')renderOperPautas();else renderPautasAdmin();
+  }
+}
+function gradeMudarSemana(delta){
+  GRADE_SEMANA_REF=new Date(GRADE_SEMANA_REF);
+  GRADE_SEMANA_REF.setDate(GRADE_SEMANA_REF.getDate()+delta*7);
+  renderGradeCaptacao();
+}
+function gradeToggleOcultar(){
+  GRADE_OCULTAR_COMPLETOS=!GRADE_OCULTAR_COMPLETOS;
+  localStorage.setItem('fw_grade_ocultar',GRADE_OCULTAR_COMPLETOS?'1':'0');
+  renderGradeCaptacao();
+}
+
+function renderGradeCaptacao(){
+  var el=gradeContEl();
+  if(!el)return;
+  var segunda=GRADE_SEMANA_REF;
+  var domingo=new Date(segunda);domingo.setDate(segunda.getDate()+6);
+  var semanaLabel=fmtDiaMes(segunda)+' a '+fmtDiaMes(domingo);
+
+  var pautasSemana=PAUTAS.filter(function(p){
+    if(!p.cliente&&!p.campanha)return false;
+    var d=pautaDataObj(p);
+    if(!d)return false;
+    return d>=segunda&&d<=domingo;
+  });
+
+  var porMarca={};
+  pautasSemana.forEach(function(p){
+    var marcas=chipsFromStr(p.campanha);
+    if(!marcas.length)marcas=['(sem campanha)'];
+    marcas.forEach(function(marca){
+      if(!porMarca[marca])porMarca[marca]={};
+      var cid=p.cidade||'—';
+      var atual=porMarca[marca][cid];
+      if(!atual||(pautaDataObj(p)&&pautaDataObj(atual)&&pautaDataObj(p)>pautaDataObj(atual))){
+        porMarca[marca][cid]=p;
+      }
+    });
+  });
+
+  var marcasList=Object.keys(porMarca).sort(function(a,b){return a.localeCompare(b,'pt-BR');});
+
+  if(GRADE_OCULTAR_COMPLETOS){
+    marcasList=marcasList.filter(function(m){
+      var cids=Object.keys(porMarca[m]);
+      return !cids.every(function(c){return (porMarca[m][c].status_captacao||'em_rota')==='captado';});
+    });
+  }
+
+  var header='<div class="card" style="padding:14px 16px;margin-bottom:14px"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">'
+    +'<div style="display:flex;align-items:center;gap:10px">'
+    +'<button class="btn btn-ghost btn-sm" onclick="gradeMudarSemana(-1)">‹</button>'
+    +'<div style="font-weight:700;font-size:14px">Semana '+semanaLabel+'</div>'
+    +'<button class="btn btn-ghost btn-sm" onclick="gradeMudarSemana(1)">›</button>'
+    +'</div>'
+    +'<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer"><input type="checkbox" '+(GRADE_OCULTAR_COMPLETOS?'checked':'')+' onchange="gradeToggleOcultar()" style="width:auto">Ocultar marcas 100% captadas</label>'
+    +'</div></div>';
+
+  if(!marcasList.length){
+    el.innerHTML=header+'<div class="empty"><p>Nenhuma pauta nesta semana'+(GRADE_OCULTAR_COMPLETOS?' (ou tudo já captado).':'.')+'</p></div>';
+    return;
+  }
+
+  var body='<div style="display:flex;flex-direction:column;gap:10px">';
+  marcasList.forEach(function(marca){
+    var cidsObj=porMarca[marca];
+    var cids=Object.keys(cidsObj).sort();
+    var totalCid=cids.length;
+    var captadas=cids.filter(function(c){return (cidsObj[c].status_captacao||'em_rota')==='captado';}).length;
+    body+='<div class="card" style="padding:0;overflow:hidden">'
+      +'<div style="padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--br);display:flex;align-items:center;justify-content:space-between">'
+      +'<div style="font-weight:700;font-size:13px">'+marca+'</div>'
+      +'<div style="font-size:11px;color:var(--t3)">'+captadas+'/'+totalCid+' cidades captadas</div>'
+      +'</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px">';
+    cids.forEach(function(cid){
+      var p=cidsObj[cid];
+      var st=p.status_captacao||'em_rota';
+      var info=statusCaptStyle(st);
+      var dataMostrar=p.data_status_captacao?p.data_status_captacao.split('-').reverse().join('/'):'sem data';
+      body+='<div class="grade-cel" style="min-width:130px;border:1px solid var(--br);border-radius:8px;overflow:hidden">'
+        +'<div style="padding:6px 10px;font-size:11px;font-weight:700;color:var(--t2);background:var(--bg);border-bottom:1px solid var(--br)">'+cid+'</div>'
+        +'<div style="padding:8px 10px;cursor:pointer" onclick="gradeAbrirStatus(event,\''+p.id+'\')">'
+        +'<span style="display:inline-block;font-size:11px;font-weight:700;background:'+info.bg+';color:'+info.fg+';padding:3px 9px;border-radius:20px">'+info.label+'</span>'
+        +'<div style="font-size:10px;color:var(--t3);margin-top:4px">'+dataMostrar+'</div>'
+        +'</div></div>';
+    });
+    body+='</div></div>';
+  });
+  body+='</div>';
+
+  el.innerHTML=header+body;
+}
+
+function gradeAbrirStatus(e,pautaId){
+  e.stopPropagation();
+  document.querySelectorAll('.grade-dd').forEach(function(d){d.remove();});
+  var p=null;for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===pautaId){p=PAUTAS[i];break;}}
+  if(!p)return;
+  var dd=document.createElement('div');
+  dd.className='grade-dd';
+  dd.style.cssText='position:fixed;z-index:400;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.15);padding:10px;min-width:210px';
+  var opts=[['em_rota','Em rota'],['captado','Captado'],['nao_tinha','Não tinha na rua']];
+  var html='<div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:8px">Status de captação</div>';
+  opts.forEach(function(o){
+    html+='<div style="padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'" onclick="gradeSetStatus(\''+pautaId+'\',\''+o[0]+'\')">'+o[1]+'</div>';
+  });
+  html+='<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--br)"><label style="font-size:10px;color:var(--t3)">Data do status</label><input type="date" value="'+(p.data_status_captacao||'')+'" onchange="gradeSetData(\''+pautaId+'\',this.value)" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--br);border-radius:6px;margin-top:3px"></div>';
+  dd.innerHTML=html;
+  document.body.appendChild(dd);
+  var r=e.target.closest('.grade-cel').getBoundingClientRect();
+  dd.style.left=Math.min(r.left,window.innerWidth-224)+'px';
+  dd.style.top=(r.bottom+window.scrollY+4)+'px';
+  setTimeout(function(){document.addEventListener('click',function h(){dd.remove();document.removeEventListener('click',h);});},0);
+}
+
+async function gradeSetStatus(pautaId,novoStatus){
+  document.querySelectorAll('.grade-dd').forEach(function(d){d.remove();});
+  var p=null;for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===pautaId){p=PAUTAS[i];break;}}
+  if(!p)return;
+  var antigoStatus=p.status_captacao,antigaData=p.data_status_captacao;
+  p.status_captacao=novoStatus;
+  if(!p.data_status_captacao)p.data_status_captacao=new Date().toISOString().slice(0,10);
+  renderGradeCaptacao();
+  try{
+    var r=await SB.from('pautas').update({status_captacao:novoStatus,data_status_captacao:p.data_status_captacao}).eq('id',pautaId);
+    if(r.error)throw new Error(r.error.message);
+    await registrarLog('editou','Pauta',pautaId,'Status de captação: '+(antigoStatus||'em_rota')+' → '+novoStatus);
+  }catch(e){
+    p.status_captacao=antigoStatus;p.data_status_captacao=antigaData;
+    renderGradeCaptacao();
+    showAlertX('Erro ao salvar: '+e.message);
+  }
+}
+async function gradeSetData(pautaId,novaData){
+  var p=null;for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===pautaId){p=PAUTAS[i];break;}}
+  if(!p)return;
+  var antiga=p.data_status_captacao;
+  p.data_status_captacao=novaData;
+  try{
+    var r=await SB.from('pautas').update({data_status_captacao:novaData}).eq('id',pautaId);
+    if(r.error)throw new Error(r.error.message);
+    document.querySelectorAll('.grade-dd').forEach(function(d){d.remove();});
+    renderGradeCaptacao();
+  }catch(e){
+    p.data_status_captacao=antiga;
+    showAlertX('Erro ao salvar: '+e.message);
   }
 }
 
