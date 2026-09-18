@@ -568,9 +568,6 @@ tbody tr:hover td{background:#FEF0EA}
             <button class="btn btn-ghost" id="tab-planilha-edicao" onclick="trocarPlanilha('edicao')" style="border-radius:8px 8px 0 0">Edição</button>
             <button class="btn btn-ghost" id="tab-planilha-motion" onclick="trocarPlanilha('motion')" style="border-radius:8px 8px 0 0">Motion</button>
           </div>
-          <div style="display:flex;justify-content:flex-end;margin-bottom:10px" id="grade-toggle-wrap">
-            <button class="btn btn-ghost btn-sm" id="btn-grade-toggle" onclick="toggleGradeCaptacao()">Ver grade de captação</button>
-          </div>
           <div id="pautas-admin-cont"></div>
           <div id="grade-captacao-cont" style="display:none"></div>
           <div id="pauta-hist-cont" style="margin-top:20px"></div>
@@ -662,9 +659,6 @@ tbody tr:hover td{background:#FEF0EA}
             <button class="btn btn-ghost" id="op-tab-planilha-edicao_guiga" onclick="trocarPlanilhaOper('edicao_guiga')" style="border-radius:8px 8px 0 0">Edição Guiga</button>
             <button class="btn btn-ghost" id="op-tab-planilha-edicao" onclick="trocarPlanilhaOper('edicao')" style="border-radius:8px 8px 0 0">Edição</button>
             <button class="btn btn-ghost" id="op-tab-planilha-motion" onclick="trocarPlanilhaOper('motion')" style="border-radius:8px 8px 0 0">Motion</button>
-          </div>
-          <div style="display:flex;justify-content:flex-end;margin-bottom:10px" id="op-grade-toggle-wrap">
-            <button class="btn btn-ghost btn-sm" id="op-btn-grade-toggle" onclick="toggleGradeCaptacao()">Ver grade de captação</button>
           </div>
           <div id="op-pautas-cont"></div>
           <div id="op-grade-captacao-cont" style="display:none"></div>
@@ -2204,17 +2198,14 @@ function trocarPlanilha(cat){
   });
   var titulo=document.getElementById('planilha-titulo'),sub=document.getElementById('planilha-subtitulo');
   var hist=document.getElementById('pauta-hist-cont');
-  var gtw=document.getElementById('grade-toggle-wrap');
   if(cat==='pautas'){
     if(titulo)titulo.textContent='Pautas';if(sub)sub.textContent='Gerencie as pautas do mês.';
     if(hist)hist.style.display='';
-    if(gtw)gtw.style.display='';
     renderPautasAdmin();
   } else {
     if(titulo)titulo.textContent=planilhaLabel(cat);
     if(sub)sub.textContent='Prazos e equipe de '+planilhaLabel(cat).toLowerCase()+'.';
     if(hist)hist.style.display='none';
-    if(gtw)gtw.style.display='none';
     if(GRADE_MODO)toggleGradeCaptacao();
     renderPlanilhaProd(cat);
   }
@@ -2230,15 +2221,12 @@ function trocarPlanilhaOper(cat){
     }
   });
   var titulo=document.getElementById('op-planilha-titulo'),sub=document.getElementById('op-planilha-subtitulo');
-  var gtw=document.getElementById('op-grade-toggle-wrap');
   if(cat==='pautas'){
     if(titulo)titulo.textContent='Pautas';if(sub)sub.textContent='Gerencie as pautas do mês.';
-    if(gtw)gtw.style.display='';
     renderOperPautas();
   } else {
     if(titulo)titulo.textContent=planilhaLabel(cat);
     if(sub)sub.textContent='Prazos e equipe de '+planilhaLabel(cat).toLowerCase()+'.';
-    if(gtw)gtw.style.display='none';
     if(GRADE_MODO)toggleGradeCaptacao();
     renderPlanilhaProd(cat);
   }
@@ -3019,12 +3007,12 @@ function renderPautasAdmin(){
   }
 
   // Month tabs HTML
-  var tabsHtml='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">';
+  var tabsHtml='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;justify-content:space-between;align-items:center"><div style="display:flex;gap:6px;flex-wrap:wrap">';
   mesesList.forEach(function(m){
     var active=m===PAUTA_MES_SEL;
     tabsHtml+='<button onclick="PAUTA_MES_SEL=\''+m+'\';renderPautasAdmin()" style="padding:6px 16px;font-size:13px;font-weight:600;border-radius:20px;cursor:pointer;border:2px solid '+(active?'var(--or)':'var(--br2)')+';background:'+(active?'var(--or)':'transparent')+';color:'+(active?'#fff':'var(--t2)')+';font-family:\'Raleway\',inherit;transition:all .15s">'+fml(m)+'</button>';
   });
-  tabsHtml+='</div>';
+  tabsHtml+='</div><button class="btn btn-ghost btn-sm" onclick="toggleGradeCaptacao()">Ver grade de captação</button></div>';
 
   if(isMobileView()){
     var mh=tabsHtml+pautaCardsHtml(f,true)+'<button class="pauta-add-btn" onclick="abrirNovaPauta()">+ Nova pauta</button>';
@@ -3348,22 +3336,19 @@ var GRADE_OCULTAR_COMPLETOS=(localStorage.getItem('fw_grade_ocultar')==='1');
 
 function pautasListContEl(){return USER_ROLE==='operacional'?document.getElementById('op-pautas-cont'):document.getElementById('pautas-admin-cont');}
 function gradeContEl(){return USER_ROLE==='operacional'?document.getElementById('op-grade-captacao-cont'):document.getElementById('grade-captacao-cont');}
-function gradeToggleBtnEl(){return USER_ROLE==='operacional'?document.getElementById('op-btn-grade-toggle'):document.getElementById('btn-grade-toggle');}
 
 function toggleGradeCaptacao(){
   GRADE_MODO=!GRADE_MODO;
-  var listCont=pautasListContEl(),gradeCont=gradeContEl(),hist=document.getElementById('pauta-hist-cont'),btn=gradeToggleBtnEl();
+  var listCont=pautasListContEl(),gradeCont=gradeContEl(),hist=document.getElementById('pauta-hist-cont');
   if(GRADE_MODO){
     if(listCont)listCont.style.display='none';
     if(gradeCont)gradeCont.style.display='block';
     if(hist)hist.style.display='none';
-    if(btn)btn.textContent='Ver lista de pautas';
     renderGradeCaptacao();
   }else{
     if(listCont)listCont.style.display='';
     if(gradeCont)gradeCont.style.display='none';
     if(hist&&PLANILHA_ATIVA==='pautas')hist.style.display='';
-    if(btn)btn.textContent='Ver grade de captação';
     if(USER_ROLE==='operacional')renderOperPautas();else renderPautasAdmin();
   }
 }
@@ -3426,7 +3411,10 @@ function renderGradeCaptacao(){
     +'<div style="font-weight:700;font-size:14px">Semana '+semanaLabel+'</div>'
     +'<button class="btn btn-ghost btn-sm" onclick="gradeMudarSemana(1)">›</button>'
     +'</div>'
+    +'<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">'
     +'<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer"><input type="checkbox" '+(GRADE_OCULTAR_COMPLETOS?'checked':'')+' onchange="gradeToggleOcultar()" style="width:auto">Ocultar marcas 100% captadas</label>'
+    +'<button class="btn btn-ghost btn-sm" onclick="toggleGradeCaptacao()">Ver lista de pautas</button>'
+    +'</div>'
     +'</div></div>';
 
   if(!marcasList.length){
@@ -3472,8 +3460,6 @@ function gradeAbrirStatus(e,pautaId,marca){
   document.querySelectorAll('.grade-dd').forEach(function(d){d.remove();});
   var p=null;for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===pautaId){p=PAUTAS[i];break;}}
   if(!p)return;
-  var reg=gradeStatusDe(p,marca);
-  var dataAtual=reg&&reg.dt?reg.dt:'';
   var marcaAttr=marca.replace(/'/g,"\\'");
   var dd=document.createElement('div');
   dd.className='grade-dd';
@@ -3483,7 +3469,6 @@ function gradeAbrirStatus(e,pautaId,marca){
   opts.forEach(function(o){
     html+='<div style="padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'" onclick="gradeSetStatus(\''+pautaId+'\',\''+marcaAttr+'\',\''+o[0]+'\')">'+o[1]+'</div>';
   });
-  html+='<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--br)"><label style="font-size:10px;color:var(--t3)">Data do status</label><input type="date" value="'+dataAtual+'" onchange="gradeSetData(\''+pautaId+'\',\''+marcaAttr+'\',this.value)" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--br);border-radius:6px;margin-top:3px"></div>';
   dd.innerHTML=html;
   document.body.appendChild(dd);
   var r=e.target.closest('.grade-cel').getBoundingClientRect();
@@ -3825,7 +3810,7 @@ function renderOperPautas(){
     return(parseInt((a.data_rec||'0').split('/')[0])||0)-(parseInt((b.data_rec||'0').split('/')[0])||0);
   });
 
-  var tabsHtml='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap" id="op-mes-tabs"></div>';
+  var tabsHtml='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;justify-content:space-between;align-items:center"><div style="display:flex;gap:6px;flex-wrap:wrap" id="op-mes-tabs"></div><button class="btn btn-ghost btn-sm" onclick="toggleGradeCaptacao()">Ver grade de captação</button></div>';
 
   if(isMobileView()){
     var _scrollElOldM=el;var _scrollPosM=_scrollElOldM?_scrollElOldM.scrollTop:0;
