@@ -3312,8 +3312,12 @@ async function salvarPauta(){
 // ── GRADE DE CAPTAÇÃO (marca × cidade) ──────────────────────────────────────
 function statusCaptStyle(s){
   if(s==='captado')return{bg:'#DCFCE7',fg:'#15803D',label:'Captado'};
-  if(s==='nao_tinha')return{bg:'#FEE2E2',fg:'#B91C1C',label:'Não tinha na rua'};
+  if(s==='nao_captado')return{bg:'#FEE2E2',fg:'#B91C1C',label:'Não foi captado'};
   return{bg:'#FEF3C7',fg:'#92400E',label:'Em rota'};
+}
+function gradeStatusDe(p,marca){
+  var mapa=p.status_captacao_marcas||{};
+  return mapa[marca]||null;
 }
 function pautaDataObj(p){
   if(!p.data_rec)return null;
@@ -3332,6 +3336,11 @@ function getMondaySemana(d){
   return monday;
 }
 function fmtDiaMes(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');}
+function dataRecParaISO(p){
+  var d=pautaDataObj(p);
+  if(!d)return new Date().toISOString().slice(0,10);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 
 var GRADE_MODO=false;
 var GRADE_SEMANA_REF=getMondaySemana(new Date());
@@ -3376,24 +3385,29 @@ function renderGradeCaptacao(){
   var domingo=new Date(segunda);domingo.setDate(segunda.getDate()+6);
   var semanaLabel=fmtDiaMes(segunda)+' a '+fmtDiaMes(domingo);
 
-  var pautasSemana=PAUTAS.filter(function(p){
-    if(!p.cliente&&!p.campanha)return false;
+  // 1) Quais marcas têm pelo menos uma pauta na semana selecionada
+  var marcasAtivasSemana={};
+  PAUTAS.forEach(function(p){
+    if(!p.cliente&&!p.campanha)return;
     var d=pautaDataObj(p);
-    if(!d)return false;
-    return d>=segunda&&d<=domingo;
+    if(!d||d<segunda||d>domingo)return;
+    chipsFromStr(p.campanha).forEach(function(marca){marcasAtivasSemana[marca]=true;});
   });
 
+  // 2) Pra cada marca ativa, junta TODAS as cidades dela, de qualquer semana
   var porMarca={};
-  pautasSemana.forEach(function(p){
+  Object.keys(marcasAtivasSemana).forEach(function(m){porMarca[m]={};});
+  PAUTAS.forEach(function(p){
+    if(!p.cliente&&!p.campanha)return;
     var marcas=chipsFromStr(p.campanha);
     if(!marcas.length)marcas=['(sem campanha)'];
     marcas.forEach(function(marca){
-      if(!porMarca[marca])porMarca[marca]={};
+      if(!marcasAtivasSemana[marca])return;
       var cid=p.cidade||'—';
       var atual=porMarca[marca][cid];
-      if(!atual||(pautaDataObj(p)&&pautaDataObj(atual)&&pautaDataObj(p)>pautaDataObj(atual))){
-        porMarca[marca][cid]=p;
-      }
+      var dAtual=atual?pautaDataObj(atual):null;
+      var dNovo=pautaDataObj(p);
+      if(!atual||(dNovo&&dAtual&&dNovo>dAtual))porMarca[marca][cid]=p;
     });
   });
 
@@ -3402,7 +3416,7 @@ function renderGradeCaptacao(){
   if(GRADE_OCULTAR_COMPLETOS){
     marcasList=marcasList.filter(function(m){
       var cids=Object.keys(porMarca[m]);
-      return !cids.every(function(c){return (porMarca[m][c].status_captacao||'em_rota')==='captado';});
+      return !cids.every(function(c){var reg=gradeStatusDe(porMarca[m][c],m);return reg&&reg.st==='captado';});
     });
   }
 
@@ -3425,7 +3439,7 @@ function renderGradeCaptacao(){
     var cidsObj=porMarca[marca];
     var cids=Object.keys(cidsObj).sort();
     var totalCid=cids.length;
-    var captadas=cids.filter(function(c){return (cidsObj[c].status_captacao||'em_rota')==='captado';}).length;
+    var captadas=cids.filter(function(c){var reg=gradeStatusDe(cidsObj[c],marca);return reg&&reg.st==='captado';}).length;
     body+='<div class="card" style="padding:0;overflow:hidden">'
       +'<div style="padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--br);display:flex;align-items:center;justify-content:space-between">'
       +'<div style="font-weight:700;font-size:13px">'+marca+'</div>'
@@ -3434,12 +3448,14 @@ function renderGradeCaptacao(){
       +'<div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px">';
     cids.forEach(function(cid){
       var p=cidsObj[cid];
-      var st=p.status_captacao||'em_rota';
+      var reg=gradeStatusDe(p,marca);
+      var st=reg?reg.st:'em_rota';
       var info=statusCaptStyle(st);
-      var dataMostrar=p.data_status_captacao?p.data_status_captacao.split('-').reverse().join('/'):'sem data';
+      var dataMostrar=(reg&&reg.dt)?reg.dt.split('-').reverse().join('/'):(p.data_rec||'sem data');
+      var marcaAttr=marca.replace(/'/g,"\\'");
       body+='<div class="grade-cel" style="min-width:130px;border:1px solid var(--br);border-radius:8px;overflow:hidden">'
         +'<div style="padding:6px 10px;font-size:11px;font-weight:700;color:var(--t2);background:var(--bg);border-bottom:1px solid var(--br)">'+cid+'</div>'
-        +'<div style="padding:8px 10px;cursor:pointer" onclick="gradeAbrirStatus(event,\''+p.id+'\')">'
+        +'<div style="padding:8px 10px;cursor:pointer" onclick="gradeAbrirStatus(event,\''+p.id+'\',\''+marcaAttr+'\')">'
         +'<span style="display:inline-block;font-size:11px;font-weight:700;background:'+info.bg+';color:'+info.fg+';padding:3px 9px;border-radius:20px">'+info.label+'</span>'
         +'<div style="font-size:10px;color:var(--t3);margin-top:4px">'+dataMostrar+'</div>'
         +'</div></div>';
@@ -3451,20 +3467,23 @@ function renderGradeCaptacao(){
   el.innerHTML=header+body;
 }
 
-function gradeAbrirStatus(e,pautaId){
+function gradeAbrirStatus(e,pautaId,marca){
   e.stopPropagation();
   document.querySelectorAll('.grade-dd').forEach(function(d){d.remove();});
   var p=null;for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===pautaId){p=PAUTAS[i];break;}}
   if(!p)return;
+  var reg=gradeStatusDe(p,marca);
+  var dataAtual=reg&&reg.dt?reg.dt:'';
+  var marcaAttr=marca.replace(/'/g,"\\'");
   var dd=document.createElement('div');
   dd.className='grade-dd';
   dd.style.cssText='position:fixed;z-index:400;background:#fff;border:1px solid var(--br);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.15);padding:10px;min-width:210px';
-  var opts=[['em_rota','Em rota'],['captado','Captado'],['nao_tinha','Não tinha na rua']];
-  var html='<div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:8px">Status de captação</div>';
+  var opts=[['em_rota','Em rota'],['captado','Captado'],['nao_captado','Não foi captado']];
+  var html='<div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:8px">'+marca+' — status de captação</div>';
   opts.forEach(function(o){
-    html+='<div style="padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'" onclick="gradeSetStatus(\''+pautaId+'\',\''+o[0]+'\')">'+o[1]+'</div>';
+    html+='<div style="padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'" onclick="gradeSetStatus(\''+pautaId+'\',\''+marcaAttr+'\',\''+o[0]+'\')">'+o[1]+'</div>';
   });
-  html+='<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--br)"><label style="font-size:10px;color:var(--t3)">Data do status</label><input type="date" value="'+(p.data_status_captacao||'')+'" onchange="gradeSetData(\''+pautaId+'\',this.value)" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--br);border-radius:6px;margin-top:3px"></div>';
+  html+='<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--br)"><label style="font-size:10px;color:var(--t3)">Data do status</label><input type="date" value="'+dataAtual+'" onchange="gradeSetData(\''+pautaId+'\',\''+marcaAttr+'\',this.value)" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--br);border-radius:6px;margin-top:3px"></div>';
   dd.innerHTML=html;
   document.body.appendChild(dd);
   var r=e.target.closest('.grade-cel').getBoundingClientRect();
@@ -3473,36 +3492,41 @@ function gradeAbrirStatus(e,pautaId){
   setTimeout(function(){document.addEventListener('click',function h(){dd.remove();document.removeEventListener('click',h);});},0);
 }
 
-async function gradeSetStatus(pautaId,novoStatus){
+async function gradeSetStatus(pautaId,marca,novoStatus){
   document.querySelectorAll('.grade-dd').forEach(function(d){d.remove();});
   var p=null;for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===pautaId){p=PAUTAS[i];break;}}
   if(!p)return;
-  var antigoStatus=p.status_captacao,antigaData=p.data_status_captacao;
-  p.status_captacao=novoStatus;
-  if(!p.data_status_captacao)p.data_status_captacao=new Date().toISOString().slice(0,10);
+  var mapaAntigo=JSON.parse(JSON.stringify(p.status_captacao_marcas||{}));
+  var mapa=Object.assign({},p.status_captacao_marcas||{});
+  var dataAtual=(mapa[marca]&&mapa[marca].dt)||dataRecParaISO(p);
+  mapa[marca]={st:novoStatus,dt:dataAtual};
+  p.status_captacao_marcas=mapa;
   renderGradeCaptacao();
   try{
-    var r=await SB.from('pautas').update({status_captacao:novoStatus,data_status_captacao:p.data_status_captacao}).eq('id',pautaId);
+    var r=await SB.from('pautas').update({status_captacao_marcas:mapa}).eq('id',pautaId);
     if(r.error)throw new Error(r.error.message);
-    await registrarLog('editou','Pauta',pautaId,'Status de captação: '+(antigoStatus||'em_rota')+' → '+novoStatus);
+    await registrarLog('editou','Pauta',pautaId,'Status de captação ('+marca+'): '+novoStatus);
   }catch(e){
-    p.status_captacao=antigoStatus;p.data_status_captacao=antigaData;
+    p.status_captacao_marcas=mapaAntigo;
     renderGradeCaptacao();
     showAlertX('Erro ao salvar: '+e.message);
   }
 }
-async function gradeSetData(pautaId,novaData){
+async function gradeSetData(pautaId,marca,novaData){
   var p=null;for(var i=0;i<PAUTAS.length;i++){if(PAUTAS[i].id===pautaId){p=PAUTAS[i];break;}}
   if(!p)return;
-  var antiga=p.data_status_captacao;
-  p.data_status_captacao=novaData;
+  var mapaAntigo=JSON.parse(JSON.stringify(p.status_captacao_marcas||{}));
+  var mapa=Object.assign({},p.status_captacao_marcas||{});
+  var stAtual=(mapa[marca]&&mapa[marca].st)||'em_rota';
+  mapa[marca]={st:stAtual,dt:novaData};
+  p.status_captacao_marcas=mapa;
   try{
-    var r=await SB.from('pautas').update({data_status_captacao:novaData}).eq('id',pautaId);
+    var r=await SB.from('pautas').update({status_captacao_marcas:mapa}).eq('id',pautaId);
     if(r.error)throw new Error(r.error.message);
     document.querySelectorAll('.grade-dd').forEach(function(d){d.remove();});
     renderGradeCaptacao();
   }catch(e){
-    p.data_status_captacao=antiga;
+    p.status_captacao_marcas=mapaAntigo;
     showAlertX('Erro ao salvar: '+e.message);
   }
 }
