@@ -4437,7 +4437,7 @@ function oohRenderCheck(tipo){
         html += '<td><div class="ooh-checkbox na">–</div></td>';
       } else {
         var checked = state[m+'|'+amb];
-        html += '<td><div class="ooh-checkbox'+(checked?' checked'+corClass:'')+'" onclick="oohToggleCheck(\''+tipo+'\',\''+m+'\',\''+amb.replace(/'/g,"\\'")+'\')">'+(checked?'✓':'')+'</div></td>';
+        html += '<td><div class="ooh-checkbox'+(checked?' checked'+corClass:'')+'" onclick="oohToggleCheck(\''+tipo+'\',\''+m.replace(/'/g,"\\'")+'\',\''+amb.replace(/'/g,"\\'")+'\')">'+(checked?'✓':'')+'</div></td>';
       }
     });
     html += '</tr>';
